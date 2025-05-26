@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { BalanceCard } from '@/components/BalanceCard';
 import { TradeTable } from '@/components/TradeTable';
@@ -22,6 +21,7 @@ import {
   LogEntry,
   OHLCVData
 } from '@/types/trading';
+import { ManualTradePanel } from '@/components/ManualTradePanel';
 
 const Index = () => {
   // State management
@@ -135,7 +135,11 @@ const Index = () => {
             <BotControl status={botStatus} onStatusChange={loadAllData} />
           </div>
           
-          <div className="col-span-12 lg:col-span-6">
+          <div className="col-span-12 lg:col-span-3">
+            <ManualTradePanel />
+          </div>
+          
+          <div className="col-span-12 lg:col-span-3">
             <TradeTable trades={activeTrades} isLoading={isLoading} />
           </div>
 
