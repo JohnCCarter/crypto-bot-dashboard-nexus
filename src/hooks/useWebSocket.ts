@@ -55,7 +55,7 @@ export const useWebSocket = (url: string, onMessage?: (data: any) => void): WebS
 
     // Only attempt connection in production or when backend is available
     // For development, we'll skip WebSocket connection
-    if (process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_WS === 'true') {
+    if (import.meta.env.PROD || import.meta.env.VITE_ENABLE_WS === 'true') {
       connectWebSocket();
     }
 

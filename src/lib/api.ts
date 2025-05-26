@@ -1,7 +1,6 @@
-
 import { Balance, Trade, OrderHistoryItem, BotStatus, OrderBook, LogEntry, TradingConfig, OHLCVData } from '@/types/trading';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Mock data for development
 const mockBalances: Balance[] = [
