@@ -15,13 +15,22 @@ def register_routes():
             file_path = os.path.join(routes_path, filename)
             print(f"📦 Loading route: {module_name}...")
             spec = importlib.util.spec_from_file_location(module_name, file_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            if hasattr(module, 'register'):
-                print(f"✅ Registering route: {module_name}")
-                module.register(app)
+            if spec is not None:
+                module = importlib.util.module_from_spec(spec)
+                if spec.loader is not None:
+                    spec.loader.exec_module(module)
+                else:
+                    print(f"❌ Failed to load module for {module_name}: spec.loader is None")
             else:
-                print(f"⚠️  No 'register(app)' in {module_name}")
+                print(f"❌ Failed to load spec for {module_name}")
+            if spec is not None and spec.loader is not None:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                if hasattr(module, 'register'):
+                    print(f"✅ Registering route: {module_name}")
+                    module.register(app)
+                else:
+                    print(f"⚠️  No 'register(app)' in {module_name}")
 
 register_routes()
 
