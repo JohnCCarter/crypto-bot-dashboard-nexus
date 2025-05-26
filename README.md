@@ -1,73 +1,190 @@
-# Welcome to your Lovable project
+# 📘 Bitfinex API Integration for Flask Trading Dashboard
 
-## Project info
+Detta dokument är en komplett teknisk referens för att integrera Bitfinex REST- och WebSocket-API med en trading-dashboard byggd i Flask. Det inkluderar autentisering, endpoint-översikt, rate limits, WebSocket-kanaler och praktisk Python-kod med `ccxt` och `websocket`.
 
-**URL**: https://lovable.dev/projects/3e5d98dc-49bf-411d-b480-902091a01cf7
+## Kom igång
 
-## How can I edit this code?
+1. Klona projektet  
+  ```bash
+  git clone git@github.com:<användare>/crypto-bot-dashboard-nexus.git
+  cd crypto-bot-dashboard-nexus
+  ```
+2. Skapa och aktivera virtuell miljö  
+  ```bash
+  python3 -m venv venv
+  source venv/bin/activate     # Windows: venv\Scripts\activate
+  ```
+3. Installera beroenden  
+  ```bash
+  pip install -r requirements.txt
+  ```
+4. Skapa `.env` i projektets rot  
+  ```dotenv
+  BITFINEX_API_KEY=DIN_API_KEY
+  BITFINEX_API_SECRET=DIN_API_SECRET
+  ```
+5. Starta Flask-servern  
+  ```bash
+  flask run --host=0.0.0.0 --port=5000
+  ```
+  Öppna http://localhost:5000 i din webbläsare.
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 🔐 Bitfinex API – Autentisering, Krav och Begränsningar
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3e5d98dc-49bf-411d-b480-902091a01cf7) and start prompting.
+### 📌 API-Översikt  
+API:n är snabb och effektiv, med stöd för Python, NodeJS, Ruby och Golang.  
+Docs: https://docs.bitfinex.com/docs/introduction
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🔑 Autentisering  
+För REST-anrop:
+```json
+{
+  "apiKey": "DIN_API_KEY",
+  "authSig": "SIGNATUR",
+  "authNonce": 1680000000000
+}
+```
+För WebSocket:
+```json
+{
+  "event": "auth",
+  "apiKey": "DIN_API_KEY",
+  "authSig": "SIGNATUR",
+  "authPayload": "AUTH" + NONCE,
+  "authNonce": NONCE
+}
+```
+Använd separata nycklar per klient för att undvika nonce-konflikter.
 
-**Use your preferred IDE**
+### ⚠️ Rate Limits
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+#### REST API
+* 10–90 förfrågningar/minut beroende på endpoint  
+* Fel: `{"error":"ERR_RATE_LIMIT"}`  
+* IP blockeras i 60 sek vid överskridande
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+#### WebSocket API
+* Max 5 autentiserade anslutningar/15 s  
+* Max 20 offentliga anslutningar/min  
+* Upp till 25 kanaler per anslutning  
+* Rate-limited i 15 s (auth) eller 60 s (pub)
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🌐 Offentliga REST-endpoints
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Domän: `https://api-pub.bitfinex.com/v2/`
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Vanliga endpoints
+* GET /tickers  
+* GET /ticker/:symbol  
+* GET /book/:symbol  
+* GET /trades/:symbol  
+* GET /candles/trade:{timeframe}:symbol/hist
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Exempel (curl)
+```bash
+curl https://api-pub.bitfinex.com/v2/ticker/tBTCUSD
+curl https://api-pub.bitfinex.com/v2/book/tBTCUSD/P0
+curl https://api-pub.bitfinex.com/v2/trades/tBTCUSD/hist
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🔐 Autentiserade REST-endpoints
 
-**Use GitHub Codespaces**
+Domän: `https://api.bitfinex.com/v2/`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Funktioner
+* 📊 Saldo och plånböcker  
+* 📈 Orderläggning, avbokning, historik  
+* 📉 Positioner (futures/margin)  
+* 🧾 Fakturering och inställningar
 
-## What technologies are used for this project?
+Fullständig doc: https://docs.bitfinex.com/docs/rest-auth
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔌 Bitfinex WebSocket API
 
-## How can I deploy this project?
+### Endpoints
+* Publik: `wss://api-pub.bitfinex.com/ws/2`  
+* Autentiserad: `wss://api.bitfinex.com/ws/2`
 
-Simply open [Lovable](https://lovable.dev/projects/3e5d98dc-49bf-411d-b480-902091a01cf7) and click on Share -> Publish.
+### Prenumerationsexempel
+```json
+{
+  "event": "subscribe",
+  "channel": "ticker",
+  "symbol": "tBTCUSD"
+}
+```
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 💻 Exempelkod och användningsfall
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Hämta saldo med ccxt
+```python
+import ccxt, os
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+exchange = ccxt.bitfinex({
+   'apiKey': os.getenv("BITFINEX_API_KEY"),
+   'secret': os.getenv("BITFINEX_API_SECRET"),
+})
+balance = exchange.fetch_balance()
+print(balance)
+```
+
+### Placera market-order
+```python
+order = exchange.create_order(
+   symbol='BTC/USD',
+   type='market',
+   side='buy',
+   amount=0.001
+)
+print(order)
+```
+
+### Hämta öppna positioner
+```python
+positions = exchange.private_get_positions()
+print(positions)
+```
+> OBS: `fetch_positions()` kräver margin/futures-aktivering.
+
+### Hämta candlestick-data (OHLCV)
+```python
+ohlcv = exchange.fetch_ohlcv('BTC/USD', timeframe='1m', limit=10)
+for candle in ohlcv:
+   print(candle)
+```
+
+### WebSocket: Lyssna på ticker
+```python
+import websocket, json
+
+def on_message(ws, message):
+   print("Received:", message)
+
+def on_open(ws):
+   ws.send(json.dumps({
+      "event": "subscribe",
+      "channel": "ticker",
+      "symbol": "tBTCUSD"
+   }))
+
+ws = websocket.WebSocketApp(
+   "wss://api-pub.bitfinex.com/ws/2",
+   on_message=on_message
+)
+ws.on_open = on_open
+ws.run_forever()
+```
+
+---
+
+> Anpassa kodexemplen efter behov. För mer info, se Bitfinex officiella dokumentation: https://docs.bitfinex.com/docs/introduction
