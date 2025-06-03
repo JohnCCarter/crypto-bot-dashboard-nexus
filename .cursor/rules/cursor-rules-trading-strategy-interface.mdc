@@ -1,0 +1,15 @@
+---
+description: Enforce a common interface for all trading strategies and indicators
+globs:
+  - backend/strategies/*.py
+autoAttach: true
+---
+
+- All strategy files must implement a `run_strategy(data: pd.DataFrame) -> TradeSignal` function.
+- Indicators must be stateless, pure functions with type annotations.
+- Example:
+
+```python
+def run_strategy(data: pd.DataFrame) -> TradeSignal:
+    # Implement strategy logic
+    pass

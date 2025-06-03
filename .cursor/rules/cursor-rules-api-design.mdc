@@ -1,0 +1,12 @@
+---
+description: Standardize API route design for tradingbot backend
+globs:
+  - backend/routes/*.py
+alwaysApply: true
+---
+
+- All API endpoints must use RESTful conventions.
+- Each route should have a clear summary in the docstring.
+- All endpoints should validate input and handle errors gracefully.
+- Responses must be returned as JSON with status codes.
+- Sensitive keys (API keys, secrets) must never be exposed in logs or responses.

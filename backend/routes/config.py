@@ -1,19 +1,34 @@
 from flask import request, jsonify
-import os
-import json
-
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), '..', 'config.json')
+from services.config_service import get_config, update_config
 
 def register(app):
     @app.route('/api/config', methods=['GET'])
-    def get_config():
-        with open(CONFIG_PATH, 'r') as f:
-            config = json.load(f)
+    def get_config_route():
+        """
+        Hämta nuvarande konfiguration.
+        ---
+        responses:
+            200:
+                description: Nuvarande konfiguration
+        """
+        config = get_config()
         return jsonify(config)
 
     @app.route('/api/config', methods=['POST'])
-    def update_config():
+    def update_config_route():
+        """
+        Uppdatera konfigurationen.
+        ---
+        requestBody:
+            description: Ny konfigurationsdata
+        responses:
+            200:
+                description: Konfiguration uppdaterad
+            400:
+                description: Felaktig indata
+        """
         data = request.get_json()
-        with open(CONFIG_PATH, 'w') as f:
-            json.dump(data, f, indent=4)
+        if not data:
+            return jsonify({"error": "Missing JSON body"}), 400
+        update_config(data)
         return jsonify({"message": "Config updated successfully"})

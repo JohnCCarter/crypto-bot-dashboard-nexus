@@ -1,0 +1,10 @@
+---
+description: Allow AI agent full autonomy to build, refactor, and optimize the trading bot as long as all other rules are followed
+globs:
+  - backend/**/*.py
+  - src/**/*.tsx
+alwaysApply: true
+---
+
+- The AI assistant is free to create, refactor, and improve any module as needed, provided all code remains compliant with the active project rules.
+- Encourage creative solutions, but never compromise on code quality, test coverage, or security as defined in the rules.

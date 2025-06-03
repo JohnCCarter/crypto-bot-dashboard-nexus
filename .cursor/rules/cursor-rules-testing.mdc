@@ -1,0 +1,13 @@
+---
+description: Ensure clear onboarding instructions for new contributors
+globs:
+  - README.md
+alwaysApply: true
+---
+
+- README.md must include:
+  - Project overview
+  - Setup instructions (backend, frontend, Docker)
+  - API documentation reference
+  - Example usage and test instructions
+- Update README when significant changes are made.

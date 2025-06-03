@@ -1,0 +1,22 @@
+---
+description: Enforce consistent code style and modular structure for backend and frontend.
+globs:
+  - backend/**/*.py
+  - src/**/*.tsx
+alwaysApply: true
+---
+
+- **Backend (Python):**
+  - All Python code must be PEP8-compliant (use black for formatting).
+  - Use only absolute imports relative to the backend package (e.g. `from backend.routes.status import get_status`).
+  - Avoid relative imports like `from .status import ...` unless required.
+  - All folders representing Python packages must contain an `__init__.py` file.
+  - The import structure must reflect the project directory structure.
+  - All code must include docstrings for public functions and classes.
+  - Separate business logic from API routes.
+
+- **Frontend (React/TypeScript):**
+  - All React components should be written as functional components in TypeScript.
+  - Use clear and explicit TypeScript prop types and interfaces.
+  - All code must include JSDoc comments for public functions and components.
+  - Separate UI logic from data-fetching and state management.

@@ -1,28 +1,25 @@
 from flask import request, jsonify
-import datetime
-
-# Simulerad ordersamling
-order_log = []
+from services.order_service import place_order
 
 def register(app):
     @app.route('/api/order', methods=['POST'])
-    def place_order():
+    def place_order_route():
+        """
+        Skapa och logga en order.
+        ---
+        requestBody:
+            description: Orderparametrar (symbol, order_type, side, amount, price)
+        responses:
+            201:
+                description: Order skapad
+            400:
+                description: Felaktig indata
+        """
         data = request.get_json()
-        symbol = data.get("symbol")
-        order_type = data.get("order_type")
-        side = data.get("side")
-        amount = data.get("amount")
-        price = data.get("price")
-
-        order = {
-            "symbol": symbol,
-            "order_type": order_type,
-            "side": side,
-            "amount": amount,
-            "price": price,
-            "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
-        }
-
-        order_log.append(order)
-
-        return jsonify({"message": "Order received", "order": order}), 201
+        if not data:
+            return jsonify({"error": "Missing JSON body"}), 400
+        try:
+            order = place_order(data)
+            return jsonify({"message": "Order received", "order": order}), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
