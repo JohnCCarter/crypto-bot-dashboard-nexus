@@ -2,3 +2,4 @@ flask
 flask-cors
 ccxt
 python-dotenv
+pytest

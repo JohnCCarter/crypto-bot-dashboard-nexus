@@ -37,6 +37,11 @@ Detta dokument är en komplett teknisk referens för att integrera Bitfinex REST
   flask run --host=0.0.0.0 --port=5000
   ```
   Öppna http://localhost:5000 i din webbläsare.
+6. Kör testerna
+  ```bash
+  pytest backend/tests
+  ```
+
 
 ---
 
