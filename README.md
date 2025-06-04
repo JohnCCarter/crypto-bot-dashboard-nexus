@@ -14,17 +14,26 @@ Detta dokument är en komplett teknisk referens för att integrera Bitfinex REST
   python3 -m venv venv
   source venv/bin/activate     # Windows: venv\Scripts\activate
   ```
-3. Installera beroenden  
+3. Installera beroenden
   ```bash
+  # Kör från projektets rot
+  pip install -r backend/requirements.txt
+  ```
+  Eller byt katalog först:
+  ```bash
+  cd backend
   pip install -r requirements.txt
+  cd ..
   ```
 4. Skapa `.env` i projektets rot  
   ```dotenv
   BITFINEX_API_KEY=DIN_API_KEY
   BITFINEX_API_SECRET=DIN_API_SECRET
   ```
-5. Starta Flask-servern  
+5. Starta Flask-servern
   ```bash
+  # Från katalogen backend
+  cd backend
   flask run --host=0.0.0.0 --port=5000
   ```
   Öppna http://localhost:5000 i din webbläsare.
