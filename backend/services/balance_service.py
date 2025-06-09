@@ -1,8 +1,10 @@
 import os
+
 import ccxt
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 def fetch_balances():
     """
@@ -11,13 +13,15 @@ def fetch_balances():
     :return: dict med balansdata från ccxt
     :raises: ValueError, ccxt.BaseError
     """
-    api_key = os.getenv('BITFINEX_API_KEY')
-    api_secret = os.getenv('BITFINEX_API_SECRET')
+    api_key = os.getenv("BITFINEX_API_KEY")
+    api_secret = os.getenv("BITFINEX_API_SECRET")
     if not api_key or not api_secret:
-        raise ValueError('API keys not configured properly')
-    exchange = ccxt.bitfinex({
-        'apiKey': api_key,
-        'secret': api_secret,
-        'enableRateLimit': True,
-    })
-    return exchange.fetch_balance() 
+        raise ValueError("API keys not configured properly")
+    exchange = ccxt.bitfinex(
+        {
+            "apiKey": api_key,
+            "secret": api_secret,
+            "enableRateLimit": True,
+        }
+    )
+    return exchange.fetch_balance()

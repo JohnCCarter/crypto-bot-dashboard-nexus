@@ -8,6 +8,7 @@ bot_status = {
     "last_update": None,
 }
 
+
 def start_bot():
     """Startar tradingboten."""
     now = time.time()
@@ -16,12 +17,14 @@ def start_bot():
     bot_status["last_update"] = datetime.utcnow().isoformat()
     return {"message": "Bot started", "status": "running"}
 
+
 def stop_bot():
     """Stoppar tradingboten."""
     bot_status["running"] = False
     bot_status["start_time"] = None
     bot_status["last_update"] = datetime.utcnow().isoformat()
     return {"message": "Bot stopped", "status": "stopped"}
+
 
 def get_bot_status():
     """Returnerar nuvarande status för tradingboten, uptime och senaste uppdateringstid."""

@@ -1,8 +1,6 @@
 ---
-description: Enforce consistent code style and modular structure for backend and frontend.
-globs:
-  - backend/**/*.py
-  - src/**/*.tsx
+description: 
+globs: 
 alwaysApply: true
 ---
 
@@ -20,3 +18,4 @@ alwaysApply: true
   - Use clear and explicit TypeScript prop types and interfaces.
   - All code must include JSDoc comments for public functions and components.
   - Separate UI logic from data-fetching and state management.
+

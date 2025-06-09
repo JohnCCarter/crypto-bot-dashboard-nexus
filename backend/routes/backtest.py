@@ -1,0 +1,195 @@
+"""Backtesting API endpoints."""
+
+from typing import Any, Dict
+
+import numpy as np
+import pandas as pd
+from flask import Blueprint, jsonify, request
+
+from backend.services.backtest import BacktestEngine
+from backend.services.monitor import AlertLevel, Monitor
+from backend.strategies.rsi_strategy import run_rsi_strategy
+from backend.strategies.sample_strategy import run_strategy
+
+# Create blueprint
+backtest_bp = Blueprint("backtest", __name__)
+
+# Initialize services
+backtest_engine = BacktestEngine()
+monitor = Monitor()
+
+# Strategy mapping
+STRATEGIES = {"sample": run_strategy, "rsi": run_rsi_strategy}
+
+
+@backtest_bp.route("/api/backtest/run", methods=["POST"])
+def run_backtest():
+    """
+    Run backtest for a trading strategy.
+
+    Request body:
+    {
+        "strategy": "strategy_name",
+        "data": {
+            "timestamp": [...],
+            "open": [...],
+            "high": [...],
+            "low": [...],
+            "close": [...],
+            "volume": [...]
+        },
+        "parameters": {
+            "initial_capital": float,
+            "commission": float,
+            "slippage": float,
+            "risk_params": {
+                "max_position_size": float,
+                "stop_loss_pct": float,
+                "take_profit_pct": float
+            }
+        }
+    }
+    """
+    try:
+        # Get request data
+        if not request.is_json:
+            return jsonify({"error": "Content-Type must be application/json"}), 400
+        try:
+            data = request.get_json()
+        except Exception:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        # Validate required fields
+        if not all(k in data for k in ["strategy", "data"]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Get strategy
+        strategy_name = data["strategy"]
+        if strategy_name not in STRATEGIES:
+            return jsonify({"error": f"Unknown strategy: {strategy_name}"}), 400
+
+        strategy = STRATEGIES[strategy_name]
+
+        # Convert data to DataFrame
+        df = pd.DataFrame(data["data"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df.set_index("timestamp", inplace=True)
+
+        # Get parameters
+        parameters = data.get("parameters", {})
+        initial_capital = parameters.get("initial_capital", 10000.0)
+        commission = parameters.get("commission", 0.001)
+        slippage = parameters.get("slippage", 0.0005)
+        risk_params = parameters.get("risk_params", {})
+
+        # Create backtest engine with parameters
+        engine = BacktestEngine(
+            initial_capital=initial_capital, commission=commission, slippage=slippage
+        )
+
+        # Run backtest
+        try:
+            result = engine.run_backtest(df, strategy, risk_params)
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
+
+        # Convert result to dict
+        def to_builtin(val):
+            if isinstance(val, np.generic):
+                return val.item()
+            return val
+
+        result_dict = {
+            "total_trades": to_builtin(result.total_trades),
+            "winning_trades": to_builtin(result.winning_trades),
+            "losing_trades": to_builtin(result.losing_trades),
+            "win_rate": to_builtin(result.win_rate),
+            "total_pnl": to_builtin(result.total_pnl),
+            "max_drawdown": to_builtin(result.max_drawdown),
+            "sharpe_ratio": to_builtin(result.sharpe_ratio),
+            "trade_history": result.trade_history,
+            "equity_curve": {str(k): float(v) for k, v in result.equity_curve.items()},
+        }
+
+        return jsonify(result_dict)
+
+    except Exception as e:
+        monitor.create_alert(AlertLevel.ERROR, f"Backtest failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@backtest_bp.route("/api/backtest/optimize", methods=["POST"])
+def optimize_parameters():
+    """
+    Optimize strategy parameters using grid search.
+
+    Request body:
+    {
+        "strategy": "strategy_name",
+        "data": {
+            "timestamp": [...],
+            "open": [...],
+            "high": [...],
+            "low": [...],
+            "close": [...],
+            "volume": [...]
+        },
+        "param_grid": {
+            "param1": [value1, value2, ...],
+            "param2": [value1, value2, ...]
+        }
+    }
+    """
+    try:
+        # Get request data
+        data = request.get_json()
+
+        # Validate required fields
+        if not all(k in data for k in ["strategy", "data", "param_grid"]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Get strategy
+        strategy_name = data["strategy"]
+        if strategy_name not in STRATEGIES:
+            return jsonify({"error": f"Unknown strategy: {strategy_name}"}), 400
+
+        strategy = STRATEGIES[strategy_name]
+
+        # Convert data to DataFrame
+        df = pd.DataFrame(data["data"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df.set_index("timestamp", inplace=True)
+
+        # Get parameter grid
+        param_grid = data["param_grid"]
+
+        # Run optimization
+        try:
+            result = backtest_engine.optimize_parameters(df, strategy, param_grid)
+
+            # Konvertera numpy-typer och nycklar
+            def to_builtin(val):
+                if isinstance(val, np.generic):
+                    return val.item()
+                return val
+
+            result = {
+                "parameters": (
+                    {str(k): to_builtin(v) for k, v in result["parameters"].items()}
+                    if result["parameters"]
+                    else {}
+                ),
+                "performance": {
+                    str(k): to_builtin(v) for k, v in result["performance"].items()
+                },
+            }
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
+
+        return jsonify(result)
+
+    except Exception as e:
+        monitor.create_alert(
+            AlertLevel.ERROR, f"Parameter optimization failed: {str(e)}"
+        )
+        return jsonify({"error": str(e)}), 500

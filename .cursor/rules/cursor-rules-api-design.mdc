@@ -1,7 +1,6 @@
 ---
-description: Standardize API route design for tradingbot backend
-globs:
-  - backend/routes/*.py
+description: 
+globs: 
 alwaysApply: true
 ---
 
@@ -10,3 +9,4 @@ alwaysApply: true
 - All endpoints should validate input and handle errors gracefully.
 - Responses must be returned as JSON with status codes.
 - Sensitive keys (API keys, secrets) must never be exposed in logs or responses.
+

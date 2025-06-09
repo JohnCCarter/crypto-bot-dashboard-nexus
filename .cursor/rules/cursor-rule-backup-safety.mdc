@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
 name: Backup Before Edit
 summary: >
   Before Codex edits, renames, deletes, or generates any file, it must create a local backup in `.codex_backups/DATE/`.
@@ -20,3 +25,4 @@ action:
 notes:
   - This rule protects against accidental file loss during Codex activity.
   - All backup files should be ignored by Git via `.gitignore`.
+

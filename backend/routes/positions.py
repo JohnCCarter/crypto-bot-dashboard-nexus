@@ -1,8 +1,10 @@
 from flask import jsonify
+
 from backend.services.positions_service import get_mock_positions
 
+
 def register(app):
-    @app.route('/api/positions', methods=['GET'])
+    @app.route("/api/positions", methods=["GET"])
     def get_positions():
         """
         Hämta nuvarande positioner (mockad data).
@@ -15,4 +17,4 @@ def register(app):
             data = get_mock_positions()
             return jsonify(data), 200
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": str(e)}), 500

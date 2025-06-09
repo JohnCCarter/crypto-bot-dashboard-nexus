@@ -1,6 +1,7 @@
 """EMA crossover strategy stub implementation."""
 
 import pandas as pd
+
 from backend.strategies.sample_strategy import TradeSignal
 
 
@@ -12,4 +13,4 @@ def run_strategy(data: pd.DataFrame) -> TradeSignal:
     :return: A TradeSignal indicating the recommended action.
     """
     # TODO: Implement EMA crossover logic. This stub always issues 'hold'.
-    return TradeSignal(action='hold', confidence=0.0)
+    return TradeSignal(action="hold", confidence=0.0)

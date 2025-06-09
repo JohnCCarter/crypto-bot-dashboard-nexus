@@ -1,7 +1,6 @@
 ---
-description: Ensure clear onboarding instructions for new contributors
-globs:
-  - README.md
+description: 
+globs: 
 alwaysApply: true
 ---
 
@@ -11,3 +10,4 @@ alwaysApply: true
   - API documentation reference
   - Example usage and test instructions
 - Update README when significant changes are made.
+

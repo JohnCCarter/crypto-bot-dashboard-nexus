@@ -1,60 +1,140 @@
-from flask import Flask
-from flask_cors import CORS
-import os
-import importlib.util
+"""Trading bot application entrypoint."""
 
-"""
-backend/app.py
-
-Flask application entrypoint that dynamically registers all API routes.
-"""
-import os
-import sys
 import logging
-import importlib.util
+import os
+from typing import Any, Dict
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
+
+from backend.routes.backtest import backtest_bp
+from backend.routes.balances import register as register_balances
+from backend.routes.bot_control import register as register_bot_control
+from backend.routes.orders import orders_bp
+from backend.routes.status import status_bp
+from backend.services.exchange import ExchangeService
+from backend.services.monitor import Monitor
+from backend.services.order_service import OrderService
+from backend.services.risk_manager import RiskManager, RiskParameters
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+    level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
 
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
+# Registrera routes som inte använder blueprint
+register_balances(app)
+register_bot_control(app)
+
+
+# Initialize services
+def init_services() -> Dict[str, Any]:
+    """
+    Initialize trading services.
+
+    Returns:
+        Dict containing initialized services
+    """
+    # Load configuration
+    config = {
+        "exchange_id": os.getenv("EXCHANGE_ID", "binance"),
+        "api_key": os.getenv("EXCHANGE_API_KEY"),
+        "api_secret": os.getenv("EXCHANGE_API_SECRET"),
+        "risk_params": {
+            "max_position_size": float(os.getenv("MAX_POSITION_SIZE", "0.1")),
+            "max_leverage": float(os.getenv("MAX_LEVERAGE", "3.0")),
+            "stop_loss_pct": float(os.getenv("STOP_LOSS_PCT", "0.02")),
+            "take_profit_pct": float(os.getenv("TAKE_PROFIT_PCT", "0.04")),
+            "max_daily_loss": float(os.getenv("MAX_DAILY_LOSS", "0.05")),
+            "max_open_positions": int(os.getenv("MAX_OPEN_POSITIONS", "5")),
+        },
+    }
+
+    # Initialize exchange service
+    exchange = ExchangeService(
+        config["exchange_id"], config["api_key"], config["api_secret"]
+    )
+
+    # Initialize risk manager
+    risk_params = RiskParameters(**config["risk_params"])
+    risk_manager = RiskManager(risk_params)
+
+    # Initialize monitor
+    monitor = Monitor()
+
+    # Initialize order service
+    order_service = OrderService(exchange)
+
+    return {
+        "exchange": exchange,
+        "risk_manager": risk_manager,
+        "monitor": monitor,
+        "order_service": order_service,
+        "config": config,
+    }
+
+
+# Initialize services
+services = init_services()
+
+
 def register_routes():
-    """
-    Dynamically load and register all route modules under backend/routes.
-    """
-    routes_path = os.path.join(os.path.dirname(__file__), 'routes')
-    for filename in os.listdir(routes_path):
-        if not filename.endswith('.py') or filename.startswith('__'):
-            continue
+    """Register all API routes."""
+    app.register_blueprint(status_bp)
+    app.register_blueprint(orders_bp)
+    app.register_blueprint(backtest_bp)
 
-        module_basename = filename[:-3]
-        module_name = f"backend.routes.{module_basename}"
-        file_path = os.path.join(routes_path, filename)
-        logger.info("Loading route: %s", module_name)
 
-        spec = importlib.util.spec_from_file_location(module_name, file_path)
-        if spec and spec.loader:
-            module = importlib.util.module_from_spec(spec)
-            # Ensure module is in sys.modules for proper imports and patching
-            sys.modules[module_name] = module
-            spec.loader.exec_module(module)
-            if hasattr(module, 'register'):
-                logger.info("Registering route: %s", module_name)
-                module.register(app)
-            else:
-                logger.warning("No 'register(app)' in %s", module_name)
-        else:
-            logger.error("Failed to load spec/loader for %s", module_name)
-
+# Register routes
 register_routes()
 
-if __name__ == '__main__':
+
+# Add monitoring endpoints
+@app.route("/api/monitor/status", methods=["GET"])
+def get_status():
+    """Get trading bot status."""
+    try:
+        # Get performance report
+        report = services["monitor"].get_performance_report()
+
+        # Get exchange status
+        exchange_status = services["exchange"].fetch_ticker("BTC/USD")
+
+        return jsonify(
+            {"status": "running", "performance": report, "market": exchange_status}
+        )
+    except Exception as e:
+        logger.error("Error getting status: %s", str(e))
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route("/api/monitor/alerts", methods=["GET"])
+def get_alerts():
+    """Get recent alerts."""
+    try:
+        alerts = services["monitor"].get_recent_alerts()
+        return jsonify(
+            {
+                "alerts": [
+                    {
+                        "level": alert.level.value,
+                        "message": alert.message,
+                        "timestamp": alert.timestamp.isoformat(),
+                        "metadata": alert.metadata,
+                    }
+                    for alert in alerts
+                ]
+            }
+        )
+    except Exception as e:
+        logger.error("Error getting alerts: %s", str(e))
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)

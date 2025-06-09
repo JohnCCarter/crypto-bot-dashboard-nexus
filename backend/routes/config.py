@@ -1,8 +1,10 @@
-from flask import request, jsonify
+from flask import jsonify, request
+
 from backend.services.config_service import get_config, update_config
 
+
 def register(app):
-    @app.route('/api/config', methods=['GET'])
+    @app.route("/api/config", methods=["GET"])
     def get_config_route():
         """
         Hämta nuvarande konfiguration.
@@ -15,9 +17,9 @@ def register(app):
             config = get_config()
             return jsonify(config), 200
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": str(e)}), 500
 
-    @app.route('/api/config', methods=['POST'])
+    @app.route("/api/config", methods=["POST"])
     def update_config_route():
         """
         Uppdatera konfigurationen.
@@ -37,6 +39,6 @@ def register(app):
             update_config(data)
             return jsonify({"message": "Config updated successfully"}), 200
         except ValueError as e:
-            return jsonify({'error': str(e)}), 400
+            return jsonify({"error": str(e)}), 400
         except Exception:
-            return jsonify({'error': 'Unexpected error'}), 500
+            return jsonify({"error": "Unexpected error"}), 500

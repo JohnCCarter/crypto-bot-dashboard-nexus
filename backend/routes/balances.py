@@ -1,8 +1,10 @@
 from flask import jsonify
+
 from backend.services.balance_service import fetch_balances
 
+
 def register(app):
-    @app.route('/api/balances', methods=['GET'])
+    @app.route("/api/balances", methods=["GET"])
     def get_balances():
         """
         Hämta saldon från Bitfinex.
@@ -16,14 +18,16 @@ def register(app):
         try:
             balance_data = fetch_balances()
             result = []
-            for currency, info in balance_data['total'].items():
+            for currency, info in balance_data["total"].items():
                 if info is None or info == 0:
                     continue
-                result.append({
-                    'currency': currency,
-                    'total_balance': balance_data['total'][currency],
-                    'available': balance_data['free'][currency]
-                })
+                result.append(
+                    {
+                        "currency": currency,
+                        "total_balance": balance_data["total"][currency],
+                        "available": balance_data["free"][currency],
+                    }
+                )
             return jsonify(result), 200
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": str(e)}), 500

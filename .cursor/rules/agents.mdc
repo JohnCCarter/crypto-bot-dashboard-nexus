@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
 # 🧠 AGENTS.md – Codex Contributor & Rule Guide
 
 This file helps Codex and contributors operate safely, consistently, and effectively across the trading bot project.
@@ -71,4 +76,5 @@ Codex is more effective when:
 3. Lint and type-check
 4. Follow PR title format: `[<area>] <concise title>`
 5. Cross-check with `AGENTS.md` before commit
+
 
