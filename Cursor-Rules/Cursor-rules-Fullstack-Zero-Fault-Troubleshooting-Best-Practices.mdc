@@ -1,0 +1,93 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🚦 Codex Rule: Fullstack Zero-Fault Troubleshooting & Best Practices
+
+> **Use this checklist after refactoring, before merging, and during troubleshooting. It is designed to proactively prevent and auto-detect common issues in fullstack (backend + frontend) projects.**
+
+---
+
+## 1. Imports, Structure & Dependencies
+
+* All backend Python packages/folders must include an `__init__.py` file.
+* Always use absolute imports where possible.
+* Run Python from the project root (`python -m backend.tradingbot.main`).
+* Ensure the correct virtual environment is active for Python (`which python`).
+* Install dependencies with `pip install -r requirements.txt`.
+* Keep `requirements.txt` and `package.json` up to date with all dependencies.
+* For frontend, check all import paths and verify aliasing in config files (`vite.config.js`, `jsconfig.json`, etc).
+* Remove/reinstall node dependencies after moving/renaming frontend folders:
+
+  ```bash
+  rm -rf node_modules
+  npm ci
+  ```
+
+---
+
+## 2. Testing
+
+* **Unit tests:**
+
+  * Backend: run `pytest backend/tests/` from the root.
+  * Frontend: run `npm run test` from the `frontend` directory.
+  * Resolve all import errors in test files (`sys.path` updates for backend, alias config for frontend).
+* **Integration tests:**
+
+  * Ensure tests exist that verify end-to-end flows, e.g.:
+
+    * Frontend → API (login, order, data fetch)
+    * Backend modules (API → DB, API → trading engine)
+  * Use tools like `pytest` with `requests`, `pytest-flask`, or `Cypress`/`Playwright` for frontend-backend integration.
+* **CI pipeline:**
+
+  * All tests must pass automatically before merge.
+  * Configure GitHub Actions or similar CI to run both backend and frontend test suites.
+
+---
+
+## 3. DevOps & Deployment Hygiene
+
+* Store all secrets (API keys, tokens, passwords) in environment variables or platform secrets—not in code.
+* Use `.env` files for local development, and `.env.example` as a template in the repo.
+* Configure auto-deployment (optional):
+
+  * Use Docker or venv on the server; automate with scripts or CI runners.
+* Always have a rollback plan (e.g. versioned Docker images, previous build or backup).
+* Set up logging for both backend and frontend (file and/or external).
+* Monitor running processes and resource usage if in production.
+
+---
+
+## 4. Proxy/API Integration (for local dev)
+
+* Ensure frontend can reach backend (proxy configured, backend running).
+* Test API endpoints manually and via automated tests after changes.
+* Verify that ports and base paths match in all config files.
+
+---
+
+## 5. Quick Fullstack Troubleshooting Routine
+
+1. Run `tree -L 2` to check the directory structure.
+2. Clean and reinstall dependencies in both backend and frontend.
+3. Fix all import path errors.
+4. Run unit and integration tests for both backend and frontend.
+5. Rebuild and restart both servers (Python, Node).
+6. Manually test all critical flows (UI → API → database/trading).
+7. Check logs for errors; verify environment variables are loaded.
+
+---
+
+**Codex should always:**
+
+* Auto-scan for import/dependency/config errors after refactors.
+* Propose or auto-fix missing `__init__.py`, broken imports, outdated requirements.
+* Run all available tests and show failing results inline.
+* Remind about secrets, envs, and logging setup before deployment.
+
+---
+
+> **Keep this rule visible and up-to-date in the repo root (e.g. as **\`\`**). Always follow before every major push, PR, or deployment!**

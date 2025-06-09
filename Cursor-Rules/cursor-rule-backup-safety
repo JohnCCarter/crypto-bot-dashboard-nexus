@@ -1,0 +1,22 @@
+name: Backup Before Edit
+summary: >
+  Before Codex edits, renames, deletes, or generates any file, it must create a local backup in `.codex_backups/DATE/`.
+trigger:
+  - file.edit
+  - file.rename
+  - file.generate
+  - file.delete
+condition:
+  - file.tracked_by_git == true
+  - file.path != null
+action:
+  - If `.codex_backups/YYYY-MM-DD/` does not exist, create it.
+  - For every file to be modified:
+      - Copy to `.codex_backups/YYYY-MM-DD/<original_path>.bak`
+      - Log: "✅ BACKUP: <filename> backed up to .codex_backups/..."
+  - Verify that the backup file exists and is byte-identical to the original.
+  - Ask user for confirmation to proceed with the actual edit.
+  - If backup fails: Abort with message "⚠️ Backup failed. No changes made."
+notes:
+  - This rule protects against accidental file loss during Codex activity.
+  - All backup files should be ignored by Git via `.gitignore`.

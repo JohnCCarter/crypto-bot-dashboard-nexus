@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { BalanceCard } from '@/components/BalanceCard';
 import { TradeTable } from '@/components/TradeTable';
 import { OrderHistory } from '@/components/OrderHistory';
@@ -23,7 +23,11 @@ import {
 } from '@/types/trading';
 import { ManualTradePanel } from '@/components/ManualTradePanel';
 
-const Index = () => {
+/**
+ * Main dashboard page for the crypto trading application.
+ * Displays balances, active trades, order history, charts, and control panels.
+ */
+const Index: FC = () => {
   // State management
   const [balances, setBalances] = useState<Balance[]>([]);
   const [activeTrades, setActiveTrades] = useState<Trade[]>([]);

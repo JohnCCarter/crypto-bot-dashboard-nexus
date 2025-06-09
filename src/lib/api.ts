@@ -80,5 +80,23 @@ export const api = {
   // Get Chart Data (Mock)
   async getChartData(symbol: string): Promise<OHLCVData[]> {
     return new Promise(resolve => setTimeout(() => resolve(generateMockOHLCVData()), 400));
+  },
+  // Bot control endpoints
+  async startBot(): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE_URL}/api/start-bot`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to start bot');
+    return await res.json();
+  },
+
+  async stopBot(): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE_URL}/api/stop-bot`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to stop bot');
+    return await res.json();
+  },
+
+  async getBotStatus(): Promise<BotStatus> {
+    const res = await fetch(`${API_BASE_URL}/api/bot-status`);
+    if (!res.ok) throw new Error('Failed to fetch bot status');
+    return await res.json();
   }
 };

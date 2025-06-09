@@ -1,14 +1,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-interface WebSocketHook {
+interface WebSocketHook<T = unknown> {
   socket: WebSocket | null;
   isConnected: boolean;
   error: string | null;
-  sendMessage: (message: any) => void;
+  sendMessage: (message: T) => void;
 }
 
-export const useWebSocket = (url: string, onMessage?: (data: any) => void): WebSocketHook => {
+export const useWebSocket = <T = unknown>(
+  url: string,
+  onMessage?: (data: T) => void
+): WebSocketHook<T> => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -26,7 +29,7 @@ export const useWebSocket = (url: string, onMessage?: (data: any) => void): WebS
         
         socket.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data);
+            const data = JSON.parse(event.data) as T;
             onMessage?.(data);
           } catch (e) {
             console.error('Failed to parse WebSocket message:', e);
@@ -66,7 +69,7 @@ export const useWebSocket = (url: string, onMessage?: (data: any) => void): WebS
     };
   }, [url, onMessage]);
 
-  const sendMessage = (message: any) => {
+  const sendMessage = (message: T) => {
     if (socketRef.current && isConnected) {
       socketRef.current.send(JSON.stringify(message));
     }

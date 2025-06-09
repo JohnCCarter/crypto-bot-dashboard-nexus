@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from services.order_service import place_order
+from backend.services.order_service import place_order
 
 def register(app):
     @app.route('/api/order', methods=['POST'])

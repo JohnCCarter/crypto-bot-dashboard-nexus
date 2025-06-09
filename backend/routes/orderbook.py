@@ -1,5 +1,5 @@
 from flask import jsonify
-from services.orderbook_service import get_mock_orderbook
+from backend.services.orderbook_service import get_mock_orderbook
 
 def register(app):
     @app.route('/api/orderbook/<symbol>', methods=['GET'])
@@ -11,4 +11,10 @@ def register(app):
             200:
                 description: Orderbok (bids och asks)
         """
-        return jsonify(get_mock_orderbook(symbol))
+        try:
+            data = get_mock_orderbook(symbol)
+            return jsonify(data), 200
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
+        except Exception:
+            return jsonify({'error': 'Unexpected error'}), 500

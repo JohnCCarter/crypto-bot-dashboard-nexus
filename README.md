@@ -42,6 +42,45 @@ Detta dokument är en komplett teknisk referens för att integrera Bitfinex REST
   pytest backend/tests
   ```
 
+7. Starta frontend
+   ```bash
+   npm install
+   npm run dev
+   ```
+   Öppna http://localhost:8080 i din webbläsare.
+
+8. Tradingstrategier och indikatorer
+   Alla strategi- och indikatorfiler placeras i `backend/strategies/`.
+   Varje strategi måste implementera en `run_strategy(data: pd.DataFrame) -> TradeSignal`-funktion:
+
+   ```python
+   def run_strategy(data: pd.DataFrame) -> TradeSignal:
+       """Implementerar strategins logik.
+       :param data: Historisk prisdata som pandas DataFrame.
+       :return: Ett TradeSignal med action och confidence."""
+       pass
+   ```
+   Indikatorer (rena, stateless funktioner) kan läggas till i `backend/strategies/indicators.py`, t.ex.:
+
+   ```python
+   def ema(data: pd.Series, length: int) -> pd.Series:
+       """Exponential moving average (EMA).
+       :param data: Serie av prisvärden.
+       :param length: EMA-fönsterlängd.
+       :return: Serie med EMA-värden."""
+       pass
+   ```
+
+   Exempelkod för att köra en strategi:
+
+   ```python
+   from backend.strategies.sample_strategy import run_strategy
+   import pandas as pd
+
+   df = pd.DataFrame(...)  # historisk prisdata
+   signal = run_strategy(df)
+   print(signal.action, signal.confidence)
+   ```
 
 ---
 
@@ -202,3 +241,89 @@ ws.run_forever()
 ---
 
 > Anpassa kodexemplen efter behov. För mer info, se Bitfinex officiella dokumentation: https://docs.bitfinex.com/docs/introduction
+
+---
+
+# 🚀 Crypto Bot Dashboard Nexus
+
+## Project Overview
+
+This repository provides a full-stack trading dashboard integrating Bitfinex's REST and WebSocket APIs via a Flask backend and a React + TypeScript frontend. It allows you to view balances, order books, positions, place orders, and monitor a trading bot in real time.
+
+## Repository Structure
+
+```text
+.
+├── backend/             # Flask API (routes, services, tests, Dockerfile)
+├── public/              # Static assets for the frontend
+├── src/                 # React + TypeScript source (pages, components, hooks)
+├── docker-compose.yml   # Docker setup for backend and frontend
+├── start-dev.sh         # Quick start script for local development
+├── Dockerfile.frontend  # Frontend Dockerfile (dist via Nginx)
+├── .env.example         # Template for environment variables
+└── README.md            # This file
+```
+
+## Local Development (no Docker)
+
+1. Backend:
+   ```bash
+   cd backend
+   python3 -m venv .venv
+   source .venv/bin/activate   # Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   export FLASK_APP=app.py
+   flask run --host=0.0.0.0 --port=5000
+   ```
+2. Frontend:
+   ```bash
+   npm install
+   npm run dev                # Vite dev server on http://localhost:8080
+   ```
+
+## Docker Setup
+
+```bash
+docker-compose up --build
+```  
+This launches the Flask API on port 5000 and serves the built frontend on port 8080 via Nginx.
+
+## API Endpoints
+
+| Method | Endpoint                  | Description                      |
+|--------|---------------------------|----------------------------------|
+| GET    | /api/balances             | List all balances per currency   |
+| GET    | /api/orderbook/<symbol>   | Get order book for a trading pair|
+| GET    | /api/positions            | Get current positions            |
+| GET    | /api/status               | Get API status and mock balance  |
+| GET    | /api/config               | Get current strategy configuration|
+| POST   | /api/config               | Update strategy configuration     |
+| POST   | /api/order                | Place a new order                 |
+| POST   | /api/start-bot            | Start the trading bot (returns message, status)             |
+| POST   | /api/stop-bot             | Stop the trading bot (returns message, status)              |
+| GET    | /api/bot-status           | Get current trading bot status (status, uptime, last_update) |
+
+### Example: Activating the Trading Bot
+
+```bash
+# Start the trading bot
+curl -X POST http://127.0.0.1:5000/api/start-bot
+
+# Check bot status (status, uptime, last_update)
+curl http://127.0.0.1:5000/api/bot-status
+
+# Stop the trading bot
+curl -X POST http://127.0.0.1:5000/api/stop-bot
+```
+
+## Testing
+
+### Backend
+```bash
+pytest backend/tests
+```
+
+### Frontend
+```bash
+npm run lint
+```

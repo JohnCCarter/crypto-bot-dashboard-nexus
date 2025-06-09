@@ -15,7 +15,7 @@ def test_status_endpoint():
     assert 'balance' in data
 
 
-@patch('balances.fetch_balances')
+@patch('backend.routes.balances.fetch_balances')
 def test_balances_endpoint(mock_fetch_balances):
     mock_fetch_balances.return_value = {
         'total': {'USD': 100.0, 'BTC': 0.1},
@@ -29,4 +29,28 @@ def test_balances_endpoint(mock_fetch_balances):
         {'currency': 'BTC', 'total_balance': 0.1, 'available': 0.05}
     ]
     assert response.get_json() == expected
+
+def test_bot_control_endpoints():
+    client = app.test_client()
+    # Start the trading bot
+    response = client.post('/api/start-bot')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data.get('status') == 'running'
+    assert data.get('message') == 'Bot started'
+
+    # Retrieve bot status (should include uptime and last_update)
+    response = client.get('/api/bot-status')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data.get('status') == 'running'
+    assert 'uptime' in data and isinstance(data['uptime'], (int, float))
+    assert 'last_update' in data and isinstance(data['last_update'], str)
+
+    # Stop the trading bot
+    response = client.post('/api/stop-bot')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data.get('status') == 'stopped'
+    assert data.get('message') == 'Bot stopped'
 

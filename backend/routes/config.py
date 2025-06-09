@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from services.config_service import get_config, update_config
+from backend.services.config_service import get_config, update_config
 
 def register(app):
     @app.route('/api/config', methods=['GET'])
@@ -11,8 +11,11 @@ def register(app):
             200:
                 description: Nuvarande konfiguration
         """
-        config = get_config()
-        return jsonify(config)
+        try:
+            config = get_config()
+            return jsonify(config), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
     @app.route('/api/config', methods=['POST'])
     def update_config_route():
@@ -30,5 +33,10 @@ def register(app):
         data = request.get_json()
         if not data:
             return jsonify({"error": "Missing JSON body"}), 400
-        update_config(data)
-        return jsonify({"message": "Config updated successfully"})
+        try:
+            update_config(data)
+            return jsonify({"message": "Config updated successfully"}), 200
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
+        except Exception:
+            return jsonify({'error': 'Unexpected error'}), 500

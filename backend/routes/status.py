@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from services.status_service import get_status
+from backend.services.status_service import get_status
 
 def register(app):
     @app.route('/api/status', methods=['GET'])
@@ -11,4 +11,8 @@ def register(app):
             200:
                 description: Status och balans
         """
-        return jsonify(get_status())
+        try:
+            data = get_status()
+            return jsonify(data), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500

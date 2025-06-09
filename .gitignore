@@ -1,6 +1,8 @@
 # Logs
 logs/
 *.log
+# Codex backups
+.codex_backups/
 
 # Backend logs
 backend/logs/

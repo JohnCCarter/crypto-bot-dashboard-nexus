@@ -1,0 +1,74 @@
+# 🧠 AGENTS.md – Codex Contributor & Rule Guide
+
+This file helps Codex and contributors operate safely, consistently, and effectively across the trading bot project.
+
+---
+
+## 📁 Codebase Focus Areas
+
+Codex should primarily work in:
+
+- `backend/**/*.py` – Trading logic, strategy, API routes
+- `frontend/**/*.tsx` – Dashboard interface (TBD)
+- `backend/routes/*.py` – API endpoints
+- `backend/strategies/*.py` – Strategy definitions
+
+---
+
+## 🧪 Testing Instructions
+
+Codex, follow these when testing:
+
+- Use `pytest` to validate Python modules
+- Run `pnpm lint` and `pnpm test` for any frontend code (if active)
+- Confirm all rule checks pass before proposing a pull request
+- Follow `cursor-rules-testing.mdc` for onboarding and test policy
+
+---
+
+## 🔐 Safety & Backup Policy
+
+Codex **must create backups** before modifying tracked files.
+
+> Rule: `cursor-rule-backup-safety.mdc`
+- Back up to `.codex_backups/YYYY-MM-DD/`
+- Verify backup integrity
+- Abort if backup fails
+- Seek confirmation before edits
+
+---
+
+## 🧱 Rule Overview (from .cursor/rules)
+
+| Rule File | Summary |
+|-----------|---------|
+| `cursor-rules-api-design.mdc` | Standardize API route design for backend (`routes/*.py`) |
+| `cursor-rules-autonomy.mdc` | Allow full AI autonomy as long as rules are followed |
+| `cursor-rules-general-standards.mdc` | Enforce consistent code style and modular backend |
+| `cursor-rules-testing.mdc` | Define contributor onboarding and test validation |
+| `cursor-rules-trading-strategy-interface.mdc` | Require interface compliance for all strategies |
+| `Cursor-rules-Fullstack-Zero-Fault-Troubleshooting-Best-Practices.mdc` | Zero-fault debugging best practices |
+
+---
+
+## 🤖 Prompting Codex Effectively
+
+Codex is more effective when:
+
+- You **point to exact files or errors**
+- You **split complex work** into steps
+- You **log test/lint output** for verification
+- You **specify PR formatting**, doc style, or backup triggers
+
+> Codex is allowed to write docs, improve structure, and self-debug using logs or traces.
+
+---
+
+## ✅ Contribution Workflow
+
+1. Backup affected files
+2. Validate all tests
+3. Lint and type-check
+4. Follow PR title format: `[<area>] <concise title>`
+5. Cross-check with `AGENTS.md` before commit
+

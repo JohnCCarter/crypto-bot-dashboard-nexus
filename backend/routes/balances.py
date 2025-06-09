@@ -1,5 +1,5 @@
 from flask import jsonify
-from services.balance_service import fetch_balances
+from backend.services.balance_service import fetch_balances
 
 def register(app):
     @app.route('/api/balances', methods=['GET'])
@@ -24,6 +24,6 @@ def register(app):
                     'total_balance': balance_data['total'][currency],
                     'available': balance_data['free'][currency]
                 })
-            return jsonify(result)
+            return jsonify(result), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500

@@ -2,4 +2,5 @@ flask
 flask-cors
 ccxt
 python-dotenv
+pandas
 pytest

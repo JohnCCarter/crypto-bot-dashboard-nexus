@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TradingConfig } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,9 +27,9 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     if (isOpen) {
       loadConfig();
     }
-  }, [isOpen]);
+  }, [isOpen, loadConfig]);
 
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     setIsLoading(true);
     try {
       const configData = await api.getConfig();
@@ -43,7 +43,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleSave = async () => {
     if (!config) return;
