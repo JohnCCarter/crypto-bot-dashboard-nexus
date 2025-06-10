@@ -1,0 +1,13 @@
+{
+  "terminals": [
+    {
+      "name": "Backend",
+      "command": "cd backend && flask run"
+    },
+    {
+      "name": "Frontend",
+      "command": "npm run dev"
+    }
+  ],
+  "install": "pip install -r backend/requirements.txt && npm install"
+}
