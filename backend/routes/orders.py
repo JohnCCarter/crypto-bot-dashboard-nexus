@@ -132,3 +132,33 @@ def get_open_orders_route():
     except Exception as e:
         orders_bp.logger.error(f"Error fetching open orders: {str(e)}")
         return jsonify({"error": "Failed to fetch open orders"}), 500
+
+
+@orders_bp.route("/api/orders/history", methods=["GET"])
+def get_order_history():
+    """
+    Returnerar mockad orderhistorik.
+    """
+    mock_orders = [
+        {
+            "id": "1",
+            "symbol": "BTC/USD",
+            "order_type": "limit",
+            "side": "buy",
+            "amount": 0.1,
+            "price": 27000,
+            "fee": 1.5,
+            "status": "filled"
+        },
+        {
+            "id": "2",
+            "symbol": "ETH/USD",
+            "order_type": "market",
+            "side": "sell",
+            "amount": 2.0,
+            "price": 1800,
+            "fee": 0.8,
+            "status": "pending"
+        }
+    ]
+    return jsonify(mock_orders), 200

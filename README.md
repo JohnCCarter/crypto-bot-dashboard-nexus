@@ -401,3 +401,104 @@ curl -X POST http://127.0.0.1:5000/api/stop-bot
 
 > **Note:**
 > Some advanced UI components (e.g. Select, Dialog, Tabs, and other Radix UI components) use interactions and events that are not always fully supported by jsdom/Vitest. To test these components and full user flows in a real browser, E2E tools like [Cypress](https://www.cypress.io/) or [Playwright](https://playwright.dev/) are recommended.
+
+## Konfiguration
+
+Projektet använder en konfigurationsfil (`backend/config.json`) för att styra tradingstrategier, riskhantering och notifieringar. Strukturen och reglerna för denna fil definieras i `backend/config.schema.json` (JSON Schema).
+
+### Viktiga parametrar
+- **strategy**: Inställningar för symbol, timeframe och indikatorer.
+- **trading_window**: Handelsfönster och max trades per dag.
+- **risk**: Riskparametrar, stop loss, take profit, max daglig förlust.
+- **notifications**: E-postnotifieringar och SMTP-inställningar.
+
+Se `backend/config.schema.json` för fullständig beskrivning av alla fält, typer och krav.
+
+### Exempel på config.json
+```json
+{
+  "strategy": {
+    "symbol": "BTC/USD",
+    "timeframe": "1h",
+    "ema_length": 20,
+    "ema_fast": 12,
+    "ema_slow": 26,
+    "rsi_period": 14,
+    "atr_multiplier": 2,
+    "volume_multiplier": 1.5
+  },
+  "trading_window": {
+    "start_hour": 0,
+    "end_hour": 24,
+    "max_trades_per_day": 5
+  },
+  "risk": {
+    "max_daily_loss": 2,
+    "lookback": 5,
+    "stop_loss_percent": 2,
+    "take_profit_percent": 2,
+    "risk_per_trade": 0.02
+  },
+  "notifications": {
+    "email_enabled": true,
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 465,
+    "sender": "din@email.com",
+    "receiver": "din@email.com"
+  }
+}
+```
+
+### Miljövariabler
+För känsliga värden (t.ex. e-post, lösenord) rekommenderas att använda miljövariabler och/eller `.env`-fil. Se `.env.example` för mall.
+
+### Validering
+Vid uppstart valideras `config.json` automatiskt mot `config.schema.json` för att säkerställa korrekt struktur och giltiga värden.
+
+## FVG-strategi (Fair Value Gap)
+
+FVG-strategin identifierar obalanser i priset (gaps) och genererar tradesignaler när priset återbesöker dessa zoner. Den kan filtrera på gap-storlek och riktning (bullish/bearish).
+
+**Parametrar:**
+- `min_gap_size`: Minsta gap-storlek (absolut, i pris) för att inkluderas.
+- `direction`: "bullish", "bearish" eller "both" – vilken typ av gap som ska handlas.
+- `position_size`: Andel av portfölj att använda per trade (0-1).
+- `lookback`: Hur många candles bakåt som FVG-zoner är giltiga.
+
+**Exempel på config.json:**
+```json
+{
+  "fvg_strategy": {
+    "min_gap_size": 10,
+    "direction": "both",
+    "position_size": 0.1,
+    "lookback": 5
+  }
+}
+```
+
+**Exempel på API-anrop:**
+```json
+{
+  "strategy": "fvg",
+  "data": { ... },
+  "parameters": {
+    "min_gap_size": 10,
+    "direction": "bullish",
+    "position_size": 0.1,
+    "lookback": 5
+  }
+}
+```
+
+Se även `backend/config.schema.json` för fullständig beskrivning av parametrar.
+
+
+Leta efter något specifikt i en kod kan du använda dig av  Select-String -Path .\localhost.har -Pattern '"status": 4' i powershell. terminalen.
+i bash kan du använda dig av grep '"status": 4' localhost.har
+Alternativt ctrl f i vscode.
+
+
+
+
+

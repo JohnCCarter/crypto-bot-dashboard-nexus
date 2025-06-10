@@ -19,7 +19,8 @@ import {
   BotStatus,
   OrderBook as OrderBookType,
   LogEntry,
-  OHLCVData
+  OHLCVData,
+  EmaCrossoverBacktestResult
 } from '@/types/trading';
 import { ManualTradePanel } from '@/components/ManualTradePanel';
 
@@ -42,6 +43,9 @@ const Index: FC = () => {
   const [chartData, setChartData] = useState<OHLCVData[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [emaFast, setEmaFast] = useState<number[] | undefined>(undefined);
+  const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
+  const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
 
   // WebSocket for real-time updates (prepared for future use)
   const { isConnected } = useWebSocket('ws://localhost:5000/ws', (data) => {
@@ -57,7 +61,9 @@ const Index: FC = () => {
 
   // Load initial data
   useEffect(() => {
+    console.log('API keys:', Object.keys(api)); // Debug: logga vilka funktioner som finns på api-objektet
     loadAllData();
+    loadEmaCrossover();
     
     // Set up periodic updates
     const interval = setInterval(() => {
@@ -98,6 +104,30 @@ const Index: FC = () => {
       console.error('Failed to load data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadEmaCrossover = async () => {
+    try {
+      // Mock: använd chartData för att skapa data-objekt
+      const data = {
+        timestamp: chartData.map(d => d.timestamp),
+        open: chartData.map(d => d.open),
+        high: chartData.map(d => d.high),
+        low: chartData.map(d => d.low),
+        close: chartData.map(d => d.close),
+        volume: chartData.map(d => d.volume)
+      };
+      const result = await api.runBacktestEmaCrossover(data, {
+        fast_period: 3,
+        slow_period: 5,
+        lookback: 5
+      });
+      setEmaFast(result.ema_fast);
+      setEmaSlow(result.ema_slow);
+      setSignals(result.signals);
+    } catch (error) {
+      console.error('Failed to load EMA crossover data:', error);
     }
   };
 
@@ -153,6 +183,9 @@ const Index: FC = () => {
               data={chartData} 
               symbol="BTCUSD" 
               isLoading={isLoading} 
+              emaFast={emaFast}
+              emaSlow={emaSlow}
+              signals={signals}
             />
           </div>
           

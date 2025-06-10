@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Trading Bot Config Schema",
+  "type": "object",
+  "properties": {
+    "strategy": {
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "description": "Handlad symbol, t.ex. BTC/USD" },
+        "timeframe": { "type": "string", "description": "Tidsupplösning, t.ex. 1h" },
+        "ema_length": { "type": "integer", "minimum": 1, "description": "Längd för EMA" },
+        "ema_fast": { "type": "integer", "minimum": 1, "description": "Snabb EMA-period" },
+        "ema_slow": { "type": "integer", "minimum": 1, "description": "Långsam EMA-period" },
+        "rsi_period": { "type": "integer", "minimum": 1, "description": "RSI-period" },
+        "atr_multiplier": { "type": "number", "minimum": 0, "description": "ATR-multiplikator" },
+        "volume_multiplier": { "type": "number", "minimum": 0, "description": "Volymmultiplikator" }
+      },
+      "required": ["symbol", "timeframe"]
+    },
+    "trading_window": {
+      "type": "object",
+      "properties": {
+        "start_hour": { "type": "integer", "minimum": 0, "maximum": 23, "description": "Starttimme för handel" },
+        "end_hour": { "type": "integer", "minimum": 1, "maximum": 24, "description": "Sluttimme för handel" },
+        "max_trades_per_day": { "type": "integer", "minimum": 1, "description": "Max antal trades per dag" }
+      },
+      "required": ["start_hour", "end_hour", "max_trades_per_day"]
+    },
+    "risk": {
+      "type": "object",
+      "properties": {
+        "max_daily_loss": { "type": "number", "minimum": 0, "description": "Max daglig förlust (%)" },
+        "lookback": { "type": "integer", "minimum": 1, "description": "Lookback-period" },
+        "stop_loss_percent": { "type": "number", "minimum": 0, "maximum": 100, "description": "Stop loss (%)" },
+        "take_profit_percent": { "type": "number", "minimum": 0, "maximum": 100, "description": "Take profit (%)" },
+        "risk_per_trade": { "type": "number", "minimum": 0, "maximum": 1, "description": "Risk per trade (andel)" }
+      },
+      "required": ["max_daily_loss", "lookback", "stop_loss_percent", "take_profit_percent", "risk_per_trade"]
+    },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "email_enabled": { "type": "boolean", "description": "Om e-postnotifieringar är aktiverade" },
+        "smtp_server": { "type": "string", "description": "SMTP-server" },
+        "smtp_port": { "type": "integer", "description": "SMTP-port" },
+        "sender": { "type": "string", "description": "Avsändarens e-postadress" },
+        "receiver": { "type": "string", "description": "Mottagarens e-postadress" }
+      },
+      "required": ["email_enabled"]
+    },
+    "fvg_strategy": {
+      "type": "object",
+      "properties": {
+        "min_gap_size": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minsta gap-storlek (absolut, i pris) för att inkluderas"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["bullish", "bearish", "both"],
+          "description": "Vilken riktning av FVG som ska handlas"
+        },
+        "position_size": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Positionsstorlek som andel av portfölj (0-1)"
+        },
+        "lookback": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hur många candles bakåt som FVG-zoner är giltiga"
+        }
+      },
+      "required": ["min_gap_size", "direction", "position_size", "lookback"]
+    }
+  },
+  "required": ["strategy", "trading_window", "risk", "notifications"]
+} 

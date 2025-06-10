@@ -1,6 +1,5 @@
-
 import { useEffect, useRef } from 'react';
-import { OHLCVData } from '@/types/trading';
+import { OHLCVData, EmaCrossoverSignal } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -8,16 +7,22 @@ interface PriceChartProps {
   data: OHLCVData[];
   symbol: string;
   isLoading?: boolean;
+  emaFast?: number[];
+  emaSlow?: number[];
+  signals?: EmaCrossoverSignal[];
 }
 
-export function PriceChart({ data, symbol, isLoading = false }: PriceChartProps) {
-  const chartData = data.map(item => ({
+export function PriceChart({ data, symbol, isLoading = false, emaFast, emaSlow, signals }: PriceChartProps) {
+  const chartData = data.map((item, i) => ({
     time: new Date(item.timestamp).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     }),
     price: item.close,
-    volume: item.volume
+    volume: item.volume,
+    emaFast: emaFast ? emaFast[i] : undefined,
+    emaSlow: emaSlow ? emaSlow[i] : undefined,
+    signal: signals?.find(s => s.index === i)?.type || null
   }));
 
   if (isLoading) {
@@ -77,6 +82,42 @@ export function PriceChart({ data, symbol, isLoading = false }: PriceChartProps)
                 dot={false}
                 activeDot={{ r: 4, stroke: '#3b82f6', strokeWidth: 2 }}
               />
+              {emaFast && (
+                <Line
+                  type="monotone"
+                  dataKey="emaFast"
+                  stroke="#f59e42"
+                  strokeWidth={1.5}
+                  dot={false}
+                  name="EMA Fast"
+                />
+              )}
+              {emaSlow && (
+                <Line
+                  type="monotone"
+                  dataKey="emaSlow"
+                  stroke="#10b981"
+                  strokeWidth={1.5}
+                  dot={false}
+                  name="EMA Slow"
+                />
+              )}
+              {signals && signals.length > 0 && (
+                <Line
+                  dataKey="signal"
+                  stroke="none"
+                  dot={({ cx, cy, payload }) => {
+                    if (payload.signal === 'buy') {
+                      return <circle cx={cx} cy={cy} r={6} fill="#22c55e" stroke="#fff" strokeWidth={2} />;
+                    }
+                    if (payload.signal === 'sell') {
+                      return <circle cx={cx} cy={cy} r={6} fill="#ef4444" stroke="#fff" strokeWidth={2} />;
+                    }
+                    return null;
+                  }}
+                  legendType="none"
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>

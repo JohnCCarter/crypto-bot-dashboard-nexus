@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { TradingConfig } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,12 +22,6 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (isOpen) {
-      loadConfig();
-    }
-  }, [isOpen, loadConfig]);
-
   const loadConfig = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -44,6 +37,12 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
       setIsLoading(false);
     }
   }, [toast]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadConfig();
+    }
+  }, [isOpen, loadConfig]);
 
   const handleSave = async () => {
     if (!config) return;

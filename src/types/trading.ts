@@ -1,4 +1,3 @@
-
 export interface Balance {
   currency: string;
   total_balance: number;
@@ -86,4 +85,18 @@ export interface TradingConfig {
   EMAIL_RECEIVER: string;
   EMAIL_SMTP_SERVER: string;
   EMAIL_SMTP_PORT: number;
+}
+
+export interface EmaCrossoverSignal {
+  index: number;
+  type: 'buy' | 'sell';
+}
+
+export interface EmaCrossoverBacktestResult {
+  ema_fast: number[];
+  ema_slow: number[];
+  signals: EmaCrossoverSignal[];
+  signal_result: any;
+  // Lägg till övriga fält från backtest vid behov
+  [key: string]: any;
 }

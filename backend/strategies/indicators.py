@@ -1,12 +1,28 @@
 """Stateless pure functions for trading indicators."""
 
-import numpy as np
 import pandas as pd
 
 
-def ema(series, length):
-    """Stub för EMA-indikator. Ska kasta NotImplementedError enligt test."""
-    raise NotImplementedError("EMA-indikatorn är inte implementerad.")
+def ema(series: pd.Series, length: int) -> pd.Series:
+    """
+    Beräknar Exponential Moving Average (EMA) för en pandas Series.
+
+    Args:
+        series (pd.Series): Prisdata eller annan numerisk serie
+        length (int): Periodlängd för EMA
+
+    Returns:
+        pd.Series: EMA-värden
+    """
+    if not isinstance(series, pd.Series):
+        raise TypeError(
+            "series måste vara en pandas Series"
+        )
+    if length <= 0:
+        raise ValueError(
+            "length måste vara > 0"
+        )
+    return series.ewm(span=length, adjust=False).mean()
 
 
 def rsi(series, length=None, period=None):
@@ -59,3 +75,60 @@ def macd(
     histogram = macd_line - signal_line
 
     return macd_line, signal_line, histogram
+
+
+def find_fvg_zones(
+    data: pd.DataFrame,
+    min_gap_size: float = 0.0,
+    direction: str = "both"
+) -> list[dict]:
+    """
+    Identifierar Fair Value Gap (FVG) zoner i OHLCV-data (klassisk 3-candle gap).
+
+    Args:
+        data (pd.DataFrame): DataFrame med kolumnerna ['open', 'high', 'low', 'close']
+        min_gap_size (float): Minsta gap-storlek (absolut, i pris) för att inkluderas
+        direction (str): "bullish", "bearish" eller "both" (default)
+
+    Returns:
+        list[dict]: Lista av FVG-zoner med index, gap-storlek och riktning
+
+    Exempel på output:
+        [
+            {"index": 10, "gap_high": 25000, "gap_low": 24900, "size": 100,
+             "direction": "bullish"},
+            ...
+        ]
+    """
+    fvg_zones = []
+    for i in range(1, len(data) - 1):
+        prev_low = data['low'].iloc[i - 1]
+        prev_high = data['high'].iloc[i - 1]
+        next_high = data['high'].iloc[i + 1]
+        next_low = data['low'].iloc[i + 1]
+
+        # Bullish FVG: prev_high < next_low (gap up)
+        if direction in ("bullish", "both"):
+            if prev_high < next_low:
+                gap_size = next_low - prev_high
+                if gap_size >= min_gap_size:
+                    fvg_zones.append({
+                        "index": i,
+                        "gap_high": next_low,
+                        "gap_low": prev_high,
+                        "size": gap_size,
+                        "direction": "bullish"
+                    })
+        # Bearish FVG: prev_low > next_high (gap down)
+        if direction in ("bearish", "both"):
+            if prev_low > next_high:
+                gap_size = prev_low - next_high
+                if gap_size >= min_gap_size:
+                    fvg_zones.append({
+                        "index": i,
+                        "gap_high": prev_low,
+                        "gap_low": next_high,
+                        "size": gap_size,
+                        "direction": "bearish"
+                    })
+    return fvg_zones

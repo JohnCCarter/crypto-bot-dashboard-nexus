@@ -98,6 +98,27 @@ def test_optimize_parameters_endpoint(client, sample_data):
     assert response.status_code == 400
 
 
+def test_optimize_fvg_strategy(client, sample_data):
+    """Testa optimering av FVG-strategin via API."""
+    response = client.post(
+        "/api/backtest/optimize",
+        json={
+            "strategy": "fvg",
+            "data": sample_data,
+            "param_grid": {
+                "min_gap_size": [5, 10],
+                "direction": ["bullish", "bearish"],
+                "position_size": [0.05, 0.1],
+                "lookback": [3, 5],
+            },
+        },
+    )
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert "parameters" in data
+    assert "performance" in data
+
+
 def test_error_handling(client):
     """Test error handling in endpoints."""
     # Test with invalid JSON

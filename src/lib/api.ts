@@ -1,4 +1,4 @@
-import { Balance, Trade, OrderHistoryItem, BotStatus, OrderBook, LogEntry, TradingConfig, OHLCVData } from '@/types/trading';
+import { Balance, Trade, OrderHistoryItem, BotStatus, OrderBook, LogEntry, TradingConfig, OHLCVData, EmaCrossoverBacktestResult } from '@/types/trading';
 
 const API_BASE_URL = 'http://127.0.0.1:5000';
 
@@ -36,7 +36,7 @@ export const api = {
     amount: number;
     price?: number | null;
   }): Promise<{ message: string }> {
-    const res = await fetch(`${API_BASE_URL}/api/order`, {
+    const res = await fetch(`${API_BASE_URL}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order),
@@ -98,5 +98,54 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/api/bot-status`);
     if (!res.ok) throw new Error('Failed to fetch bot status');
     return await res.json();
+  },
+
+  async runBacktestEmaCrossover(
+    data: { timestamp: number[]; open: number[]; high: number[]; low: number[]; close: number[]; volume: number[] },
+    parameters: any = {}
+  ): Promise<EmaCrossoverBacktestResult> {
+    const res = await fetch(`${API_BASE_URL}/api/backtest/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        strategy: 'ema_crossover',
+        data,
+        parameters
+      })
+    });
+    if (!res.ok) throw new Error('Backtest failed');
+    return await res.json();
+  },
+
+  // Get Order History (Live)
+  async getOrderHistory(): Promise<OrderHistoryItem[]> {
+    const res = await fetch(`${API_BASE_URL}/api/orders/history`);
+    if (!res.ok) throw new Error('Failed to fetch order history');
+    return await res.json();
+  },
+
+  // Get Order Book (Mock)
+  async getOrderBook(symbol: string): Promise<OrderBook> {
+    // Returnera mockad orderbok
+    return {
+      bids: [
+        { price: 45000, amount: 1 },
+        { price: 44950, amount: 2 }
+      ],
+      asks: [
+        { price: 45100, amount: 1.5 },
+        { price: 45200, amount: 0.8 }
+      ],
+      symbol
+    };
+  },
+
+  // Get Logs (Mock)
+  async getLogs(): Promise<LogEntry[]> {
+    // Returnera mockade loggar
+    return [
+      { timestamp: new Date().toISOString(), level: 'info', message: 'Bot started' },
+      { timestamp: new Date().toISOString(), level: 'error', message: 'Test error' }
+    ];
   }
 };

@@ -10,6 +10,8 @@ from backend.services.backtest import BacktestEngine
 from backend.services.monitor import AlertLevel, Monitor
 from backend.strategies.rsi_strategy import run_rsi_strategy
 from backend.strategies.sample_strategy import run_strategy
+from backend.strategies.fvg_strategy import run_strategy_with_params
+from backend.strategies.ema_crossover_strategy import run_strategy as run_ema_crossover_strategy
 
 # Create blueprint
 backtest_bp = Blueprint("backtest", __name__)
@@ -18,8 +20,25 @@ backtest_bp = Blueprint("backtest", __name__)
 backtest_engine = BacktestEngine()
 monitor = Monitor()
 
+def run_ema_crossover_with_params(data, params):
+    result = run_ema_crossover_strategy(
+        data,
+        fast_period=params.get("fast_period", 9),
+        slow_period=params.get("slow_period", 21),
+        min_gap=params.get("min_gap"),
+        direction=params.get("direction", "both"),
+        lookback=params.get("lookback", 3),
+    )
+    # result är nu ett dict med 'result', 'ema_fast', 'ema_slow', 'signals'
+    return result
+
 # Strategy mapping
-STRATEGIES = {"sample": run_strategy, "rsi": run_rsi_strategy}
+STRATEGIES = {
+    "sample": run_strategy,
+    "rsi": run_rsi_strategy,
+    "fvg": run_strategy_with_params,
+    "ema_crossover": run_ema_crossover_with_params,
+}
 
 
 @backtest_bp.route("/api/backtest/run", methods=["POST"])
@@ -93,6 +112,17 @@ def run_backtest():
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
 
+        # Om strategin är ema_crossover, hämta ema-linjer och signaler
+        extra = {}
+        if strategy_name == "ema_crossover":
+            strat_result = strategy(df, risk_params)
+            extra = {
+                "ema_fast": strat_result.get("ema_fast", []),
+                "ema_slow": strat_result.get("ema_slow", []),
+                "signals": strat_result.get("signals", []),
+                "signal_result": strat_result.get("result")
+            }
+
         # Convert result to dict
         def to_builtin(val):
             if isinstance(val, np.generic):
@@ -109,6 +139,7 @@ def run_backtest():
             "sharpe_ratio": to_builtin(result.sharpe_ratio),
             "trade_history": result.trade_history,
             "equity_curve": {str(k): float(v) for k, v in result.equity_curve.items()},
+            **extra
         }
 
         return jsonify(result_dict)
