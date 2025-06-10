@@ -1,15 +1,19 @@
-
 import { OrderHistoryItem } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { api } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrderHistoryProps {
   orders: OrderHistoryItem[];
   isLoading?: boolean;
+  onOrderCancelled?: () => void;
 }
 
-export function OrderHistory({ orders, isLoading = false }: OrderHistoryProps) {
+export function OrderHistory({ orders, isLoading = false, onOrderCancelled }: OrderHistoryProps) {
+  const { toast } = useToast();
+
   if (isLoading) {
     return (
       <Card className="bg-card border-border">
@@ -39,6 +43,25 @@ export function OrderHistory({ orders, isLoading = false }: OrderHistoryProps) {
       case 'cancelled': return 'bg-red-500';
       case 'pending': return 'bg-yellow-500';
       default: return 'bg-gray-500';
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      await api.cancelOrder(orderId);
+      toast({
+        title: 'Order Cancelled',
+        description: `Order ${orderId} cancelled successfully.`
+      });
+      if (typeof onOrderCancelled === 'function') {
+        onOrderCancelled();
+      }
+    } catch (error) {
+      toast({
+        title: 'Cancellation Failed',
+        description: 'Failed to cancel order. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -74,9 +97,19 @@ export function OrderHistory({ orders, isLoading = false }: OrderHistoryProps) {
                   <span>{order.amount}</span>
                   <span>${order.price.toLocaleString()}</span>
                   <span>${order.fee.toFixed(2)}</span>
-                  <Badge className={`w-fit text-xs ${getStatusColor(order.status)}`}>
-                    {order.status}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={`w-fit text-xs ${getStatusColor(order.status)}`}>{order.status}</Badge>
+                    {order.status === 'pending' && (
+                      <Button
+                        variant="destructive"
+                        size="xs"
+                        className="ml-2"
+                        onClick={() => handleCancelOrder(order.id)}
+                      >
+                        Avbryt
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

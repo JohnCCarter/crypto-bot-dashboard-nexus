@@ -38,3 +38,12 @@ jobs:
         run: npm install
       - name: Run ESLint on modified frontend files
         run: npx eslint src/pages
+      - name: Run frontend tests with coverage
+        run: npx vitest run --coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-coverage
+          path: coverage/
+      - name: Show test results
+        run: cat coverage/report.txt || echo "No text summary found"

@@ -1,28 +1,28 @@
-import { useEffect, useState, type FC } from 'react';
 import { BalanceCard } from '@/components/BalanceCard';
-import { TradeTable } from '@/components/TradeTable';
-import { OrderHistory } from '@/components/OrderHistory';
 import { BotControl } from '@/components/BotControl';
-import { PriceChart } from '@/components/PriceChart';
-import { OrderBook } from '@/components/OrderBook';
 import { LogViewer } from '@/components/LogViewer';
+import { ManualTradePanel } from '@/components/ManualTradePanel';
+import { OrderBook } from '@/components/OrderBook';
+import { OrderHistory } from '@/components/OrderHistory';
+import { PriceChart } from '@/components/PriceChart';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Button } from '@/components/ui/button';
+import { TradeTable } from '@/components/TradeTable';
 import { Badge } from '@/components/ui/badge';
-import { api } from '@/lib/api';
+import { Button } from '@/components/ui/button';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { api } from '@/lib/api';
 import {
   Balance,
-  Trade,
-  OrderHistoryItem,
   BotStatus,
-  OrderBook as OrderBookType,
+  EmaCrossoverBacktestResult,
   LogEntry,
   OHLCVData,
-  EmaCrossoverBacktestResult
+  OrderBook as OrderBookType,
+  OrderHistoryItem,
+  Trade
 } from '@/types/trading';
-import { ManualTradePanel } from '@/components/ManualTradePanel';
+import { useCallback, useEffect, useState, type FC } from 'react';
 
 /**
  * Main dashboard page for the crypto trading application.
@@ -47,15 +47,42 @@ const Index: FC = () => {
   const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
   const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
 
-  // WebSocket for real-time updates (prepared for future use)
-  const { isConnected } = useWebSocket('ws://localhost:5000/ws', (data) => {
-    console.log('WebSocket data received:', data);
-    // Handle real-time updates here
-    if (data.type === 'orderbook') {
-      setOrderBook(data.data);
+  const loadEmaCrossover = useCallback(async () => {
+    try {
+      // Mock: använd chartData för att skapa data-objekt
+      const data = {
+        timestamp: chartData.map(d => d.timestamp),
+        open: chartData.map(d => d.open),
+        high: chartData.map(d => d.high),
+        low: chartData.map(d => d.low),
+        close: chartData.map(d => d.close),
+        volume: chartData.map(d => d.volume)
+      };
+      const result = await api.runBacktestEmaCrossover(data, {
+        fast_period: 3,
+        slow_period: 5,
+        lookback: 5
+      });
+      setEmaFast(result.ema_fast);
+      setEmaSlow(result.ema_slow);
+      setSignals(result.signals);
+    } catch (error) {
+      console.error('Failed to load EMA crossover data:', error);
     }
-    if (data.type === 'status') {
-      setBotStatus(data.data);
+  }, [chartData]);
+
+  // WebSocket for real-time updates (prepared for future use)
+  const { isConnected } = useWebSocket('ws://localhost:5000/ws', (data: unknown) => {
+    console.log('WebSocket data received:', data);
+    // Type guard for expected data shape
+    if (typeof data === 'object' && data !== null && 'type' in data && 'data' in data) {
+      const d = data as { type: string; data: OrderBookType | BotStatus };
+      if (d.type === 'orderbook') {
+        setOrderBook(d.data as OrderBookType);
+      }
+      if (d.type === 'status') {
+        setBotStatus(d.data as BotStatus);
+      }
     }
   });
 
@@ -71,7 +98,7 @@ const Index: FC = () => {
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [loadEmaCrossover]);
 
   const loadAllData = async () => {
     try {
@@ -104,30 +131,6 @@ const Index: FC = () => {
       console.error('Failed to load data:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadEmaCrossover = async () => {
-    try {
-      // Mock: använd chartData för att skapa data-objekt
-      const data = {
-        timestamp: chartData.map(d => d.timestamp),
-        open: chartData.map(d => d.open),
-        high: chartData.map(d => d.high),
-        low: chartData.map(d => d.low),
-        close: chartData.map(d => d.close),
-        volume: chartData.map(d => d.volume)
-      };
-      const result = await api.runBacktestEmaCrossover(data, {
-        fast_period: 3,
-        slow_period: 5,
-        lookback: 5
-      });
-      setEmaFast(result.ema_fast);
-      setEmaSlow(result.ema_slow);
-      setSignals(result.signals);
-    } catch (error) {
-      console.error('Failed to load EMA crossover data:', error);
     }
   };
 
@@ -170,7 +173,7 @@ const Index: FC = () => {
           </div>
           
           <div className="col-span-12 lg:col-span-3">
-            <ManualTradePanel />
+            <ManualTradePanel onOrderPlaced={loadAllData} />
           </div>
           
           <div className="col-span-12 lg:col-span-3">
@@ -197,7 +200,7 @@ const Index: FC = () => {
 
           {/* Third Row - Tables */}
           <div className="col-span-12 lg:col-span-6">
-            <OrderHistory orders={orderHistory} isLoading={isLoading} />
+            <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={loadAllData} />
           </div>
           
           <div className="col-span-12 lg:col-span-6">

@@ -10,7 +10,9 @@ from flask_cors import CORS
 from backend.routes.backtest import backtest_bp
 from backend.routes.balances import register as register_balances
 from backend.routes.bot_control import register as register_bot_control
+from backend.routes.config import register as register_config
 from backend.routes.orders import orders_bp
+from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
 from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
@@ -30,6 +32,8 @@ CORS(app)
 # Registrera routes som inte använder blueprint
 register_balances(app)
 register_bot_control(app)
+register_positions(app)
+register_config(app)
 
 
 # Initialize services

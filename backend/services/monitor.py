@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -138,7 +138,7 @@ class Monitor:
             metadata: Optional alert metadata
         """
         alert = Alert(
-            level=level, message=message, timestamp=datetime.utcnow(), metadata=metadata
+            level=level, message=message, timestamp=datetime.now(UTC), metadata=metadata
         )
 
         self.alerts.append(alert)
@@ -192,7 +192,7 @@ class Monitor:
         Returns:
             List of recent alerts
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
 
         alerts = [alert for alert in self.alerts if alert.timestamp > cutoff]
 

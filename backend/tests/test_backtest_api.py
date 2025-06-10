@@ -20,7 +20,7 @@ def client():
 @pytest.fixture
 def sample_data():
     """Create sample price data for testing."""
-    dates = pd.date_range(start="2024-01-01", periods=100, freq="1H")
+    dates = pd.date_range(start="2024-01-01", periods=100, freq="1h")
     data = {
         "timestamp": dates.strftime("%Y-%m-%d %H:%M:%S").tolist(),
         "open": [100.0] * 100,

@@ -13,7 +13,7 @@ from backend.strategies.sample_strategy import TradeSignal, run_strategy
 @pytest.fixture
 def sample_data():
     """Create sample price data for testing med tydlig variation och trend."""
-    dates = pd.date_range(start="2024-01-01", periods=100, freq="1H")
+    dates = pd.date_range(start="2024-01-01", periods=100, freq="1h")
     base = 100
     amplitude = 10
     trend = np.linspace(-5, 5, 100)

@@ -1,5 +1,15 @@
-import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+// Import ReactDOM's createRoot for rendering the application
+// Import the main application component
+import App from './App.tsx';
+// Import global styles
+import { createRoot } from 'react-dom/client';
+import './index.css';
 
-createRoot(document.getElementById("root")!).render(<App />);
+// React DevTools-scriptinjektion borttagen för att undvika CORS- och nätverksfel.
+
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  createRoot(rootElement).render(<App />);
+} else {
+  console.error("Root element not found. Unable to render the application.");
+}

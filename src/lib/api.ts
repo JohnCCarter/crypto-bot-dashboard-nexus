@@ -1,6 +1,6 @@
-import { Balance, Trade, OrderHistoryItem, BotStatus, OrderBook, LogEntry, TradingConfig, OHLCVData, EmaCrossoverBacktestResult } from '@/types/trading';
+import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, OrderBook, OrderHistoryItem, Trade, TradingConfig } from '@/types/trading';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = '';
 
 // Generate mock OHLCV data
 const generateMockOHLCVData = (): OHLCVData[] => {
@@ -147,5 +147,14 @@ export const api = {
       { timestamp: new Date().toISOString(), level: 'info', message: 'Bot started' },
       { timestamp: new Date().toISOString(), level: 'error', message: 'Test error' }
     ];
+  },
+
+  // Cancel Order (Live)
+  async cancelOrder(orderId: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to cancel order');
+    return await res.json();
   }
 };

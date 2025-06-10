@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { TradingConfig } from '@/types/trading';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { api } from '@/lib/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+import { TradingConfig } from '@/types/trading';
+import { useCallback, useEffect, useState } from 'react';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -79,7 +79,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
       <Card className="w-full max-w-4xl bg-card border-border max-h-[90vh]">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Trading Bot Settings</CardTitle>
-          <Button variant="ghost" onClick={onClose}>✕</Button>
+          <Button variant="ghost" onClick={onClose}>✕<span className="sr-only">Stäng inställningar</span></Button>
         </CardHeader>
         <CardContent>
           {isLoading ? (

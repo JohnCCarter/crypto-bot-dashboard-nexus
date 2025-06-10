@@ -5,49 +5,64 @@ This document is a complete technical reference for integrating the Bitfinex RES
 ## Getting Started
 
 1. Clone the project  
+
   ```bash
   git clone git@github.com:<user>/crypto-bot-dashboard-nexus.git
   cd crypto-bot-dashboard-nexus
   ```
+
 2. Create and activate a virtual environment  
+
   ```bash
   python3 -m venv venv
   source venv/bin/activate     # Windows: venv\Scripts\activate
   ```
+
 3. Install dependencies
+
   ```bash
   # Run from the project root
   pip install -r backend/requirements.txt
   ```
+
   Or change directory first:
+
   ```bash
   cd backend
   pip install -r requirements.txt
   cd ..
   ```
+
 4. Create `.env` in the project root  
+
   ```dotenv
   BITFINEX_API_KEY=YOUR_API_KEY
   BITFINEX_API_SECRET=YOUR_API_SECRET
   ```
+
 5. Start the Flask server
+
   ```bash
   # From the backend directory
   cd backend
   flask run --host=0.0.0.0 --port=5000
   ```
-  Open http://localhost:5000 in your browser.
+
+  Open <http://localhost:5000> in your browser.
 6. Run the tests
+
   ```bash
   pytest backend/tests
   ```
 
 7. Start the frontend
+
    ```bash
    npm install
    npm run dev
    ```
-   Open http://localhost:8080 in your browser.
+
+   Open <http://localhost:8080> in your browser.
 
 8. Trading strategies and indicators
    All strategy and indicator files are placed in `backend/strategies/`.
@@ -60,6 +75,7 @@ This document is a complete technical reference for integrating the Bitfinex RES
        :return: A TradeSignal with action and confidence."""
        pass
    ```
+
    Indicators (pure, stateless functions) can be added to `backend/strategies/indicators.py`, e.g.:
 
    ```python
@@ -87,11 +103,14 @@ This document is a complete technical reference for integrating the Bitfinex RES
 ## 🔐 Bitfinex API – Authentication, Requirements, and Limitations
 
 ### 📌 API Overview  
+
 The API is fast and efficient, with support for Python, NodeJS, Ruby, and Golang.  
-Docs: https://docs.bitfinex.com/docs/introduction
+Docs: <https://docs.bitfinex.com/docs/introduction>
 
 ### 🔑 Authentication  
+
 For REST calls:
+
 ```json
 {
   "apiKey": "YOUR_API_KEY",
@@ -99,7 +118,9 @@ For REST calls:
   "authNonce": 1680000000000
 }
 ```
+
 For WebSocket:
+
 ```json
 {
   "event": "auth",
@@ -109,16 +130,19 @@ For WebSocket:
   "authNonce": NONCE
 }
 ```
+
 Use separate keys per client to avoid nonce conflicts.
 
 ### ⚠️ Rate Limits
 
 #### REST API
+
 * 10–90 requests/minute depending on endpoint  
 * Error: `{"error":"ERR_RATE_LIMIT"}`  
 * IP is blocked for 60 seconds if exceeded
 
 #### WebSocket API
+
 * Max 5 authenticated connections/15 s  
 * Max 20 public connections/min  
 * Up to 25 channels per connection  
@@ -131,6 +155,7 @@ Use separate keys per client to avoid nonce conflicts.
 Domain: `https://api-pub.bitfinex.com/v2/`
 
 ### Common endpoints
+
 * GET /tickers  
 * GET /ticker/:symbol  
 * GET /book/:symbol  
@@ -138,6 +163,7 @@ Domain: `https://api-pub.bitfinex.com/v2/`
 * GET /candles/trade:{timeframe}:symbol/hist
 
 ### Example (curl)
+
 ```bash
 curl https://api-pub.bitfinex.com/v2/ticker/tBTCUSD
 curl https://api-pub.bitfinex.com/v2/book/tBTCUSD/P0
@@ -151,22 +177,25 @@ curl https://api-pub.bitfinex.com/v2/trades/tBTCUSD/hist
 Domain: `https://api.bitfinex.com/v2/`
 
 ### Features
+
 * 📊 Balances and wallets  
 * 📈 Order placement, cancellation, history  
 * 📉 Positions (futures/margin)  
 * 🧾 Billing and settings
 
-Full docs: https://docs.bitfinex.com/docs/rest-auth
+Full docs: <https://docs.bitfinex.com/docs/rest-auth>
 
 ---
 
 ## 🔌 Bitfinex WebSocket API
 
 ### Endpoints
+
 * Public: `wss://api-pub.bitfinex.com/ws/2`  
 * Authenticated: `wss://api.bitfinex.com/ws/2`
 
 ### Subscription example
+
 ```json
 {
   "event": "subscribe",
@@ -180,6 +209,7 @@ Full docs: https://docs.bitfinex.com/docs/rest-auth
 ## 💻 Example Code and Use Cases
 
 ### Fetch balance with ccxt
+
 ```python
 import ccxt, os
 
@@ -192,6 +222,7 @@ print(balance)
 ```
 
 ### Place market order
+
 ```python
 order = exchange.create_order(
    symbol='BTC/USD',
@@ -203,13 +234,16 @@ print(order)
 ```
 
 ### Fetch open positions
+
 ```python
 positions = exchange.private_get_positions()
 print(positions)
 ```
+
 > NOTE: `fetch_positions()` requires margin/futures activation.
 
 ### Fetch candlestick data (OHLCV)
+
 ```python
 ohlcv = exchange.fetch_ohlcv('BTC/USD', timeframe='1m', limit=10)
 for candle in ohlcv:
@@ -217,6 +251,7 @@ for candle in ohlcv:
 ```
 
 ### WebSocket: Listen to ticker
+
 ```python
 import websocket, json
 
@@ -240,7 +275,7 @@ ws.run_forever()
 
 ---
 
-> Adjust code examples as needed. For more info, see Bitfinex official documentation: https://docs.bitfinex.com/docs/introduction
+> Adjust code examples as needed. For more info, see Bitfinex official documentation: <https://docs.bitfinex.com/docs/introduction>
 
 ---
 
@@ -267,6 +302,7 @@ This repository provides a full-stack trading dashboard integrating Bitfinex's R
 ## Local Development (no Docker)
 
 1. Backend:
+
    ```bash
    cd backend
    python3 -m venv .venv
@@ -275,7 +311,9 @@ This repository provides a full-stack trading dashboard integrating Bitfinex's R
    export FLASK_APP=app.py
    flask run --host=0.0.0.0 --port=5000
    ```
+
 2. Frontend:
+
    ```bash
    npm install
    npm run dev                # Vite dev server on http://localhost:8080
@@ -286,6 +324,7 @@ This repository provides a full-stack trading dashboard integrating Bitfinex's R
 ```bash
 docker-compose up --build
 ```  
+
 This launches the Flask API on port 5000 and serves the built frontend on port 8080 via Nginx.
 
 ## API Endpoints
@@ -320,49 +359,58 @@ curl -X POST http://127.0.0.1:5000/api/stop-bot
 
 ### Backend
 
-- **Run all tests:**
+* **Run all tests:**
+
   ```bash
   pytest backend/tests
   ```
-- **Tools:**
-  - [pytest](https://docs.pytest.org/)
-  - [pytest-cov] for coverage
-  - [flake8], [black], [mypy], [isort] for code style and type checking
-- **Interpreting results:**
-  - All tests should pass ("passed").
-  - Error messages are shown directly in the terminal.
+
+* **Tools:**
+  * [pytest](https://docs.pytest.org/)
+  * [pytest-cov] for coverage
+  * [flake8], [black], [mypy], [isort] for code style and type checking
+
+* **Interpreting results:**
+  * All tests should pass ("passed").
+  * Error messages are shown directly in the terminal.
 
 ### Frontend
 
-- **Run linter:**
+* **Run linter:**
+
   ```bash
   npm run lint
   ```
-- **Run tests:**
+
+* **Run tests:**
+
   ```bash
   npm run test
   ```
-- **Tools:**
-  - [Vitest](https://vitest.dev/) (test runner)
-  - [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
-  - [@testing-library/jest-dom] for DOM matchers
-  - [jsdom] for simulated DOM environment
-  - [MSW (Mock Service Worker)](https://mswjs.io/) for mocked API responses and integration tests
-- **Interpreting results:**
-  - All tests should pass ("passed").
-  - Error messages and code lines are shown directly in the terminal.
+
+* **Tools:**
+  * [Vitest](https://vitest.dev/) (test runner)
+  * [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
+  * [@testing-library/jest-dom] for DOM matchers
+  * [jsdom] for simulated DOM environment
+  * [MSW (Mock Service Worker)](https://mswjs.io/) for mocked API responses and integration tests
+
+* **Interpreting results:**
+  * All tests should pass ("passed").
+  * Error messages and code lines are shown directly in the terminal.
 
 #### Integration tests with MSW
 
-- **Purpose:**
+* **Purpose:**
   Integration tests ensure that frontend components handle API responses, errors, and edge cases correctly without needing to run a real backend.
 
-- **Setup:**
-  - MSW is started automatically via `src/__tests__/setup-msw.ts` (see `vitest.config.ts`).
-  - Place integration tests in `src/__tests__/`.
-  - Mocked endpoints are defined with `rest.get/post/put...` from MSW.
+* **Setup:**
+  * MSW is started automatically via `src/__tests__/setup-msw.ts` (see `vitest.config.ts`).
+  * Place integration tests in `src/__tests__/`.
+  * Mocked endpoints are defined with `rest.get/post/put...` from MSW.
 
-- **Example:**
+* **Example:**
+
   ```ts
   // src/__tests__/balance-card.integration.test.tsx
   import { render, screen } from '@testing-library/react';
@@ -391,13 +439,14 @@ curl -X POST http://127.0.0.1:5000/api/stop-bot
   });
   ```
 
-- **Tips:**
-  - Mock more endpoints by adding more handlers in the test files.
-  - For components that fetch data themselves, mock fetch/axios calls in the test or expand the integration test.
-  - E2E tests are recommended for full user flows.
+* **Tips:**
+  * Mock more endpoints by adding more handlers in the test files.
+  * For components that fetch data themselves, mock fetch/axios calls in the test or expand the integration test.
+  * E2E tests are recommended for full user flows.
 
 #### Example component tests
-- See `src/components/ui/button.test.tsx`, `src/components/ui/input.test.tsx`, `src/components/ui/textarea.test.tsx`, `src/components/ui/toggle.test.tsx`, `src/components/ui/tabs.test.tsx`, `src/components/ui/dialog.test.tsx` for example component tests.
+
+* See `src/components/ui/button.test.tsx`, `src/components/ui/input.test.tsx`, `src/components/ui/textarea.test.tsx`, `src/components/ui/toggle.test.tsx`, `src/components/ui/tabs.test.tsx`, `src/components/ui/dialog.test.tsx` for example component tests.
 
 > **Note:**
 > Some advanced UI components (e.g. Select, Dialog, Tabs, and other Radix UI components) use interactions and events that are not always fully supported by jsdom/Vitest. To test these components and full user flows in a real browser, E2E tools like [Cypress](https://www.cypress.io/) or [Playwright](https://playwright.dev/) are recommended.
@@ -407,14 +456,17 @@ curl -X POST http://127.0.0.1:5000/api/stop-bot
 Projektet använder en konfigurationsfil (`backend/config.json`) för att styra tradingstrategier, riskhantering och notifieringar. Strukturen och reglerna för denna fil definieras i `backend/config.schema.json` (JSON Schema).
 
 ### Viktiga parametrar
-- **strategy**: Inställningar för symbol, timeframe och indikatorer.
-- **trading_window**: Handelsfönster och max trades per dag.
-- **risk**: Riskparametrar, stop loss, take profit, max daglig förlust.
-- **notifications**: E-postnotifieringar och SMTP-inställningar.
+
+* **strategy**: Inställningar för symbol, timeframe och indikatorer.
+
+* **trading_window**: Handelsfönster och max trades per dag.
+* **risk**: Riskparametrar, stop loss, take profit, max daglig förlust.
+* **notifications**: E-postnotifieringar och SMTP-inställningar.
 
 Se `backend/config.schema.json` för fullständig beskrivning av alla fält, typer och krav.
 
 ### Exempel på config.json
+
 ```json
 {
   "strategy": {
@@ -450,9 +502,11 @@ Se `backend/config.schema.json` för fullständig beskrivning av alla fält, typ
 ```
 
 ### Miljövariabler
+
 För känsliga värden (t.ex. e-post, lösenord) rekommenderas att använda miljövariabler och/eller `.env`-fil. Se `.env.example` för mall.
 
 ### Validering
+
 Vid uppstart valideras `config.json` automatiskt mot `config.schema.json` för att säkerställa korrekt struktur och giltiga värden.
 
 ## FVG-strategi (Fair Value Gap)
@@ -460,12 +514,14 @@ Vid uppstart valideras `config.json` automatiskt mot `config.schema.json` för a
 FVG-strategin identifierar obalanser i priset (gaps) och genererar tradesignaler när priset återbesöker dessa zoner. Den kan filtrera på gap-storlek och riktning (bullish/bearish).
 
 **Parametrar:**
-- `min_gap_size`: Minsta gap-storlek (absolut, i pris) för att inkluderas.
-- `direction`: "bullish", "bearish" eller "both" – vilken typ av gap som ska handlas.
-- `position_size`: Andel av portfölj att använda per trade (0-1).
-- `lookback`: Hur många candles bakåt som FVG-zoner är giltiga.
+
+* `min_gap_size`: Minsta gap-storlek (absolut, i pris) för att inkluderas.
+* `direction`: "bullish", "bearish" eller "both" – vilken typ av gap som ska handlas.
+* `position_size`: Andel av portfölj att använda per trade (0-1).
+* `lookback`: Hur många candles bakåt som FVG-zoner är giltiga.
 
 **Exempel på config.json:**
+
 ```json
 {
   "fvg_strategy": {
@@ -478,6 +534,7 @@ FVG-strategin identifierar obalanser i priset (gaps) och genererar tradesignaler
 ```
 
 **Exempel på API-anrop:**
+
 ```json
 {
   "strategy": "fvg",
@@ -493,12 +550,180 @@ FVG-strategin identifierar obalanser i priset (gaps) och genererar tradesignaler
 
 Se även `backend/config.schema.json` för fullständig beskrivning av parametrar.
 
-
 Leta efter något specifikt i en kod kan du använda dig av  Select-String -Path .\localhost.har -Pattern '"status": 4' i powershell. terminalen.
 i bash kan du använda dig av grep '"status": 4' localhost.har
 Alternativt ctrl f i vscode.
 
+## 🛠️ API Endpoints – Tradingbot Backend
 
+### **Order API**
 
+#### Skapa order
 
+**POST** `/api/orders`
 
+```json
+{
+  "symbol": "BTC/USD",
+  "order_type": "limit",
+  "side": "buy",
+  "amount": 0.1,
+  "price": 27000
+}
+```
+
+**Response (201):**
+
+```json
+{
+  "message": "Order placed successfully",
+  "order": {
+    "id": "123",
+    "symbol": "BTC/USD",
+    "order_type": "limit",
+    "side": "buy",
+    "amount": 0.1,
+    "price": 27000,
+    "status": "filled"
+  }
+}
+```
+
+#### Hämta order
+
+**GET** `/api/orders/<order_id>`
+
+```json
+// Response (200)
+{
+  "id": "123",
+  "symbol": "BTC/USD",
+  "status": "filled"
+}
+```
+
+#### Avbryta order
+
+**DELETE** `/api/orders/<order_id>`
+
+```json
+// Response (200)
+{
+  "message": "Order cancelled successfully"
+}
+```
+
+#### Lista öppna ordrar
+
+**GET** `/api/orders`
+
+```json
+// Response (200)
+{
+  "orders": [
+    { "id": "1", "symbol": "BTC/USD", "status": "open" },
+    { "id": "2", "symbol": "ETH/USD", "status": "open" }
+  ]
+}
+```
+
+#### Orderhistorik
+
+**GET** `/api/orders/history`
+
+```json
+// Response (200)
+[
+  {
+    "id": "1",
+    "symbol": "BTC/USD",
+    "order_type": "limit",
+    "side": "buy",
+    "amount": 0.1,
+    "price": 27000,
+    "fee": 1.5,
+    "status": "filled"
+  }
+]
+```
+
+---
+
+### **Backtest API**
+
+#### Kör backtest
+
+**POST** `/api/backtest/run`
+
+```json
+{
+  "strategy": "fvg",
+  "data": {
+    "timestamp": ["2024-01-01 00:00:00", ...],
+    "open": [100.0, ...],
+    "high": [101.0, ...],
+    "low": [99.0, ...],
+    "close": [100.0, ...],
+    "volume": [1000.0, ...]
+  },
+  "parameters": {
+    "initial_capital": 10000.0,
+    "commission": 0.001,
+    "slippage": 0.0005
+  }
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "total_trades": 12,
+  "win_rate": 0.58,
+  "total_pnl": 1234.56,
+  "max_drawdown": -0.12,
+  "sharpe_ratio": 1.23,
+  "trade_history": [ ... ],
+  "equity_curve": { "2024-01-01": 10000, ... }
+}
+```
+
+#### Optimera strategi
+
+**POST** `/api/backtest/optimize`
+
+```json
+{
+  "strategy": "fvg",
+  "data": { ... },
+  "param_grid": {
+    "min_gap_size": [5, 10],
+    "direction": ["bullish", "bearish"],
+    "position_size": [0.05, 0.1],
+    "lookback": [3, 5]
+  }
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "parameters": { "min_gap_size": 5, "direction": "bullish", ... },
+  "performance": { "sharpe_ratio": 1.23, ... }
+}
+```
+
+---
+
+### **Exempel: cURL-anrop**
+
+```bash
+curl -X POST http://localhost:5000/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{"symbol":"BTC/USD","order_type":"limit","side":"buy","amount":0.1,"price":27000}'
+```
+
+```bash
+curl http://localhost:5000/api/orders/history
+```

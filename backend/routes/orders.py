@@ -2,7 +2,7 @@
 
 from typing import Any, Dict
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
 from backend.services.exchange import ExchangeService
 from backend.services.order_service import OrderService
@@ -63,7 +63,7 @@ def place_order_route():
         )
 
     except Exception as e:
-        orders_bp.logger.error(f"Error placing order: {str(e)}")
+        current_app.logger.error(f"Error placing order: {str(e)}")
         return jsonify({"error": "Failed to place order", "details": str(e)}), 500
 
 
@@ -86,7 +86,7 @@ def get_order_route(order_id: str):
             return jsonify({"error": "Order not found"}), 404
         return jsonify(order), 200
     except Exception as e:
-        orders_bp.logger.error(f"Error fetching order: {str(e)}")
+        current_app.logger.error(f"Error fetching order: {str(e)}")
         return jsonify({"error": "Failed to fetch order"}), 500
 
 
@@ -109,7 +109,7 @@ def cancel_order_route(order_id: str):
             return jsonify({"error": "Order not found"}), 404
         return jsonify({"message": "Order cancelled successfully"}), 200
     except Exception as e:
-        orders_bp.logger.error(f"Error cancelling order: {str(e)}")
+        current_app.logger.error(f"Error cancelling order: {str(e)}")
         return jsonify({"error": "Failed to cancel order"}), 500
 
 
@@ -130,7 +130,7 @@ def get_open_orders_route():
         orders = order_service.get_open_orders(symbol)
         return jsonify({"orders": orders}), 200
     except Exception as e:
-        orders_bp.logger.error(f"Error fetching open orders: {str(e)}")
+        current_app.logger.error(f"Error fetching open orders: {str(e)}")
         return jsonify({"error": "Failed to fetch open orders"}), 500
 
 

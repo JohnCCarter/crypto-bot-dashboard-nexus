@@ -1,14 +1,15 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+import React, { useState } from 'react';
 
 interface ManualTradePanelProps {
   className?: string;
+  onOrderPlaced?: () => void;
 }
 
 interface OrderData {
@@ -21,7 +22,7 @@ interface OrderData {
 
 const symbols = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'ADAUSD'];
 
-export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className }) => {
+export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, onOrderPlaced }) => {
   const [symbol, setSymbol] = useState<string>('BTCUSD');
   const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
   const [amount, setAmount] = useState<string>('');
@@ -59,17 +60,16 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className })
     setIsSubmitting(true);
 
     try {
-      // In production: const response = await fetch('/api/order', { method: 'POST', body: JSON.stringify(orderData) });
-      console.log('Submitting order:', orderData);
-      
-      // Mock API call simulation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Skicka order till backend
+      await api.placeOrder(orderData);
       toast({
         title: 'Order Submitted',
         description: `${side.toUpperCase()} order for ${amount} ${symbol} has been placed successfully.`,
       });
-
+      // Uppdatera orderhistorik i parent om prop finns
+      if (typeof onOrderPlaced === 'function') {
+        onOrderPlaced();
+      }
       // Reset form after successful submission
       setAmount('');
       if (orderType === 'limit') {
