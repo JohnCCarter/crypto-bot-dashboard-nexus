@@ -25,7 +25,8 @@ describe('BalanceCard integration', () => {
     expect(screen.getByText('BTC')).toBeInTheDocument();
     expect(screen.getByText('ETH')).toBeInTheDocument();
     // Notera: Kommatecken används som tusentalsavgränsare p.g.a. toLocaleString och svensk/internationell formatering
-    expect(screen.getByText('1,234')).toBeInTheDocument();
-    expect(screen.getByText('10,5')).toBeInTheDocument();
+    // Adjust assertions to match locale-specific number formatting
+    expect(screen.getByText(/1[.,]234/)).toBeInTheDocument();
+    expect(screen.getByText(/10[.,]5/)).toBeInTheDocument();
   });
 }); 
