@@ -727,3 +727,27 @@ curl -X POST http://localhost:5000/api/orders \
 ```bash
 curl http://localhost:5000/api/orders/history
 ```
+
+---
+
+## 📝 Git Cheat Sheet
+
+| Kommando                        | Beskrivning                                      |
+|----------------------------------|-------------------------------------------------|
+| git clone <repo-url>             | Klona repo första gången till ny dator           |
+| git status                       | Visa status på ändringar och branch              |
+| git pull                         | Hämta och integrera senaste ändringar            |
+| git add .                        | Lägg till alla ändrade filer för commit          |
+| git commit -m "Meddelande"        | Spara ändringar lokalt med ett meddelande        |
+| git push                         | Skicka dina commits till GitHub                  |
+| git checkout <branch>            | Byt till en annan branch                         |
+| git branch                       | Lista alla brancher                              |
+| git branch <ny-branch>           | Skapa en ny branch                               |
+| git merge <branch>               | Slå ihop annan branch till aktuell               |
+| git stash                        | Tillfälligt spara undan ändringar                |
+| git stash pop                    | Återställ senaste stash                          |
+| git log --oneline                | Visa commit-historik i kort format               |
+| git rebase <branch>              | Lägg dina commits ovanpå annan branch            |
+| git rebase --continue            | Fortsätt rebase efter konflikt                   |
+| git rebase --abort               | Avbryt pågående rebase                           |
+| git reset --hard                 | Återställ allt till senaste commit (var försiktig!) |
