@@ -1,37 +1,52 @@
 {
-  "strategy": {
-    "symbol": "BTC/USD",
-    "timeframe": "1h",
-    "ema_length": 20,
-    "ema_fast": 12,
-    "ema_slow": 26,
-    "rsi_period": 14,
-    "atr_multiplier": 2,
-    "volume_multiplier": 1.5
-  },
-  "trading_window": {
-    "start_hour": 0,
-    "end_hour": 24,
-    "max_trades_per_day": 5
-  },
-  "risk": {
-    "max_daily_loss": 2,
-    "lookback": 5,
-    "stop_loss_percent": 2,
-    "take_profit_percent": 2,
-    "risk_per_trade": 0.02
-  },
-  "notifications": {
-    "email_enabled": true,
-    "smtp_server": "smtp.gmail.com",
-    "smtp_port": 465,
-    "sender": "your@email.com",
-    "receiver": "your@email.com"
-  },
-  "fvg_strategy": {
-    "min_gap_size": 10,
-    "direction": "both",
-    "position_size": 0.1,
-    "lookback": 5
-  }
+    "ATR_MULTIPLIER": 1.5,
+    "EMAIL_NOTIFICATIONS": true,
+    "EMAIL_RECEIVER": "",
+    "EMAIL_SENDER": "",
+    "EMAIL_SMTP_PORT": null,
+    "EMA_FAST": 10,
+    "EMA_LENGTH": 20,
+    "EMA_SLOW": 50,
+    "LOOKBACK": 15,
+    "RSI_PERIOD": 14,
+    "STOP_LOSS_PERCENT": 0.1,
+    "SYMBOL": "BTCUSD",
+    "TAKE_PROFIT_PERCENT": 0.1,
+    "TIMEFRAME": "15m",
+    "VOLUME_MULTIPLIER": 1.5,
+    "fvg_strategy": {
+        "direction": "both",
+        "lookback": 5,
+        "min_gap_size": 10,
+        "position_size": 0.1
+    },
+    "notifications": {
+        "email_enabled": true,
+        "receiver": "your@email.com",
+        "sender": "your@email.com",
+        "smtp_port": 465,
+        "smtp_server": "smtp.gmail.com"
+    },
+    "risk": {
+        "lookback": 5,
+        "max_daily_loss": 2,
+        "risk_per_trade": 0.02,
+        "stop_loss_percent": 2,
+        "take_profit_percent": 2
+    },
+    "strategy": {
+        "atr_multiplier": 2,
+        "ema_fast": 12,
+        "ema_length": 20,
+        "ema_slow": 26,
+        "rsi_period": 14,
+        "symbol": "BTC/USD",
+        "timeframe": "1h",
+        "volume_multiplier": 1.5
+    },
+    "trading_window": {
+        "end_hour": 24,
+        "max_trades_per_day": 5,
+        "start_hour": 0
+    }
 }

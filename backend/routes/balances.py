@@ -1,4 +1,5 @@
 from flask import jsonify
+import logging
 
 from backend.services.balance_service import fetch_balances
 
@@ -30,4 +31,5 @@ def register(app):
                 )
             return jsonify(result), 200
         except Exception as e:
+            logging.exception("Fel vid hämtning av saldon i /api/balances:")
             return jsonify({"error": str(e)}), 500

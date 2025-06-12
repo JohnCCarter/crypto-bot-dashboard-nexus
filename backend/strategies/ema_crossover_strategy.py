@@ -3,11 +3,17 @@
 from typing import Any, Dict, Optional
 
 import pandas as pd
+<<<<<<< HEAD
 
+=======
+from typing import Dict, Any
+from backend.strategies.sample_strategy import TradeSignal
+>>>>>>> c57a2b2 ([infra] Uppdatera dependencies, robust nonce-hantering för Bitfinex, och säkerställ teststruktur)
 from backend.strategies.indicators import ema
 from backend.strategies.sample_strategy import TradeSignal
 
 
+<<<<<<< HEAD
 def run_strategy(
     data: pd.DataFrame,
     fast_period: int = 9,
@@ -36,31 +42,58 @@ def run_strategy_with_details(
     lookback: int = 3
 ) -> Dict[str, Any]:
     """Returnerar dict med TradeSignal, EMA-linjer och signalpunkter."""
+=======
+def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
+    """
+    Kör EMA-crossover-strategi med parametrar från config.
+
+    Args:
+        data (pd.DataFrame): DataFrame med minst kolumnen 'close'.
+        params (dict): Parametrar från config, t.ex. {
+            'fast_period': 12,
+            'slow_period': 26,
+            'min_gap': 0.5,
+            'direction': 'both',
+            'lookback': 3,
+            'symbol': 'BTC/USD',
+            'timeframe': '1h',
+            ...
+        }
+
+    Returns:
+        TradeSignal: Signalobjekt med action, confidence, position_size och metadata.
+    """
+    fast_period = params.get('ema_fast') or params.get('fast_period')
+    slow_period = params.get('ema_slow') or params.get('slow_period')
+    min_gap = params.get('min_gap')
+    direction = params.get('direction', 'both')
+    lookback = params.get('lookback', 3)
+>>>>>>> c57a2b2 ([infra] Uppdatera dependencies, robust nonce-hantering för Bitfinex, och säkerställ teststruktur)
     if 'close' not in data:
         raise ValueError(
             "Data måste innehålla kolumnen 'close'"
         )
-    if fast_period >= slow_period:
+    if fast_period is None or slow_period is None:
         raise ValueError(
-            "fast_period måste vara mindre än slow_period"
+            "Både fast_period och slow_period måste anges i config"
         )
+    if fast_period >= slow_period:
+        raise ValueError("fast_period måste vara mindre än slow_period")
     if len(data) < slow_period + 2:
-        return {
-            'result': TradeSignal(
-                action="hold",
-                confidence=0.0,
-                position_size=0.0,
-                metadata={}
-            ),
-            'ema_fast': [],
-            'ema_slow': [],
-            'signals': []
-        }
+        return TradeSignal(
+            action="hold",
+            confidence=0.0,
+            position_size=0.0,
+            metadata={
+                'ema_fast': [],
+                'ema_slow': [],
+                'signals': []
+            }
+        )
     close = data['close']
     ema_fast = ema(close, fast_period)
     ema_slow = ema(close, slow_period)
     signals = []
-    # Leta crossover i hela serien
     for i in range(1, len(data)):
         prev_fast = float(ema_fast.iloc[i-1])
         prev_slow = float(ema_slow.iloc[i-1])
@@ -75,7 +108,6 @@ def run_strategy_with_details(
             signals.append({"index": int(i), "type": "buy"})
         elif bearish and direction in ("both", "bearish"):
             signals.append({"index": int(i), "type": "sell"})
-    # Hitta senaste signal i lookback-fönstret
     last_signal = None
     for s in reversed(signals):
         if s["index"] >= len(data) - lookback:
@@ -88,24 +120,22 @@ def run_strategy_with_details(
             abs(float(ema_fast.iloc[-1]) - float(ema_slow.iloc[-1])) /
             (abs(float(ema_slow.iloc[-1])) + 1e-9)
         )
-        position_size = 1.0
+        position_size = params.get('position_size', 1.0)
     else:
         action = "hold"
         confidence = 0.0
         position_size = 0.0
-    result = TradeSignal(
+    return TradeSignal(
         action=action,
         confidence=confidence,
         position_size=position_size,
         metadata={
             "ema_fast": float(ema_fast.iloc[-1]),
             "ema_slow": float(ema_slow.iloc[-1]),
-            "signals": signals[-lookback:] if lookback > 0 else signals
+            "ema_fast_series": [float(x) for x in ema_fast],
+            "ema_slow_series": [float(x) for x in ema_slow],
+            "signals": signals[-lookback:] if lookback > 0 else signals,
+            "symbol": params.get('symbol'),
+            "timeframe": params.get('timeframe')
         }
     )
-    return {
-        'result': result,
-        'ema_fast': [float(x) for x in ema_fast],
-        'ema_slow': [float(x) for x in ema_slow],
-        'signals': signals
-    }

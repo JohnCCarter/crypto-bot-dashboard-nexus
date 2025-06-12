@@ -54,6 +54,36 @@ def run_rsi_strategy(data: pd.DataFrame) -> TradeSignal:
     return strategy.run_strategy(data)
 
 
-def run_strategy(data: pd.DataFrame) -> TradeSignal:
-    """Interface-funktion för strategi-tester. Anropar run_rsi_strategy."""
-    return run_rsi_strategy(data)
+def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
+    """
+    Kör RSI-strategin med parametrar från config.
+
+    Args:
+        data (pd.DataFrame): DataFrame med minst kolumnen 'close'.
+        params (dict): Parametrar från config, t.ex. {
+            'rsi_period': 14,
+            'overbought': 70,
+            'oversold': 30,
+            'position_size': 0.1,
+            'symbol': 'BTC/USD',
+            'timeframe': '1h',
+            ...
+        }
+
+    Returns:
+        TradeSignal: Signalobjekt med action, confidence, position_size och metadata.
+    """
+    rsi_period = params.get('rsi_period', 14)
+    overbought = params.get('overbought', 70)
+    oversold = params.get('oversold', 30)
+    position_size = params.get('position_size', 0.1)
+    if 'close' not in data:
+        raise ValueError("Data måste innehålla kolumnen 'close'")
+    rsi_values = rsi(data["close"], rsi_period)
+    last_rsi = rsi_values.iloc[-1] if not rsi_values.empty else None
+    if last_rsi is not None and last_rsi < oversold:
+        return TradeSignal("buy", 1.0, position_size, metadata={"rsi": last_rsi, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')})
+    elif last_rsi is not None and last_rsi > overbought:
+        return TradeSignal("sell", 1.0, position_size, metadata={"rsi": last_rsi, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')})
+    else:
+        return TradeSignal("hold", 0.0, 0.0, metadata={"rsi": last_rsi, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')})

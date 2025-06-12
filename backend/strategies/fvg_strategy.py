@@ -60,9 +60,51 @@ def run_fvg_strategy(data: pd.DataFrame) -> TradeSignal:
     return strategy.run_strategy(data)
 
 
-def run_strategy(data: pd.DataFrame) -> TradeSignal:
-    """Interface-funktion för strategi-tester. Anropar run_fvg_strategy."""
-    return run_fvg_strategy(data)
+def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
+    """
+    Kör FVG-strategin med parametrar från config.
+
+    Args:
+        data (pd.DataFrame): DataFrame med minst kolumnen 'close'.
+        params (dict): Parametrar från config, t.ex. {
+            'min_gap_size': 10,
+            'direction': 'both',
+            'position_size': 0.1,
+            'lookback': 5,
+            'symbol': 'BTC/USD',
+            'timeframe': '1h',
+            ...
+        }
+
+    Returns:
+        TradeSignal: Signalobjekt med action, confidence, position_size och metadata.
+    """
+    min_gap_size = params.get('min_gap_size', 0.0)
+    direction = params.get('direction', 'both')
+    position_size = params.get('position_size', 0.1)
+    lookback = params.get('lookback', 5)
+    if 'close' not in data:
+        raise ValueError("Data måste innehålla kolumnen 'close'")
+    fvg_zones = find_fvg_zones(
+        data,
+        min_gap_size=min_gap_size,
+        direction=direction
+    )
+    last_close = data['close'].iloc[-1]
+    recent_fvg = [
+        z for z in fvg_zones
+        if z['index'] >= len(data) - lookback - 1
+    ]
+    for zone in recent_fvg:
+        if zone['gap_low'] <= last_close <= zone['gap_high']:
+            action = "buy" if zone['direction'] == "bullish" else "sell"
+            return TradeSignal(
+                action=action,
+                confidence=1.0,
+                position_size=position_size,
+                metadata={"fvg_zone": zone, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')}
+            )
+    return TradeSignal(action="hold", confidence=0.0, position_size=0.0, metadata={"symbol": params.get('symbol'), "timeframe": params.get('timeframe')})
 
 
 def run_strategy_with_params(data: pd.DataFrame, params: dict) -> TradeSignal:
