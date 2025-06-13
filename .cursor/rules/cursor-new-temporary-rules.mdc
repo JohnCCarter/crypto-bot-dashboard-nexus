@@ -1,0 +1,74 @@
+Nedan följer en strukturerad «red-flag & best-practice»-granskning av back-end-koden (Flask + services) — det mest kritiska lagret för driftsäker handel. Front-end- och infra-delen kommenteras kort mot slutet.
+
+
+1. Arkitektur-översikt
+Lager	Styrkor	Svagheter / risker
+Routes (Flask Blueprints + funktions-registrering)	Tydligt separerade endpoints för orders, backtest, status.	Blanda / duplicera registreringar och direkt-routes → ökad koppling (se §2).
+Service-lager	ExchangeService, RiskManager, OrderService är bra avgränsningar. Dataclass för risk-parametrar ≈ self-dokumenterande.	State hålls in-memory → förloras vid omstart; ingen tråd- eller process-säkerhet.
+Domän-modell	JSON Schema för konfig; validering-helpers för order & par.	Ingen persistens-modell för Position/Trade → svårt med historik, PnL, multi-bot.
+
+
+2. Konkreta kodanmärkningar
+Fil / kodrad	Problem	Konsekvens	Rek. åtgärd
+backend/app.py – dubbletter av register_positions och register_config samt import-dubbletter	Oöverskådlig boot-strap, risk att samma route registreras två gånger.	404/500-fel eller CORS-dubbletter vid deploy.	Flytta route-registrering till Blueprint-fabrik och importera en gång.
+Minifierad kod (hela repo har 1-raders-filer)	Svår-läst, brutna diffar, omöjligt att PEP-8-checka.	Ökar fel-risk, blockerar community-bidrag.	Kör black/isort före commit, slå av ev. minify-steg i build-pipeline.
+bot_control.py importerar backend.services.bot_service som saknas	Runtime-ImportError → 500 på alla bot-kontroll-anrop.	Bot kan inte starta/stoppa.	Lägg in faktisk BotService-klass eller ta bort referensen.
+orders.py skapar global ExchangeService med tomma API-nycklar	Hamnar i produktionskod om man inte byter → misslyckad auth / läckta limits.	Autentisering misslyckas, orders blockeras.	Injicera ExchangeService från app.py istället, via dependency-injection.
+RiskManager räknar bara daglig PnL i minne	Om podden dödar/omstartas → nollställning, kan fortsätta handla trots tidigare förluster.	Databas-backad daily_pnl eller persistens i Redis.	
+Validation-helpers saknar schema-version & återanvändning	Dubbelkällor till sanning (JSON Schema vs Python).	Drifta isär → validerings-buggar.	Generera Python-klasser automatiskt från JSON-Schema (pydantic-v2).
+
+
+3. Design & Robusthet
+	1.	State & Persistens
+	•	Alla orders/alerts förvaras i RAM. För multi-container (Docker compose + k8s) behövs delad datakälla.
+	•	Rekommendation: PostgreSQL (SQLModel / SQLAlchemy 2.0) + Alembic-migrationer.
+	2.	Asynkronitet & Skalning
+	•	Flask kör synkront; ccxt-anrop är blockande.
+	•	Växling till FastAPI + asyncio-ccxt eller lägga tunga jobb i Celery/RQ kö.
+	3.	Fel-hantering
+	•	Exchange-fel kapslas men HTTP-svaren returnerar 500 utan fel-kod-standard.
+	•	Definiera ApiError(code, msg) → map til JSON API-spec (RFC 7807 “problem+json”).
+	4.	Risk-lager
+	•	Bra början med position-size & stop-loss, men ingen real-time-uppdatering när marknaden rör sig.
+	•	Lägg in WebSocket-feed & dynamisk re-eval av stop-loss / trailing.
+	5.	Säkerhet
+	•	Öppen CORS(“*”) & ingen auth → valfri besökare kan trade:a via din server.
+	•	Lägg minst JWT-bearer på alla /api/**, rate-limit via Flask-Limiter.
+
+
+4. Test- & CI-nivå
+Område	Observation	Rek.
+Pytest-mappar finns men inga assertions mot RequestContext.	End-to-end-tester saknas.	Kör pytest-flask med test-client + responses för ccxt-mock.
+Vitest för React men ingen GitHub Action-pipeline.	Missar regressions vid PR.	Lägg .github/workflows/ci.yml → lint + test + docker-build.
+
+
+5. Docker / Secrets
+	•	docker-compose.yml bakar in env-variables i klartext.
+→ Byt till env_file eller docker secret.
+	•	Ingen health-check → orchestrator vet inte när bot fastnat.
+
+⸻
+
+6. Front-end (React + TS) snabbblick
+	•	Strikt TS-konfiguration (strict: true i tsconfig) 👍.
+	•	API-klient använder fetch direkt; saknar central error-/auth-interceptor.
+	•	UI-komponenter (Radix + Tailwind) är snygga men ingen real-time order-/PnL-graf.
+→ Använd WebSocket (socket.io-client) + Zustand/Redux för tillstånd.
+
+⸻
+
+7. Prioriterad åtgärds-lista
+	1.	Formattera & linta hela koden (black + ruff) för läsbarhet.
+	2.	Fixa fel: ta bort dubbletter i app.py, implementera bot_service.py.
+	3.	Inför auth & rate-limit på API-tjänsterna.
+	4.	Flytta state till databas och skapa migrationer.
+	5.	Byt till async-framework eller använd task-queue för IO-tunga jobb.
+	6.	Inför CI-pipeline med enhetstest & docker build-push.
+	7.	Lägg till WebSocket layer för marknadsdata och UI-live-uppdatering.
+	8.	Utöka RiskManager med dynamisk PnL-tracking och auto-hedge.
+
+⸻
+
+Sammanfattning
+
+Repositoryt ger dig en vettig “proof-of-concept” — modulär service-indelning och JSON-schema-driven konfig är bra byggstenar. Däremot finns blockerande produktionsbrister (in-memory-state, avsaknad auth, minifierad kod). Genom att sanera koden, införa persistens och hårdna säkerhets-/risk-kontroller kan du göra projektet robust nog för livehandel.
