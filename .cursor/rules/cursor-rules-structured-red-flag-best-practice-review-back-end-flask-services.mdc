@@ -1,0 +1,88 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Structured “Red-Flag & Best-Practice” Review (Back End: Flask + Services)
+Front-end and infrastructure are covered briefly at the end.
+
+1 Architecture Overview
+Layer	Strengths	Weaknesses / Risks
+Routes (Flask Blueprints + function registration)	Clearly separated endpoints for orders, back-tests and status.	Duplicate registrations and direct routes mixed together → tighter coupling (see §2).
+Service layer	Good boundaries: ExchangeService, RiskManager, OrderService. @dataclass for risk parameters is self-documenting.	State kept in-memory → lost on restart; no thread/process safety.
+Domain model	JSON Schema for config; validation helpers for orders & pairs.	No persistence model for Position/Trade → hard to track history, PnL, multi-bot activity.
+
+2 Concrete Code Remarks
+File / Line	Problem	Consequence	Recommended Fix
+backend/app.py – duplicates of register_positions & register_config, plus duplicate imports	Bloated boot-strap; routes may be registered twice.	404/500 errors or CORS duplicates in production.	Move route registration to a Blueprint factory and import it once.
+Minified code (entire repo in 1-line files)	Hard to read, broken diffs, impossible to PEP-8 check.	Higher bug risk, blocks community contributions.	Run black/isort before commits; disable any minify step in the build pipeline.
+bot_control.py imports missing backend.services.bot_service	Runtime ImportError → every bot-control call returns 500.	Bot cannot start/stop.	Implement a real BotService class or remove the reference.
+orders.py creates a global ExchangeService with empty API keys	May ship to production unchanged → failed auth / leaked rate limits.	Authentication fails, orders blocked.	Inject ExchangeService from app.py via dependency injection.
+RiskManager keeps daily PnL only in memory	If the pod dies/restarts → counter resets, bot may keep trading despite earlier losses.	Persist daily_pnl in a DB (PostgreSQL) or Redis.	
+Validation helpers lack schema version & reuse	Two sources of truth (JSON Schema vs Python).	They will drift → validation bugs.	Auto-generate Python models from JSON Schema (pydantic v2).
+
+3 Design & Robustness
+State & Persistence
+
+All orders/alerts sit in RAM. For multi-container (Docker Compose / K8s) you need shared storage.
+
+Recommendation: PostgreSQL with SQLModel / SQLAlchemy 2 + Alembic migrations.
+
+Asynchrony & Scaling
+
+Flask is synchronous; ccxt calls are blocking.
+
+Switch to FastAPI + asyncio-ccxt or push heavy work to a Celery / RQ queue.
+
+Error Handling
+
+Exchange errors are wrapped, but HTTP responses just return 500 without a standard error code.
+
+Define ApiError(code, msg) and map to JSON-API / RFC 7807 “problem+json”.
+
+Risk Layer
+
+Position size & stop-loss are a good start, but there’s no real-time re-evaluation as the market moves.
+
+Add a WebSocket feed and dynamically re-calculate stop-loss / trailing stops.
+
+Security
+
+CORS set to "*" and no auth → any visitor can trade through your server.
+
+At minimum, protect all /api/** with JWT Bearer tokens and rate-limit via Flask-Limiter.
+
+4 Test & CI Level
+Area	Observation	Recommendation
+Pytest directories exist but lack assertions against a RequestContext.	End-to-end tests are missing.	Use pytest-flask with a test client + responses to mock ccxt.
+Vitest for React, but no GitHub Actions pipeline.	Regressions can slip in via PRs.	Add .github/workflows/ci.yml → lint + test + Docker build.
+
+5 Docker & Secrets
+docker-compose.yml hard-codes env variables in plain text → switch to an env_file or Docker Secrets.
+
+No health-check → the orchestrator can’t detect a stuck bot.
+
+6 Front-End (React + TS) Quick Look
+Strict TypeScript configuration (strict: true in tsconfig) 👍
+
+API client calls fetch directly; lacks a central error/auth interceptor.
+
+UI (Radix + Tailwind) looks clean but has no real-time order/PnL chart → add WebSocket (socket.io-client) + Zustand/Redux for state.
+
+7 Prioritized Action List
+Format & lint the entire codebase (black + ruff) for readability.
+
+Fix the bugs: remove duplicates in app.py, implement bot_service.py.
+
+Add authentication & rate-limiting to all API endpoints.
+
+Move state into a database and create migrations.
+
+Switch to an async framework or use a task queue for IO-heavy work.
+
+Introduce a CI pipeline with unit tests & Docker build/push.
+
+Add a WebSocket layer for market data and real-time UI updates.
+
+
+Extend RiskManager with dynamic PnL tracking and auto-hedging.
