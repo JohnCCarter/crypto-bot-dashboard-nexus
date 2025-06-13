@@ -4,15 +4,21 @@ from typing import Any, Dict
 
 from flask import Blueprint, current_app, jsonify, request
 
-from backend.services.exchange import ExchangeService
-from backend.services.order_service import OrderService
 from backend.services.validation import validate_order_data
 
-# Skapa en ExchangeService-instans (dummy-nycklar för test)
-exchange_service = ExchangeService(exchange_id="binance", api_key="", api_secret="")
-order_service = OrderService(exchange_service)
-
 orders_bp = Blueprint("orders", __name__)
+
+
+def get_order_service():
+    """Get order service from application context."""
+    if not hasattr(current_app, '_services'):
+        # Fallback if services not properly initialized
+        from backend.services.exchange import ExchangeService
+        from backend.services.order_service import OrderService
+        # This should be properly configured
+        exchange = ExchangeService("binance", "", "")  
+        return OrderService(exchange)
+    return current_app._services.get("order_service")
 
 
 @orders_bp.route("/api/orders", methods=["POST"])
@@ -55,6 +61,11 @@ def place_order_route():
                 400,
             )
 
+        # Get order service from app context
+        order_service = get_order_service()
+        if not order_service:
+            return jsonify({"error": "Order service not available"}), 500
+
         # Place order
         order = order_service.place_order(data)
         return (
@@ -81,6 +92,10 @@ def get_order_route(order_id: str):
         500: Server error
     """
     try:
+        order_service = get_order_service()
+        if not order_service:
+            return jsonify({"error": "Order service not available"}), 500
+            
         order = order_service.get_order_status(order_id)
         if not order:
             return jsonify({"error": "Order not found"}), 404
@@ -104,6 +119,10 @@ def cancel_order_route(order_id: str):
         500: Server error
     """
     try:
+        order_service = get_order_service()
+        if not order_service:
+            return jsonify({"error": "Order service not available"}), 500
+            
         result = order_service.cancel_order(order_id)
         if not result:
             return jsonify({"error": "Order not found"}), 404
@@ -126,6 +145,10 @@ def get_open_orders_route():
         500: Server error
     """
     try:
+        order_service = get_order_service()
+        if not order_service:
+            return jsonify({"error": "Order service not available"}), 500
+            
         symbol = request.args.get("symbol")
         orders = order_service.get_open_orders(symbol)
         return jsonify({"orders": orders}), 200

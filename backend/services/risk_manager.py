@@ -1,7 +1,9 @@
 """Risk management service for trading operations."""
 
+import json
+import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 from typing import Any, Dict, Optional
 
 
@@ -20,16 +22,65 @@ class RiskParameters:
 class RiskManager:
     """Service for managing trading risk."""
 
-    def __init__(self, risk_params: RiskParameters):
+    def __init__(self, risk_params: RiskParameters, 
+                 persistence_file: str = "daily_pnl.json"):
         """
         Initialize risk manager.
 
         Args:
             risk_params: Risk management parameters
+            persistence_file: File to persist daily PnL data
         """
         self.params = risk_params
+        self.persistence_file = persistence_file
         self.daily_pnl = 0.0
+        self.current_date = date.today()
         self.open_positions: Dict[str, Dict[str, Any]] = {}
+        
+        # Load persisted daily PnL data
+        self._load_daily_pnl()
+
+    def _load_daily_pnl(self):
+        """Load daily PnL data from persistence file."""
+        if os.path.exists(self.persistence_file):
+            try:
+                with open(self.persistence_file, 'r') as f:
+                    data = json.load(f)
+                    saved_date_str = data.get('date', str(date.today()))
+                    saved_date = date.fromisoformat(saved_date_str)
+                    
+                    # Reset if it's a new day
+                    if saved_date != self.current_date:
+                        self.daily_pnl = 0.0
+                        self._save_daily_pnl()
+                    else:
+                        self.daily_pnl = data.get('daily_pnl', 0.0)
+            except (json.JSONDecodeError, KeyError, ValueError):
+                # If file is corrupted, start fresh
+                self.daily_pnl = 0.0
+                self._save_daily_pnl()
+
+    def _save_daily_pnl(self):
+        """Save daily PnL data to persistence file."""
+        data = {
+            'date': str(self.current_date),
+            'daily_pnl': self.daily_pnl,
+            'last_updated': datetime.now().isoformat()
+        }
+        try:
+            with open(self.persistence_file, 'w') as f:
+                json.dump(data, f, indent=2)
+        except IOError as e:
+            # Log error but don't fail - this is non-critical
+            print(f"Warning: Could not save daily PnL data: {e}")
+
+    def _check_new_day(self):
+        """Check if it's a new day and reset daily PnL if needed."""
+        today = date.today()
+        if today != self.current_date:
+            self.current_date = today
+            self.daily_pnl = 0.0
+            self._save_daily_pnl()
 
     def validate_order(
         self,
@@ -151,8 +202,11 @@ class RiskManager:
         Args:
             pnl: Profit/loss amount
         """
+        self._check_new_day()
         self.daily_pnl += pnl
+        self._save_daily_pnl()
 
     def reset_daily_pnl(self):
         """Reset daily profit/loss at start of new day."""
         self.daily_pnl = 0.0
+        self._save_daily_pnl()

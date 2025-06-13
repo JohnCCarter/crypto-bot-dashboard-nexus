@@ -14,8 +14,6 @@ from backend.routes.config import register as register_config
 from backend.routes.orders import orders_bp
 from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
-from backend.routes.positions import register as register_positions
-from backend.routes.config import register as register_config
 from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
@@ -87,6 +85,9 @@ def init_services() -> Dict[str, Any]:
 
 # Initialize services
 services = init_services()
+
+# Make services available to blueprints
+app._services = services
 
 
 def register_routes():
