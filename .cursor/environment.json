@@ -1,13 +1,13 @@
 {
+  "install": "cd backend; pip install -r requirements.txt; cd ..; npm install",
   "terminals": [
     {
-      "name": "Backend",
-      "command": "cd backend && flask run"
+      "name": "Starta backend (Flask)",
+      "command": "cd backend; flask run --host=0.0.0.0"
     },
     {
-      "name": "Frontend",
+      "name": "Starta frontend (Vite)",
       "command": "npm run dev"
     }
-  ],
-  "install": "pip install -r backend/requirements.txt && npm install"
+  ]
 }
