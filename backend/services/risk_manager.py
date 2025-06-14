@@ -72,7 +72,7 @@ class RiskManager:
                 json.dump(data, f, indent=2)
         except IOError as e:
             # Log error but don't fail - this is non-critical
-            print(f"Warning: Could not save daily PnL data: {e}")
+            logging.warning(f"Warning: Could not save daily PnL data: {e}")
 
     def _check_new_day(self):
         """Check if it's a new day and reset daily PnL if needed."""
