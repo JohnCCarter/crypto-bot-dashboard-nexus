@@ -84,7 +84,7 @@ def register(app):
         try:
             exchange = get_exchange_service()
             if not exchange:
-                current_app.logger.warning("Exchange service not available, using mock data")
+                current_app.logger.warning("📋 [Market] Exchange service not available, using mock data")
                 return get_mock_orderbook(symbol)
             
             limit = min(int(request.args.get('limit', 20)), 100)
@@ -100,7 +100,8 @@ def register(app):
             else:
                 formatted_symbol = symbol
                 
-            current_app.logger.info(f"📋 [Market] Fetching orderbook for {formatted_symbol}")
+            current_app.logger.info(f"📋 [Market] Fetching orderbook for {formatted_symbol} with limit {limit}")
+            current_app.logger.info(f"📋 [Market] Exchange ID: {getattr(exchange.exchange, 'id', 'unknown')}")
             
             orderbook = exchange.fetch_order_book(formatted_symbol, limit)
             
@@ -109,13 +110,15 @@ def register(app):
             return jsonify(orderbook), 200
             
         except ExchangeError as e:
-            current_app.logger.error(f"❌ [Market] Exchange error: {str(e)}")
-            return jsonify({"error": f"Exchange error: {str(e)}"}), 503
+            current_app.logger.error(f"❌ [Market] Exchange error for orderbook: {str(e)}")
+            current_app.logger.info("📋 [Market] Falling back to mock orderbook data")
+            return get_mock_orderbook(symbol)
         except Exception as e:
             current_app.logger.error(f"❌ [Market] Failed to fetch orderbook: {str(e)}")
             import traceback
             current_app.logger.error(f"❌ [Market] Stack trace: {traceback.format_exc()}")
-            return jsonify({"error": f"Failed to fetch orderbook: {str(e)}"}), 500
+            current_app.logger.info("📋 [Market] Falling back to mock orderbook data")
+            return get_mock_orderbook(symbol)
 
     @app.route("/api/market/ticker/<symbol>", methods=["GET"])
     def get_live_ticker(symbol):

@@ -233,16 +233,28 @@ class ExchangeService:
             ExchangeError: If order book fetch fails
         """
         try:
-            orderbook = self.exchange.fetch_order_book(symbol, limit)
+            # Special handling for Bitfinex orderbook
+            if hasattr(self.exchange, 'id') and self.exchange.id == 'bitfinex':
+                # Bitfinex requires different limit handling
+                # Try without limit first, then apply client-side limiting
+                orderbook = self.exchange.fetch_order_book(symbol)
+            else:
+                # Standard CCXT implementation for other exchanges
+                orderbook = self.exchange.fetch_order_book(symbol, limit)
+            
+            # Apply limit on client side to ensure consistency
+            limited_bids = orderbook["bids"][:limit] if orderbook["bids"] else []
+            limited_asks = orderbook["asks"][:limit] if orderbook["asks"] else []
+            
             return {
                 "symbol": symbol,
                 "bids": [
                     {"price": float(bid[0]), "amount": float(bid[1])}
-                    for bid in orderbook["bids"][:limit]
+                    for bid in limited_bids
                 ],
                 "asks": [
                     {"price": float(ask[0]), "amount": float(ask[1])}
-                    for ask in orderbook["asks"][:limit]
+                    for ask in limited_asks
                 ],
                 "timestamp": orderbook.get("timestamp", int(datetime.utcnow().timestamp() * 1000))
             }
