@@ -1,0 +1,20 @@
+[
+  {
+    "timestamp": "2025-06-18T20:10:46.597Z",
+    "level": "error",
+    "source": "Backend",
+    "message": "Test error"
+  },
+  {
+    "timestamp": "2025-06-18T20:09:44.725Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "Warning: Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render%s LogViewer TradeTable TradeTable \n    at div\n    at TradeTable (http://localhost:8080/src/components/TradeTable.tsx:23:30)\n    at div\n    at div\n    at div\n    at http://localhost:8080/node_modules/.vite/deps/chunk-U5ZFH5UO.js?v=bfb32294:41:13\n    at Presence (http://localhost:8080/node_modules/.vite/deps/chunk-7BGOFLGP.js?v=bfb32294:24:11)\n    at http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=bfb32294:448:13\n    at _c4 (http://localhost:8080/src/components/ui/tabs.tsx:61:61)\n    at div\n    at http://localhost:8080/node_modules/.vite/deps/chunk-U5ZFH5UO.js?v=bfb32294:41:13\n    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-5LFIKY3M.js?v=bfb32294:32:15)\n    at http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=bfb32294:326:7\n    at main\n    at div\n    at Index (http://localhost:8080/src/pages/Index.tsx:47:37)\n    at RenderedRoute (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:4069:5)\n    at Routes (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:4508:5)\n    at Router (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:4451:15)\n    at BrowserRouter (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:5196:5)\n    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-5LFIKY3M.js?v=bfb32294:32:15)\n    at TooltipProvider (http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=bfb32294:59:5)\n    at QueryClientProvider (http://localhost:8080/node_modules/.vite/deps/@tanstack_react-query.js?v=bfb32294:2794:3)\n    at App"
+  },
+  {
+    "timestamp": "2025-06-18T20:09:44.721Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "Warning: Each child in a list should have a unique \"key\" prop.%s%s See https://reactjs.org/link/warning-keys for more information.%s \n\nCheck the render method of `TradeTable`.  \n    at div\n    at TradeTable (http://localhost:8080/src/components/TradeTable.tsx:23:30)\n    at div\n    at div\n    at div\n    at http://localhost:8080/node_modules/.vite/deps/chunk-U5ZFH5UO.js?v=bfb32294:41:13\n    at Presence (http://localhost:8080/node_modules/.vite/deps/chunk-7BGOFLGP.js?v=bfb32294:24:11)\n    at http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=bfb32294:448:13\n    at _c4 (http://localhost:8080/src/components/ui/tabs.tsx:61:61)\n    at div\n    at http://localhost:8080/node_modules/.vite/deps/chunk-U5ZFH5UO.js?v=bfb32294:41:13\n    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-5LFIKY3M.js?v=bfb32294:32:15)\n    at http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=bfb32294:326:7\n    at main\n    at div\n    at Index (http://localhost:8080/src/pages/Index.tsx:47:37)\n    at RenderedRoute (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:4069:5)\n    at Routes (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:4508:5)\n    at Router (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:4451:15)\n    at BrowserRouter (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=bfb32294:5196:5)\n    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-5LFIKY3M.js?v=bfb32294:32:15)\n    at TooltipProvider (http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=bfb32294:59:5)\n    at QueryClientProvider (http://localhost:8080/node_modules/.vite/deps/@tanstack_react-query.js?v=bfb32294:2794:3)\n    at App"
+  }
+]
