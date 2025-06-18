@@ -72,14 +72,22 @@ def run_backtest():
     try:
         # Get request data
         if not request.is_json:
+            print("❌ DEBUG: Content-Type is not application/json")
             return jsonify({"error": "Content-Type must be application/json"}), 400
         try:
             data = request.get_json()
-        except Exception:
+            print(f"🔍 DEBUG: Received data keys: {list(data.keys()) if data else 'None'}")
+            if data and 'data' in data:
+                print(f"🔍 DEBUG: Data sub-keys: {list(data['data'].keys()) if data['data'] else 'None'}")
+                if data['data'] and 'timestamp' in data['data']:
+                    print(f"🔍 DEBUG: Timestamp count: {len(data['data']['timestamp'])}")
+        except Exception as e:
+            print(f"❌ DEBUG: JSON parsing error: {e}")
             return jsonify({"error": "Invalid JSON"}), 400
 
         # Validate required fields
         if not all(k in data for k in ["strategy", "data"]):
+            print(f"❌ DEBUG: Missing required fields. Has: {list(data.keys())}")
             return jsonify({"error": "Missing required fields"}), 400
 
         # Get strategy
