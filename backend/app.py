@@ -93,9 +93,9 @@ def init_services() -> Dict[str, Any]:
     
     # Exchange configuration from environment variables (sensitive data)
     exchange_config = {
-        "exchange_id": os.getenv("EXCHANGE_ID", "binance"),
-        "api_key": os.getenv("EXCHANGE_API_KEY"),
-        "api_secret": os.getenv("EXCHANGE_API_SECRET"),
+        "exchange_id": os.getenv("EXCHANGE_ID", "bitfinex"),
+        "api_key": os.getenv("BITFINEX_API_KEY"),
+        "api_secret": os.getenv("BITFINEX_API_SECRET"),
     }
 
     # Initialize exchange service

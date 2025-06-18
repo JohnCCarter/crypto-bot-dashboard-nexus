@@ -16,8 +16,8 @@ def test_bitfinex_connection():
     
     # Kontrollera environment variables
     exchange_id = os.getenv("EXCHANGE_ID")
-    api_key = os.getenv("EXCHANGE_API_KEY")
-    api_secret = os.getenv("EXCHANGE_API_SECRET")
+    api_key = os.getenv("BITFINEX_API_KEY")
+    api_secret = os.getenv("BITFINEX_API_SECRET")
     
     print(f"✅ Exchange ID: {exchange_id}")
     print(f"✅ API Key konfigurerad: {'Ja' if api_key else 'Nej'}")
@@ -25,7 +25,7 @@ def test_bitfinex_connection():
     
     if not api_key or not api_secret:
         print("\n❌ API nycklar saknas i .env filen!")
-        print("Konfigurera EXCHANGE_API_KEY och EXCHANGE_API_SECRET")
+        print("Konfigurera BITFINEX_API_KEY och BITFINEX_API_SECRET")
         return False
     
     # Testa ccxt anslutning
