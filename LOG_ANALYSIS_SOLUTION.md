@@ -19,6 +19,7 @@
 ## 🛠️ Teknisk Diagnos
 
 ### **Innan Fix:**
+
 ```javascript
 // Frontend (port 8080) försökte ansluta direkt till:
 const API_BASE_URL = 'http://localhost:5000';  // ❌ Bypass Vite proxy
@@ -30,6 +31,7 @@ proxy: {
 ```
 
 ### **Efter Fix:**
+
 ```javascript
 // Nu använder frontend Vite proxy:
 const API_BASE_URL = '';  // ✅ Använder proxy via /api/*
@@ -43,11 +45,13 @@ Frontend (8080) → /api/* → Vite Proxy → Backend (5000)
 ## ✅ Implementerade Fixes
 
 ### **1. API Configuration Fix**
+
 - ✅ Ändrat `API_BASE_URL` från `'http://localhost:5000'` till `''`
 - ✅ Nu använder alla API calls Vite proxy korrekt
 - ✅ Frontend→Backend kommunikation fungerar
 
 ### **2. Enhanced API Logging** 
+
 ```javascript
 🌐 [API] Making request to: /api/orders
 🌐 [API] Order data: {...}
@@ -55,6 +59,7 @@ Frontend (8080) → /api/* → Vite Proxy → Backend (5000)
 ```
 
 ### **3. Verifierade Backend Routes**
+
 - ✅ `/api/config` - GET & POST endpoints working
 - ✅ `/api/start-bot` - Bot control working  
 - ✅ `/api/orders` - Trading operations working
@@ -65,12 +70,14 @@ Frontend (8080) → /api/* → Vite Proxy → Backend (5000)
 ## 🧪 Test Plan
 
 ### **Steg 1: Öppna Frontend**
+
 ```bash
 # Frontend bör vara tillgänglig på:
 http://localhost:8080
 ```
 
 ### **Steg 2: Testa Bot Control**
+
 1. Klicka **START** button på bot control panel
 2. Kolla Log Viewer för:
 ```
@@ -81,6 +88,7 @@ http://localhost:8080
 ```
 
 ### **Steg 3: Testa Settings**
+
 1. Klicka **Settings** button
 2. Kolla Log Viewer för:
 ```
@@ -91,6 +99,7 @@ http://localhost:8080
 ```
 
 ### **Steg 4: Testa Manual Trading**
+
 1. Fyll i order detaljer (amount: 0.001, symbol: BTC/USD)
 2. Klicka **BUY** eller **SELL**
 3. Kolla Log Viewer för:
@@ -106,6 +115,7 @@ http://localhost:8080
 ## 🔍 Vad händer nu i logs
 
 ### **Lyckade API Calls:**
+
 ```json
 {
   "level": "info",
@@ -120,6 +130,7 @@ http://localhost:8080
 ```
 
 ### **Istället för tidigare:**
+
 ```json
 {
   "level": "error",

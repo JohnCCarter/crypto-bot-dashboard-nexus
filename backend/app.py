@@ -179,6 +179,56 @@ def register_routes():
 register_routes()
 
 
+# Root route for API documentation
+@app.route("/", methods=["GET"])
+def api_documentation():
+    """Show API documentation and available endpoints."""
+    api_info = {
+        "name": "Crypto Trading Bot API",
+        "version": "1.0.0",
+        "description": "Live cryptocurrency trading bot with Bitfinex integration",
+        "status": "running",
+        "endpoints": {
+            "health": {
+                "url": "/api/status",
+                "description": "Bot health check and basic status"
+            },
+            "live_market_data": {
+                "ohlcv": "/api/market/ohlcv/{symbol}?timeframe=5m&limit=100",
+                "orderbook": "/api/market/orderbook/{symbol}?limit=20", 
+                "ticker": "/api/market/ticker/{symbol}",
+                "markets": "/api/market/markets"
+            },
+            "trading": {
+                "orders": "/api/orders",
+                "positions": "/api/positions", 
+                "balances": "/api/balances"
+            },
+            "bot_control": {
+                "start": "/api/start-bot",
+                "stop": "/api/stop-bot",
+                "status": "/api/bot-status"
+            },
+            "analysis": {
+                "backtest": "/api/backtest/run",
+                "strategy_analysis": "/api/strategy-analysis"
+            }
+        },
+        "features": [
+            "Live Bitfinex integration",
+            "Real-time OHLCV data", 
+            "Live order book data",
+            "Trading bot control",
+            "Strategy backtesting",
+            "Risk management",
+            "Enhanced logging"
+        ],
+        "frontend_url": "http://localhost:8080"
+    }
+    
+    return jsonify(api_info)
+
+
 # Add monitoring endpoints
 @app.route("/api/monitor/status", methods=["GET"])
 def get_status():
