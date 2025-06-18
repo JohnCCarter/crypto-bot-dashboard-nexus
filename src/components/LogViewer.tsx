@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,25 @@ export const LogViewer: React.FC<LogViewerProps> = ({ logs: propLogs, isLoading 
   const [filter, setFilter] = useState<string>('all');
   const [maxLogs] = useState(1000);
 
+  // Optimized addLog function to prevent setState during render
+  const addLog = useCallback((level: 'info' | 'error' | 'warning' | 'debug', args: unknown[]) => {
+    const message = args.map(arg => 
+      typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+    ).join(' ');
+
+    const logEntry: FrontendLogEntry = {
+      timestamp: new Date().toISOString(),
+      level,
+      source: 'Frontend',
+      message
+    };
+
+    setFrontendLogs(prev => {
+      const updated = [logEntry, ...prev];
+      return updated.slice(0, maxLogs);
+    });
+  }, [maxLogs]);
+
   // Intercept console methods för att fånga frontend logs
   useEffect(() => {
     const originalConsole = {
@@ -32,24 +51,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ logs: propLogs, isLoading 
       error: console.error,
       warn: console.warn,
       info: console.info
-    };
-
-    const addLog = (level: 'info' | 'error' | 'warning' | 'debug', args: any[]) => {
-      const message = args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-      ).join(' ');
-
-      const logEntry: FrontendLogEntry = {
-        timestamp: new Date().toISOString(),
-        level,
-        source: 'Frontend',
-        message
-      };
-
-      setFrontendLogs(prev => {
-        const updated = [logEntry, ...prev];
-        return updated.slice(0, maxLogs);
-      });
     };
 
     // Override console methods
@@ -80,7 +81,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ logs: propLogs, isLoading 
       console.warn = originalConsole.warn;
       console.info = originalConsole.info;
     };
-  }, [maxLogs]);
+  }, [addLog]);
 
   // Kombinera backend logs med frontend logs - normalisera structure
   const normalizedPropLogs: FrontendLogEntry[] = propLogs.map(log => ({
@@ -223,7 +224,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ logs: propLogs, isLoading 
           ) : (
             filteredLogs.map((log, index) => (
               <div
-                key={index}
+                key={`${log.timestamp}-${index}`}
                 className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
               >
                 <div className="flex-shrink-0 mt-0.5">
