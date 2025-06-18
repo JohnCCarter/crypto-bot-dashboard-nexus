@@ -1,6 +1,9 @@
 import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, OrderBook, OrderHistoryItem, Trade, TradingConfig } from '@/types/trading';
 
-const API_BASE_URL = 'http://localhost:5000';
+// Use Vite proxy instead of direct backend connection
+// In development: requests go to '/api/*' which Vite proxies to http://127.0.0.1:5000
+// In production: API requests will go to same origin
+const API_BASE_URL = '';
 
 // Generate mock OHLCV data
 const generateMockOHLCVData = (): OHLCVData[] => {
@@ -38,43 +41,70 @@ export const api = {
     amount: number;
     price?: number | null;
   }): Promise<{ message: string }> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/orders`);
+    console.log(`🌐 [API] Order data:`, order);
+    
     const res = await fetch(`${API_BASE_URL}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order),
     });
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Order failed');
     return await res.json();
   },
 
   // Get Config (Live)
   async getConfig(): Promise<TradingConfig> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/config`);
+    
     const res = await fetch(`${API_BASE_URL}/api/config`);
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Failed to fetch config');
     return await res.json();
   },
 
   // Update Config (Live)
   async updateConfig(config: Partial<TradingConfig>): Promise<{ success: boolean; message: string }> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/config`);
+    console.log(`🌐 [API] Config data:`, config);
+    
     const res = await fetch(`${API_BASE_URL}/api/config`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
     });
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Failed to update config');
     return await res.json();
   },
 
   // Get Balances (Live)
   async getBalances(): Promise<Balance[]> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/balances`);
+    
     const res = await fetch(`${API_BASE_URL}/api/balances`);
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Failed to fetch balances');
     return await res.json();
   },
 
   // Get Active Trades (Live)
   async getActiveTrades(): Promise<Trade[]> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/positions`);
+    
     const res = await fetch(`${API_BASE_URL}/api/positions`);
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Failed to fetch trades');
     return await res.json();
   },
@@ -85,19 +115,34 @@ export const api = {
   },
   // Bot control endpoints
   async startBot(): Promise<{ success: boolean; message: string }> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/start-bot`);
+    
     const res = await fetch(`${API_BASE_URL}/api/start-bot`, { method: 'POST' });
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Failed to start bot');
     return await res.json();
   },
 
   async stopBot(): Promise<{ success: boolean; message: string }> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/stop-bot`);
+    
     const res = await fetch(`${API_BASE_URL}/api/stop-bot`, { method: 'POST' });
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Failed to stop bot');
     return await res.json();
   },
 
   async getBotStatus(): Promise<BotStatus> {
+    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/bot-status`);
+    
     const res = await fetch(`${API_BASE_URL}/api/bot-status`);
+    
+    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
+    
     if (!res.ok) throw new Error('Failed to fetch bot status');
     return await res.json();
   },
