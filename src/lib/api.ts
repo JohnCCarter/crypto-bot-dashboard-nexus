@@ -106,6 +106,10 @@ export const api = {
     data: { timestamp: number[]; open: number[]; high: number[]; low: number[]; close: number[]; volume: number[] },
     parameters: any = {}
   ): Promise<EmaCrossoverBacktestResult> {
+    console.log('🚀 Starting EMA crossover backtest request...');
+    console.log('📊 Data points:', data.timestamp.length);
+    console.log('⚙️ Parameters:', parameters);
+    
     const res = await fetch(`${API_BASE_URL}/api/backtest/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -115,8 +119,34 @@ export const api = {
         parameters
       })
     });
-    if (!res.ok) throw new Error('Backtest failed');
-    return await res.json();
+    
+    if (!res.ok) {
+      let errorDetails = `HTTP ${res.status}: ${res.statusText}`;
+      try {
+        const errorBody = await res.json();
+        if (errorBody.error) {
+          errorDetails = `${errorBody.error}`;
+          if (errorBody.error_type) {
+            errorDetails += ` (Type: ${errorBody.error_type})`;
+          }
+          if (errorBody.timestamp) {
+            errorDetails += ` [${errorBody.timestamp}]`;
+          }
+        }
+        console.error('❌ Detailed error from backend:', errorBody);
+      } catch (e) {
+        console.error('❌ Could not parse error response:', e);
+      }
+      throw new Error(`Backtest failed: ${errorDetails}`);
+    }
+    
+    const result = await res.json();
+    console.log('✅ EMA crossover backtest successful:', {
+      ema_fast: result.ema_fast,
+      ema_slow: result.ema_slow,
+      total_trades: result.total_trades
+    });
+    return result;
   },
 
   // Get Order History (Live)

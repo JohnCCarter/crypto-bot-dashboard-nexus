@@ -79,8 +79,23 @@ const Index: FC = () => {
       setEmaFast(result.ema_fast);
       setEmaSlow(result.ema_slow);
       setSignals(result.signals);
+      console.log('✅ EMA crossover loaded successfully');
     } catch (error) {
-      console.error('Failed to load EMA crossover data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('❌ Failed to load EMA crossover data:', errorMessage);
+      console.error('❌ Full error object:', error);
+      
+      // Log detailed error information for debugging
+      console.error('❌ Error details:', {
+        chartDataLength: chartData?.length || 0,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      });
+      
+      // Reset EMA data on error to prevent stale data
+      setEmaFast(undefined);
+      setEmaSlow(undefined);
+      setSignals(undefined);
     }
   }, [chartData]);
 

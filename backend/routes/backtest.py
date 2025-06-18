@@ -247,8 +247,22 @@ def run_backtest():
         return jsonify(result_dict)
 
     except Exception as e:
-        monitor.create_alert(AlertLevel.ERROR, f"Backtest failed: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        error_msg = f"Backtest failed: {str(e)}"
+        current_app.logger.error(f"❌ {error_msg}")
+        current_app.logger.error(f"❌ Error type: {type(e).__name__}")
+        current_app.logger.error(f"❌ Full traceback:")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        
+        # Log to trading.log with clear timestamp for frontend visibility
+        import logging
+        trading_logger = logging.getLogger('trading_monitor')
+        trading_logger.error(f"[{pd.Timestamp.now()}] CLEAR ERROR: {error_msg}")
+        trading_logger.error(f"[{pd.Timestamp.now()}] ERROR TYPE: {type(e).__name__}")
+        trading_logger.error(f"[{pd.Timestamp.now()}] PARAMETERS RECEIVED: {data.get('parameters', 'None')}")
+        
+        monitor.create_alert(AlertLevel.ERROR, error_msg)
+        return jsonify({"error": error_msg, "error_type": type(e).__name__, "timestamp": str(pd.Timestamp.now())}), 500
 
 
 @backtest_bp.route("/api/backtest/optimize", methods=["POST"])
