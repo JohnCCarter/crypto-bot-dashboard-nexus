@@ -57,14 +57,14 @@
     "portfolio_strategies": {
         "ema_crossover": {
             "enabled": true,
-            "weight": 0.4,
+            "weight": 0.45,
             "min_confidence": 0.6,
             "fast_period": 12,
             "slow_period": 26
         },
         "rsi": {
             "enabled": true,
-            "weight": 0.3,
+            "weight": 0.35,
             "min_confidence": 0.5,
             "rsi_period": 14,
             "overbought": 70,
@@ -72,13 +72,13 @@
         },
         "fvg": {
             "enabled": true,
-            "weight": 0.2,
+            "weight": 0.20,
             "min_confidence": 0.5,
             "lookback": 3
         },
         "sample": {
             "enabled": false,
-            "weight": 0.1,
+            "weight": 0.0,
             "min_confidence": 0.3
         }
     },
