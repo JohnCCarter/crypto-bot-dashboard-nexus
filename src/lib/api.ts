@@ -5,7 +5,7 @@ import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, Or
 // In production: API requests will go to same origin
 const API_BASE_URL = '';
 
-// Generate mock OHLCV data
+// Generate mock OHLCV data (fallback)
 const generateMockOHLCVData = (): OHLCVData[] => {
   const data: OHLCVData[] = [];
   const now = Date.now();
@@ -109,10 +109,122 @@ export const api = {
     return await res.json();
   },
 
-  // Get Chart Data (Mock)
-  async getChartData(symbol: string): Promise<OHLCVData[]> {
-    return new Promise(resolve => setTimeout(() => resolve(generateMockOHLCVData()), 400));
+  // Get Chart Data (Live Bitfinex)
+  async getChartData(symbol: string, timeframe: string = '5m', limit: number = 100): Promise<OHLCVData[]> {
+    console.log(`📊 [API] Fetching live chart data for ${symbol} (${timeframe}, ${limit} candles)`);
+    
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/market/ohlcv/${symbol}?timeframe=${timeframe}&limit=${limit}`);
+      
+      console.log(`📊 [API] Response status: ${res.status} ${res.statusText}`);
+      
+      if (!res.ok) {
+        console.warn(`📊 [API] Live data failed, falling back to mock data`);
+        return generateMockOHLCVData();
+      }
+      
+      const liveData = await res.json();
+      console.log(`✅ [API] Successfully fetched ${liveData.length} live candles`);
+      
+      return liveData;
+    } catch (error) {
+      console.error(`❌ [API] Error fetching live chart data:`, error);
+      console.warn(`📊 [API] Using mock data as fallback`);
+      return generateMockOHLCVData();
+    }
   },
+
+  // Get Order Book (Live Bitfinex)
+  async getOrderBook(symbol: string, limit: number = 20): Promise<OrderBook> {
+    console.log(`📋 [API] Fetching live order book for ${symbol}`);
+    
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/market/orderbook/${symbol}?limit=${limit}`);
+      
+      console.log(`📋 [API] Response status: ${res.status} ${res.statusText}`);
+      
+      if (!res.ok) {
+        console.warn(`📋 [API] Live orderbook failed, falling back to mock data`);
+        return {
+          bids: [
+            { price: 45000, amount: 1 },
+            { price: 44950, amount: 2 }
+          ],
+          asks: [
+            { price: 45100, amount: 1.5 },
+            { price: 45200, amount: 0.8 }
+          ],
+          symbol
+        };
+      }
+      
+      const liveOrderbook = await res.json();
+      console.log(`✅ [API] Successfully fetched live orderbook with ${liveOrderbook.bids.length} bids, ${liveOrderbook.asks.length} asks`);
+      
+      return liveOrderbook;
+    } catch (error) {
+      console.error(`❌ [API] Error fetching live orderbook:`, error);
+      console.warn(`📋 [API] Using mock orderbook as fallback`);
+      return {
+        bids: [
+          { price: 45000, amount: 1 },
+          { price: 44950, amount: 2 }
+        ],
+        asks: [
+          { price: 45100, amount: 1.5 },
+          { price: 45200, amount: 0.8 }
+        ],
+        symbol
+      };
+    }
+  },
+
+  // Get Market Ticker (Live Bitfinex)
+  async getMarketTicker(symbol: string): Promise<any> {
+    console.log(`💰 [API] Fetching live ticker for ${symbol}`);
+    
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/market/ticker/${symbol}`);
+      
+      console.log(`💰 [API] Response status: ${res.status} ${res.statusText}`);
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch ticker');
+      }
+      
+      const ticker = await res.json();
+      console.log(`✅ [API] Successfully fetched ticker: ${ticker.last}`);
+      
+      return ticker;
+    } catch (error) {
+      console.error(`❌ [API] Error fetching ticker:`, error);
+      throw error;
+    }
+  },
+
+  // Get Available Markets (Live Bitfinex)
+  async getAvailableMarkets(): Promise<any> {
+    console.log(`🏪 [API] Fetching available markets`);
+    
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/market/markets`);
+      
+      console.log(`🏪 [API] Response status: ${res.status} ${res.statusText}`);
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch markets');
+      }
+      
+      const markets = await res.json();
+      console.log(`✅ [API] Successfully fetched ${Object.keys(markets).length} markets`);
+      
+      return markets;
+    } catch (error) {
+      console.error(`❌ [API] Error fetching markets:`, error);
+      throw error;
+    }
+  },
+
   // Bot control endpoints
   async startBot(): Promise<{ success: boolean; message: string }> {
     console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/start-bot`);
@@ -199,22 +311,6 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/api/orders/history`);
     if (!res.ok) throw new Error('Failed to fetch order history');
     return await res.json();
-  },
-
-  // Get Order Book (Mock)
-  async getOrderBook(symbol: string): Promise<OrderBook> {
-    // Returnera mockad orderbok
-    return {
-      bids: [
-        { price: 45000, amount: 1 },
-        { price: 44950, amount: 2 }
-      ],
-      asks: [
-        { price: 45100, amount: 1.5 },
-        { price: 45200, amount: 0.8 }
-      ],
-      symbol
-    };
   },
 
   // Get Logs (Mock)

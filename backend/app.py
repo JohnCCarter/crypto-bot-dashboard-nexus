@@ -20,6 +20,7 @@ from backend.routes.orders import register as register_orders
 from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
 from backend.routes.strategy_analysis import strategy_analysis_bp
+from backend.routes import market_data
 from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
@@ -41,6 +42,7 @@ register_bot_control(app)
 register_orders(app)
 register_positions(app)
 register_config(app)
+market_data.register(app)
 
 
 def load_config() -> Dict[str, Any]:

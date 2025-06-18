@@ -186,3 +186,125 @@ class ExchangeService:
             }
         except Exception as e:
             raise ExchangeError(f"Failed to fetch balance: {str(e)}")
+
+    def fetch_ohlcv(self, symbol: str, timeframe: str = '5m', limit: int = 100) -> list:
+        """
+        Fetch OHLCV (candlestick) data from exchange.
+
+        Args:
+            symbol: Trading pair (e.g. 'BTC/USD')
+            timeframe: Timeframe (e.g. '1m', '5m', '1h', '1d')
+            limit: Number of candles to fetch
+
+        Returns:
+            List of OHLCV data [timestamp, open, high, low, close, volume]
+
+        Raises:
+            ExchangeError: If OHLCV fetch fails
+        """
+        try:
+            ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+            return [
+                {
+                    "timestamp": candle[0],
+                    "open": float(candle[1]),
+                    "high": float(candle[2]), 
+                    "low": float(candle[3]),
+                    "close": float(candle[4]),
+                    "volume": float(candle[5])
+                }
+                for candle in ohlcv
+            ]
+        except Exception as e:
+            raise ExchangeError(f"Failed to fetch OHLCV data: {str(e)}")
+
+    def fetch_order_book(self, symbol: str, limit: int = 20) -> Dict[str, Any]:
+        """
+        Fetch order book data from exchange.
+
+        Args:
+            symbol: Trading pair (e.g. 'BTC/USD')
+            limit: Number of levels to fetch for each side
+
+        Returns:
+            Dict containing bids and asks
+
+        Raises:
+            ExchangeError: If order book fetch fails
+        """
+        try:
+            orderbook = self.exchange.fetch_order_book(symbol, limit)
+            return {
+                "symbol": symbol,
+                "bids": [
+                    {"price": float(bid[0]), "amount": float(bid[1])}
+                    for bid in orderbook["bids"][:limit]
+                ],
+                "asks": [
+                    {"price": float(ask[0]), "amount": float(ask[1])}
+                    for ask in orderbook["asks"][:limit]
+                ],
+                "timestamp": orderbook.get("timestamp", int(datetime.utcnow().timestamp() * 1000))
+            }
+        except Exception as e:
+            raise ExchangeError(f"Failed to fetch order book: {str(e)}")
+
+    def fetch_recent_trades(self, symbol: str, limit: int = 50) -> list:
+        """
+        Fetch recent trades from exchange.
+
+        Args:
+            symbol: Trading pair (e.g. 'BTC/USD')
+            limit: Number of trades to fetch
+
+        Returns:
+            List of recent trades
+
+        Raises:
+            ExchangeError: If trades fetch fails
+        """
+        try:
+            trades = self.exchange.fetch_trades(symbol, limit=limit)
+            return [
+                {
+                    "id": trade["id"],
+                    "symbol": trade["symbol"],
+                    "side": trade["side"],
+                    "amount": float(trade["amount"]),
+                    "price": float(trade["price"]),
+                    "timestamp": trade["timestamp"]
+                }
+                for trade in trades
+            ]
+        except Exception as e:
+            raise ExchangeError(f"Failed to fetch recent trades: {str(e)}")
+
+    def get_markets(self) -> Dict[str, Any]:
+        """
+        Get available trading markets from exchange.
+
+        Returns:
+            Dict containing available markets
+
+        Raises:
+            ExchangeError: If markets fetch fails
+        """
+        try:
+            markets = self.exchange.load_markets()
+            return {
+                symbol: {
+                    "base": market["base"],
+                    "quote": market["quote"],
+                    "active": market["active"],
+                    "type": market["type"],
+                    "spot": market.get("spot", True),
+                    "margin": market.get("margin", False),
+                    "future": market.get("future", False),
+                    "option": market.get("option", False),
+                    "contract": market.get("contract", False)
+                }
+                for symbol, market in markets.items()
+                if market["active"]
+            }
+        except Exception as e:
+            raise ExchangeError(f"Failed to fetch markets: {str(e)}")
