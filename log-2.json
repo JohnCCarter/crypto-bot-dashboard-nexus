@@ -1,0 +1,56 @@
+[
+  {
+    "timestamp": "2025-06-18T18:34:45.049Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Operation completed, loading state reset"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:45.049Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Stack trace: TypeError: Failed to fetch\n    at Object.startBot (http://localhost:8080/src/lib/api.ts:80:27)\n    at handleToggleBot (http://localhost:8080/src/components/BotControl.tsx:58:92)\n    at HTMLUnknownElement.callCallback2 (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3674:22)\n    at Object.invokeGuardedCallbackDev (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3699:24)\n    at invokeGuardedCallback (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3733:39)\n    at invokeGuardedCallbackAndCatchFirstError (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3736:33)\n    at executeDispatch (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:7014:11)\n    at processDispatchQueueItemsInOrder (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:7034:15)\n    at processDispatchQueue (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:7043:13)\n    at dispatchEventsForPlugins (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:7051:11)"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:45.048Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error message: Failed to fetch"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:45.047Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error type: TypeError"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:45.047Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Exception caught: {}"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:43.069Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Calling api.startBot()..."
+  },
+  {
+    "timestamp": "2025-06-18T18:34:43.069Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Timestamp: 2025-06-18T18:34:43.069Z"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:43.069Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Current status: {\n  \"status\": \"stopped\",\n  \"uptime\": 0,\n  \"last_update\": \"2025-06-18T18:32:32.266Z\"\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:43.069Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] User clicked START button"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "timestamp": "2025-06-18T18:34:30.077Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] Order submission process completed"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:30.076Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [ManualTrade] Failed order data: {\n  \"symbol\": \"BTCUSD\",\n  \"order_type\": \"market\",\n  \"side\": \"buy\",\n  \"amount\": 0.006\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:30.075Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [ManualTrade] Stack trace: TypeError: Failed to fetch\n    at Object.placeOrder (http://localhost:8080/src/lib/api.ts:34:27)\n    at handleSubmitOrder (http://localhost:8080/src/components/ManualTradePanel.tsx:86:38)\n    at onClick (http://localhost:8080/src/components/ManualTradePanel.tsx:498:46)\n    at HTMLUnknownElement.callCallback2 (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3674:22)\n    at Object.invokeGuardedCallbackDev (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3699:24)\n    at invokeGuardedCallback (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3733:39)\n    at invokeGuardedCallbackAndCatchFirstError (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:3736:33)\n    at executeDispatch (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:7014:11)\n    at processDispatchQueueItemsInOrder (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:7034:15)\n    at processDispatchQueue (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:7043:13)"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:30.075Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [ManualTrade] Error message: Failed to fetch"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:30.075Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [ManualTrade] Error type: TypeError"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:30.074Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [ManualTrade] Order submission failed: {}"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:28.593Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] Calling api.placeOrder()..."
+  },
+  {
+    "timestamp": "2025-06-18T18:34:28.593Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] Order data prepared: {\n  \"symbol\": \"BTCUSD\",\n  \"order_type\": \"market\",\n  \"side\": \"buy\",\n  \"amount\": 0.006\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:28.593Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] Timestamp: 2025-06-18T18:34:28.593Z"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:28.593Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] Order parameters: {\n  \"symbol\": \"BTCUSD\",\n  \"orderType\": \"market\",\n  \"amount\": \"0.006\",\n  \"price\": \"\",\n  \"side\": \"buy\"\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:28.593Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] User initiated BUY order"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:23.661Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [ManualTrade] Validation failed: Invalid amount \"\""
+  },
+  {
+    "timestamp": "2025-06-18T18:34:23.659Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] Timestamp: 2025-06-18T18:34:23.659Z"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:23.659Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] Order parameters: {\n  \"symbol\": \"BTCUSD\",\n  \"orderType\": \"market\",\n  \"amount\": \"\",\n  \"price\": \"\",\n  \"side\": \"buy\"\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:34:23.658Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "📈 [ManualTrade] User initiated BUY order"
+  }
+]
