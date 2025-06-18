@@ -8,6 +8,7 @@ const generateMockOHLCVData = (): OHLCVData[] => {
   const now = Date.now();
   let basePrice = 45000;
 
+  // Generate 101 data points (from 100 to 0)
   for (let i = 100; i >= 0; i--) {
     const timestamp = now - (i * 5 * 60 * 1000); // 5-minute intervals
     const volatility = 0.02;
@@ -23,6 +24,7 @@ const generateMockOHLCVData = (): OHLCVData[] => {
     basePrice = close;
   }
 
+  console.log(`📊 generateMockOHLCVData created ${data.length} data points`);
   return data;
 };
 

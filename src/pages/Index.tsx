@@ -53,9 +53,11 @@ const Index: FC = () => {
     try {
       // Säkerhetskontroll: Se till att vi har chartData
       if (!chartData || chartData.length === 0) {
-        console.log('No chart data available for EMA crossover backtest');
+        console.log('❌ No chart data available for EMA crossover backtest');
         return;
       }
+
+      console.log(`📊 loadEmaCrossover called with ${chartData.length} data points`);
 
       // Mock: använd chartData för att skapa data-objekt
       const data = {
@@ -67,7 +69,7 @@ const Index: FC = () => {
         volume: chartData.map(d => d.volume)
       };
       
-      console.log('Sending backtest data:', { dataLength: data.timestamp.length, sample: data.timestamp.slice(0, 3) });
+      console.log('🚀 Sending backtest data:', { dataLength: data.timestamp.length, sample: data.timestamp.slice(0, 3) });
       
       const result = await api.runBacktestEmaCrossover(data, {
         fast_period: 3,
@@ -137,6 +139,7 @@ const Index: FC = () => {
         api.getChartData('BTCUSD')
       ]);
 
+      console.log(`📈 Chart data loaded: ${chartDataResponse.length} data points`);
       setBalances(balancesData);
       setActiveTrades(tradesData);
       setOrderHistory(ordersData);
