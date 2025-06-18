@@ -12,7 +12,6 @@ import { TradeTable } from '@/components/TradeTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useWebSocket } from '@/hooks/useWebSocket';
 import { api } from '@/lib/api';
 import {
   Balance,
@@ -51,6 +50,7 @@ const Index: FC = () => {
   const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
   const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
 
   const loadEmaCrossover = useCallback(async () => {
@@ -103,21 +103,6 @@ const Index: FC = () => {
     }
   }, [chartData]);
 
-  // WebSocket for real-time updates (prepared for future use)
-  const { isConnected } = useWebSocket('ws://localhost:5000/ws', (data: unknown) => {
-    console.log('WebSocket data received:', data);
-    // Type guard for expected data shape
-    if (typeof data === 'object' && data !== null && 'type' in data && 'data' in data) {
-      const d = data as { type: string; data: OrderBookType | BotStatus };
-      if (d.type === 'orderbook') {
-        setOrderBook(d.data as OrderBookType);
-      }
-      if (d.type === 'status') {
-        setBotStatus(d.data as BotStatus);
-      }
-    }
-  });
-
   // Load initial data
   useEffect(() => {
     console.log('API keys:', Object.keys(api)); // Debug: logga vilka funktioner som finns på api-objektet
@@ -166,8 +151,10 @@ const Index: FC = () => {
       setOrderBook(orderBookData);
       setLogs(logsData);
       setChartData(chartDataResponse);
+      setIsConnected(true); // Set connected to true when API calls succeed
     } catch (error) {
       console.error('Failed to load data:', error);
+      setIsConnected(false); // Set connected to false when API calls fail
     } finally {
       setIsLoading(false);
     }
