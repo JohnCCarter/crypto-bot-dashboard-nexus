@@ -8,12 +8,18 @@
  * - Graceful fallback till REST polling
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useHybridMarketData } from '@/hooks/useHybridMarketData';
-import { TrendingUp, TrendingDown, Wifi, Activity, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wifi, Activity, RefreshCw, Settings, Heart } from 'lucide-react';
+import { useWebSocketMarket } from '@/hooks/useWebSocketMarket';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTriangle } from '@/components/ui/alert';
+import { OrderBook } from '@/types/trading';
 
 interface HybridOrderBookProps {
   symbol?: string;
@@ -26,117 +32,226 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
   maxLevels = 10,
   showControls = true
 }) => {
-  const {
-    orderbook,
-    ticker,
-    connected,
-    connecting,
-    dataSource,
-    error,
-    refreshData,
-    switchToRestMode,
-    switchToWebSocketMode
-  } = useHybridMarketData(symbol);
+  const [mode, setMode] = useState<'websocket' | 'rest'>('websocket');
+  const [showDetails, setShowDetails] = useState(false);
+  
+  // WebSocket data med förbättrade funktioner
+  const wsData = useWebSocketMarket(symbol);
+  
+  // REST data som fallback
+  const { data: restOrderbook, isLoading: restLoading, error: restError, refetch } = useQuery<OrderBook>({
+    queryKey: ['orderbook', symbol, 'rest'],
+    queryFn: () => api.getOrderBook(symbol),
+    refetchInterval: mode === 'rest' ? 2000 : false,
+    enabled: mode === 'rest' || !wsData.connected
+  });
 
-  // Format price for display
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
-  };
+  // Välj data source
+  const orderbook = mode === 'websocket' ? wsData.orderbook : restOrderbook;
+  const isLoading = mode === 'websocket' ? wsData.connecting : restLoading;
+  const error = mode === 'websocket' ? wsData.error : restError;
+  const isConnected = mode === 'websocket' ? wsData.connected : !restLoading;
 
-  // Format amount with proper decimals
-  const formatAmount = (amount: number) => {
-    return amount.toFixed(4);
-  };
+  // Auto-fallback: Byt till REST om WebSocket inte fungerar
+  useEffect(() => {
+    if (mode === 'websocket' && wsData.error && !wsData.connected) {
+      console.log('🔄 [Hybrid] WebSocket failed, falling back to REST');
+      setMode('rest');
+    }
+  }, [mode, wsData.error, wsData.connected]);
 
-  // Get limited orderbook data
-  const limitedOrderbook = useMemo(() => {
-    if (!orderbook) return { bids: [], asks: [] };
-    
-    return {
-      bids: orderbook.bids.slice(0, maxLevels),
-      asks: orderbook.asks.slice(0, maxLevels)
-    };
-  }, [orderbook, maxLevels]);
-
-  // Calculate spread
-  const spread = useMemo(() => {
-    if (!limitedOrderbook.bids.length || !limitedOrderbook.asks.length) return null;
-    
-    const bestBid = limitedOrderbook.bids[0]?.price || 0;
-    const bestAsk = limitedOrderbook.asks[0]?.price || 0;
-    const spreadValue = bestAsk - bestBid;
-    const spreadPercent = (spreadValue / bestBid) * 100;
-    
-    return {
-      value: spreadValue,
-      percent: spreadPercent,
-      bestBid,
-      bestAsk
-    };
-  }, [limitedOrderbook]);
-
-  // Connection status badge
-  const getConnectionBadge = () => {
-    switch (dataSource) {
-      case 'websocket':
-        return (
-          <Badge variant="default" className="bg-green-500">
-            <Wifi className="w-3 h-3 mr-1" />
-            Live
-          </Badge>
-        );
-      case 'rest':
-        return (
-          <Badge variant="secondary" className="bg-yellow-500">
-            <Activity className="w-3 h-3 mr-1" />
-            Polling
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline">
-            Connecting...
-          </Badge>
-        );
+  // Beräkna connection status med mer detaljer
+  const getConnectionStatus = () => {
+    if (mode === 'websocket') {
+      if (wsData.connecting) return 'Ansluter...';
+      if (!wsData.connected) return 'Frånkopplad';
+      
+      // Platform status från Bitfinex
+      if (wsData.platformStatus === 'maintenance') return 'Underhållsläge';
+      if (wsData.platformStatus === 'operative') {
+        const latencyText = wsData.latency ? ` (${wsData.latency}ms)` : '';
+        return `Live WebSocket${latencyText}`;
+      }
+      
+      return 'WebSocket Ansluten';
+    } else {
+      return isLoading ? 'Laddar...' : 'REST Polling';
     }
   };
 
-  return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center space-x-2">
-          <CardTitle className="text-lg font-bold">
-            Order Book - {symbol}
-          </CardTitle>
-          {getConnectionBadge()}
-        </div>
+  const getStatusColor = () => {
+    if (mode === 'websocket') {
+      if (wsData.connecting) return 'text-yellow-500';
+      if (!wsData.connected) return 'text-red-500';
+      if (wsData.platformStatus === 'maintenance') return 'text-orange-500';
+      if (wsData.platformStatus === 'operative') return 'text-green-500';
+      return 'text-blue-500';
+    } else {
+      return isLoading ? 'text-yellow-500' : 'text-blue-500';
+    }
+  };
 
-        {showControls && (
-          <div className="flex space-x-1">
+  // Beräkna spread
+  const spread = orderbook?.asks?.[0] && orderbook?.bids?.[0] 
+    ? orderbook.asks[0].price - orderbook.bids[0].price 
+    : 0;
+
+  const spreadPercentage = orderbook?.asks?.[0] 
+    ? (spread / orderbook.asks[0].price) * 100 
+    : 0;
+
+  if (isLoading) {
+    return (
+      <Card className="h-[600px]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Orderbook - {symbol}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-full">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Laddar orderbook...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !orderbook) {
+    return (
+      <Card className="h-[600px]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Orderbook - {symbol}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-full">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Kunde inte ladda orderbook: {typeof error === 'string' ? error : error?.message || 'Okänt fel'}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const visibleBids = orderbook.bids.slice(0, maxLevels);
+  const visibleAsks = orderbook.asks.slice(0, maxLevels).reverse();
+
+  return (
+    <Card className="h-[600px]">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Orderbook - {symbol}
+          </CardTitle>
+          
+          <div className="flex items-center gap-2">
+            {/* Nya status indikatorer */}
+            <div className="flex items-center gap-1 text-xs">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={getStatusColor()}>{getConnectionStatus()}</span>
+            </div>
+            
+            {/* Heartbeat indikator för WebSocket */}
+            {mode === 'websocket' && wsData.lastHeartbeat && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Heart className="h-3 w-3" />
+                <span>{Math.round((Date.now() - wsData.lastHeartbeat) / 1000)}s</span>
+              </div>
+            )}
+            
             <Button
               variant="outline"
               size="sm"
-              onClick={refreshData}
-              disabled={connecting}
+              onClick={() => setShowDetails(!showDetails)}
+              className="h-7"
             >
-              <RefreshCw className={`w-4 h-4 ${connecting ? 'animate-spin' : ''}`} />
+              <Settings className="h-3 w-3" />
             </Button>
             
-            {dataSource !== 'websocket' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={switchToWebSocketMode}
-                className="text-green-600"
-              >
-                <Wifi className="w-4 h-4" />
-              </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => mode === 'rest' ? refetch() : wsData.connect()}
+              className="h-7"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Kontrollpanel */}
+        {showDetails && (
+          <div className="mt-3 p-3 bg-muted rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Datakälla:</span>
+              <div className="flex gap-1">
+                <Button
+                  variant={mode === 'websocket' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMode('websocket')}
+                  className="h-7 text-xs"
+                >
+                  WebSocket
+                </Button>
+                <Button
+                  variant={mode === 'rest' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMode('rest')}
+                  className="h-7 text-xs"
+                >
+                  REST
+                </Button>
+              </div>
+            </div>
+            
+            {/* WebSocket stats */}
+            {mode === 'websocket' && (
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Platform Status:</span>
+                  <p className="font-mono">
+                    {wsData.platformStatus === 'operative' ? '✅ Operativ' : 
+                     wsData.platformStatus === 'maintenance' ? '🔧 Underhåll' : 
+                     '❓ Okänd'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Latency:</span>
+                  <p className="font-mono">
+                    {wsData.latency ? `${wsData.latency}ms` : 'Mäter...'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Senaste Heartbeat:</span>
+                  <p className="font-mono">
+                    {wsData.lastHeartbeat 
+                      ? `${Math.round((Date.now() - wsData.lastHeartbeat) / 1000)}s sedan`
+                      : 'Väntar...'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Anslutning:</span>
+                  <p className="font-mono">
+                    {wsData.connected ? '🟢 Ansluten' : '🔴 Frånkopplad'}
+                  </p>
+                </div>
+              </div>
             )}
+            
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Spread:</span>
+              <span className="font-mono">
+                ${spread.toFixed(2)} ({spreadPercentage.toFixed(3)}%)
+              </span>
+            </div>
           </div>
         )}
       </CardHeader>
@@ -153,10 +268,10 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
-                <strong>Spread:</strong> {formatPrice(spread.value)} ({spread.percent.toFixed(4)}%)
+                <strong>Spread:</strong> {spread.toFixed(2)}
               </div>
               <div className="text-sm text-gray-600">
-                Best: {formatPrice(spread.bestBid)} / {formatPrice(spread.bestAsk)}
+                Percentage: {spreadPercentage.toFixed(3)}%
               </div>
             </div>
           </div>
@@ -176,23 +291,23 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
                 <div className="text-right">Amount</div>
               </div>
               
-              {limitedOrderbook.bids.length > 0 ? (
-                limitedOrderbook.bids.map((bid, index) => (
+              {visibleBids.length > 0 ? (
+                visibleBids.map((bid, index) => (
                   <div
                     key={`bid-${bid.price}-${index}`}
                     className="grid grid-cols-2 gap-2 text-sm py-1 px-2 rounded bg-green-50 hover:bg-green-100 transition-colors"
                   >
                     <div className="font-mono text-green-700">
-                      {formatPrice(bid.price)}
+                      {bid.price.toFixed(2)}
                     </div>
                     <div className="text-right font-mono text-gray-700">
-                      {formatAmount(bid.amount)}
+                      {bid.amount.toFixed(4)}
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="text-center text-gray-500 py-4">
-                  {connecting ? 'Loading bids...' : 'No bid data'}
+                  {isLoading ? 'Loading bids...' : 'No bid data'}
                 </div>
               )}
             </div>
@@ -211,23 +326,23 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
                 <div className="text-right">Amount</div>
               </div>
               
-              {limitedOrderbook.asks.length > 0 ? (
-                limitedOrderbook.asks.map((ask, index) => (
+              {visibleAsks.length > 0 ? (
+                visibleAsks.map((ask, index) => (
                   <div
                     key={`ask-${ask.price}-${index}`}
                     className="grid grid-cols-2 gap-2 text-sm py-1 px-2 rounded bg-red-50 hover:bg-red-100 transition-colors"
                   >
                     <div className="font-mono text-red-700">
-                      {formatPrice(ask.price)}
+                      {ask.price.toFixed(2)}
                     </div>
                     <div className="text-right font-mono text-gray-700">
-                      {formatAmount(ask.amount)}
+                      {ask.amount.toFixed(4)}
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="text-center text-gray-500 py-4">
-                  {connecting ? 'Loading asks...' : 'No ask data'}
+                  {isLoading ? 'Loading asks...' : 'No ask data'}
                 </div>
               )}
             </div>
@@ -235,14 +350,14 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
         </div>
 
         {/* Current Price Display */}
-        {ticker && (
+        {wsData.ticker && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg text-center">
             <div className="text-sm text-gray-600 mb-1">Current Price</div>
             <div className="text-2xl font-bold text-blue-600">
-              {formatPrice(ticker.price)}
+              {wsData.ticker.price.toFixed(2)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              Last update: {new Date(ticker.timestamp).toLocaleTimeString()}
+              Last update: {new Date(wsData.ticker.timestamp).toLocaleTimeString()}
             </div>
           </div>
         )}
@@ -250,19 +365,19 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
         {/* Status Footer */}
         <div className="mt-4 flex justify-between items-center text-xs text-gray-500">
           <div>
-            Levels: {limitedOrderbook.bids.length + limitedOrderbook.asks.length} | 
-            Source: {dataSource}
+            Levels: {visibleBids.length + visibleAsks.length} | 
+            Source: {mode === 'websocket' ? 'WebSocket' : 'REST'}
           </div>
           
           <div className="flex items-center space-x-2">
-            {connected && dataSource === 'websocket' && (
+            {mode === 'websocket' && isConnected && (
               <div className="flex items-center text-green-600">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
                 Real-time
               </div>
             )}
             
-            {!connected && dataSource === 'rest' && (
+            {!isConnected && mode === 'rest' && (
               <div className="flex items-center text-yellow-600">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
                 Polling
