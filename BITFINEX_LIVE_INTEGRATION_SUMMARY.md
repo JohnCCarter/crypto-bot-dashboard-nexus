@@ -10,6 +10,7 @@
 ### ✅ Backend Utökningar
 
 **1. Enhanced ExchangeService** (`backend/services/exchange.py`)
+
 - Nya metoder för live marknadsdata:
   - `fetch_ohlcv()` - OHLCV candlestick data
   - `fetch_order_book()` - Order book data
@@ -17,12 +18,14 @@
   - `get_markets()` - Tillgängliga marknader
 
 **2. Nya API Endpoints** (`backend/routes/market_data.py`)
+
 - `/api/market/ohlcv/<symbol>` - Live prisgraf data
 - `/api/market/orderbook/<symbol>` - Live order book
 - `/api/market/ticker/<symbol>` - Live ticker data
 - `/api/market/markets` - Tillgängliga trading par
 
 **3. Intelligent Fallback System**
+
 - Om live data inte är tillgängligt → Automatisk fallback till mock data
 - Ingen störning av användarupplevelsen
 - Tydlig loggning av data-källa
@@ -30,12 +33,14 @@
 ### ✅ Frontend Förbättringar
 
 **4. Uppdaterad API Client** (`src/lib/api.ts`)
+
 - `getChartData()` - Nu hämtar live OHLCV från Bitfinex
 - `getOrderBook()` - Live order book data
 - `getMarketTicker()` - Live ticker information
 - `getAvailableMarkets()` - Alla trading par
 
 **5. Enhanced Error Handling**
+
 - Automatisk fallback till mock data vid API fel
 - Detaljerad logging för troubleshooting
 - Graceful degradation
@@ -47,10 +52,13 @@
 ### ✅ Fungerande Endpoints
 
 **OHLCV Data (Candlestick Charts)**
+
 ```bash
-$ curl "http://127.0.0.1:5000/api/market/ohlcv/BTCUSD?timeframe=5m&limit=3"
+curl "http://127.0.0.1:5000/api/market/ohlcv/BTCUSD?timeframe=5m&limit=3"
 ```
+
 ✅ **Result:** Live data från Bitfinex!
+
 ```json
 [{
   "close": 93.3,
@@ -63,10 +71,13 @@ $ curl "http://127.0.0.1:5000/api/market/ohlcv/BTCUSD?timeframe=5m&limit=3"
 ```
 
 **Market Ticker (Current Prices)**
+
 ```bash
-$ curl "http://127.0.0.1:5000/api/market/ticker/BTCUSD"
+curl "http://127.0.0.1:5000/api/market/ticker/BTCUSD"
 ```
+
 ✅ **Result:** Live priser från Bitfinex!
+
 ```json
 {
   "ask": 103950.0,
@@ -81,9 +92,11 @@ $ curl "http://127.0.0.1:5000/api/market/ticker/BTCUSD"
 ### ⚠️ Delvis Fungerande Endpoints
 
 **Order Book**
+
 ```bash
-$ curl "http://127.0.0.1:5000/api/market/orderbook/BTCUSD?limit=3"
+curl "http://127.0.0.1:5000/api/market/orderbook/BTCUSD?limit=3"
 ```
+
 ⚠️ **Result:** Bitfinex specifikt format fel, fallback till mock data
 
 ---
@@ -91,16 +104,19 @@ $ curl "http://127.0.0.1:5000/api/market/orderbook/BTCUSD?limit=3"
 ## 🔧 Teknisk Implementation
 
 ### Symbol Format Handling
+
 - Frontend: `BTCUSD` → Backend: `BTC/USD`
 - Automatisk konvertering i API endpoints
 - Kompatibel med både format
 
 ### Rate Limiting & Performance
+
 - CCXT enableRateLimit: True
 - Cacheable responses
 - Effektiv data överföring
 
 ### Error Management
+
 ```python
 try:
     live_data = exchange.fetch_ohlcv(symbol, timeframe, limit)
@@ -115,16 +131,19 @@ except ExchangeError:
 ## 🌟 Användarupplevelse
 
 ### Diagrams & Charts
+
 - **Innan:** Mock data med random priser
 - **Nu:** Live BTC/USD data från Bitfinex
 - **Fallback:** Seamless övergång till mock vid problem
 
 ### Real-Time Market Data
+
 - Live priser uppdateras från riktiga marknaden
 - Professionell trading dashboard känsla
 - Riktig marknadsvolatilitet
 
 ### Development vs Production
+
 - **Development:** Fungerar utan API keys (offentlig data)
 - **Production:** Kan använda API keys för privat data (balances, orders)
 
@@ -133,12 +152,14 @@ except ExchangeError:
 ## 🚀 Nästa Steg
 
 ### Omedelbart Fungerande
+
 1. ✅ Live chart data (OHLCV)
 2. ✅ Live ticker priser
 3. ✅ Frontend integration
 4. ✅ Fallback system
 
 ### Förbättringar att Implementera
+
 1. 🔧 Fixa Bitfinex order book format
 2. 📊 WebSocket för real-time updates
 3. 🔐 API key konfiguration för privat data
@@ -149,6 +170,7 @@ except ExchangeError:
 ## 💡 Tekniska Detaljer
 
 ### Miljövariabler för Live Data
+
 ```bash
 # Optional - för privat data (balances, trading)
 BITFINEX_API_KEY=your_api_key
@@ -159,6 +181,7 @@ EXCHANGE_ID=bitfinex  # Already configured
 ```
 
 ### Supported Timeframes
+
 - `1m` - 1 minut
 - `5m` - 5 minuter (default)
 - `15m` - 15 minuter  
@@ -166,7 +189,9 @@ EXCHANGE_ID=bitfinex  # Already configured
 - `1d` - 1 dag
 
 ### API Response Format
+
 Standardiserat format för alla marknadsdata endpoints:
+
 ```typescript
 interface OHLCVData {
   timestamp: number;
