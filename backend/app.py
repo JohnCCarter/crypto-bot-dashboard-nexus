@@ -7,6 +7,10 @@ from typing import Any, Dict
 
 from flask import Flask, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from backend.routes.backtest import backtest_bp
 from backend.routes.balances import register as register_balances
