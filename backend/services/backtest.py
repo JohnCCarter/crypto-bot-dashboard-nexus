@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -51,7 +51,7 @@ class BacktestEngine:
     def run_backtest(
         self,
         data: pd.DataFrame,
-        strategy: Callable[[pd.DataFrame], TradeSignal],
+        strategy: Union[Callable[[pd.DataFrame], TradeSignal], Callable[[pd.DataFrame, Dict[str, Any]], TradeSignal]],
         risk_params: Optional[Dict[str, Any]] = None,
     ) -> BacktestResult:
         """
@@ -65,6 +65,8 @@ class BacktestEngine:
         Returns:
             BacktestResult containing performance metrics
         """
+        import inspect
+        
         # Kontrollera att data inte är tom
         if data is None or len(data) < 2:
             raise ValueError("Data for backtest must contain at least 2 rows.")
@@ -83,13 +85,20 @@ class BacktestEngine:
             "take_profit_pct": 0.04,
         }
 
+        # Check strategy signature to determine how to call it
+        sig = inspect.signature(strategy)
+        strategy_expects_params = len(sig.parameters) >= 2
+
         # Iterate through data
         for i in range(len(data)):
             current_data = data.iloc[: i + 1]
             current_price = current_data["close"].iloc[-1]
 
             # Get strategy signal
-            signal = strategy(current_data)
+            if strategy_expects_params:
+                signal = strategy(current_data, risk_params)
+            else:
+                signal = strategy(current_data)
 
             # Calculate position size
             if signal.action != "hold":
@@ -235,7 +244,7 @@ class BacktestEngine:
     def optimize_parameters(
         self,
         data: pd.DataFrame,
-        strategy: Callable[[pd.DataFrame, Dict[str, Any]], TradeSignal],
+        strategy: Union[Callable[[pd.DataFrame], TradeSignal], Callable[[pd.DataFrame, Dict[str, Any]], TradeSignal]],
         param_grid: Dict[str, List[Any]],
     ) -> Dict[str, Any]:
         """
@@ -263,21 +272,25 @@ class BacktestEngine:
             )
         ]
 
-        for params in param_combinations:
+        for idx, params in enumerate(param_combinations):
             # Kontrollera om strategin accepterar två argument
             sig = inspect.signature(strategy)
             if len(sig.parameters) == 2:
 
-                def strategy_with_params(df):
-                    return strategy(df, params)
+                def create_strategy_wrapper(p):
+                    def strategy_wrapper(df):
+                        return strategy(df, p)
+                    return strategy_wrapper
+                
+                strategy_func = create_strategy_wrapper(params)
 
             else:
 
-                def strategy_with_params(df):
+                def strategy_func(df):
                     return strategy(df)
 
             # Run backtest
-            result = self.run_backtest(data, strategy_with_params)
+            result = self.run_backtest(data, strategy_func)
 
             # Update best result
             if result.sharpe_ratio > best_sharpe:

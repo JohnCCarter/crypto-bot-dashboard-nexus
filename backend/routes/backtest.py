@@ -21,16 +21,9 @@ backtest_engine = BacktestEngine()
 monitor = Monitor()
 
 def run_ema_crossover_with_params(data, params):
-    result = run_ema_crossover_strategy(
-        data,
-        fast_period=params.get("fast_period", 9),
-        slow_period=params.get("slow_period", 21),
-        min_gap=params.get("min_gap"),
-        direction=params.get("direction", "both"),
-        lookback=params.get("lookback", 3),
-    )
-    # result är nu ett dict med 'result', 'ema_fast', 'ema_slow', 'signals'
-    return result
+    """Wrapper för EMA crossover strategi som accepterar parametrar."""
+    from backend.strategies.ema_crossover_strategy import run_strategy as run_ema_strategy
+    return run_ema_strategy(data, params)
 
 # Strategy mapping
 STRATEGIES = {
@@ -116,20 +109,34 @@ def run_backtest():
 
         # Run backtest
         try:
-            result = engine.run_backtest(df, strategy, risk_params)
+            result = engine.run_backtest(df, strategy, parameters)
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
 
         # Om strategin är ema_crossover, hämta ema-linjer och signaler
         extra = {}
         if strategy_name == "ema_crossover":
-            strat_result = strategy(df, risk_params)
-            extra = {
-                "ema_fast": strat_result.get("ema_fast", []),
-                "ema_slow": strat_result.get("ema_slow", []),
-                "signals": strat_result.get("signals", []),
-                "signal_result": strat_result.get("result")
-            }
+            try:
+                strat_result = run_ema_crossover_with_params(df, parameters)
+                metadata = strat_result.metadata if strat_result.metadata else {}
+                extra = {
+                    "ema_fast": metadata.get("ema_fast", 0),
+                    "ema_slow": metadata.get("ema_slow", 0),
+                    "signals": [],  # Signals from individual data points would be too much data
+                    "signal_result": {
+                        "action": strat_result.action,
+                        "confidence": strat_result.confidence,
+                        "metadata": metadata
+                    }
+                }
+            except Exception as e:
+                print(f"⚠️ Warning: Could not get extra EMA data: {e}")
+                extra = {
+                    "ema_fast": 0,
+                    "ema_slow": 0, 
+                    "signals": [],
+                    "signal_result": {"action": "hold", "confidence": 0.0}
+                }
 
         # Convert result to dict
         def to_builtin(val):
