@@ -23,52 +23,92 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   const { toast } = useToast();
 
   const loadConfig = useCallback(async () => {
+    console.log(`⚙️ [Settings] Loading configuration...`);
+    console.log(`⚙️ [Settings] Timestamp: ${new Date().toISOString()}`);
+    
     setIsLoading(true);
     try {
+      console.log(`⚙️ [Settings] Calling api.getConfig()...`);
       const configData = await api.getConfig();
+      
+      console.log(`✅ [Settings] Configuration loaded successfully:`, configData);
+      console.log(`✅ [Settings] Config keys: ${Object.keys(configData).join(', ')}`);
+      
       setConfig(configData);
     } catch (error) {
+      console.error(`❌ [Settings] Failed to load configuration:`, error);
+      console.error(`❌ [Settings] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [Settings] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`❌ [Settings] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
+      
       toast({
-        title: "Error",
-        description: "Failed to load configuration",
+        title: "Configuration Load Error",
+        description: `Failed to load configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+      console.log(`⚙️ [Settings] Configuration loading completed`);
     }
   }, [toast]);
 
   useEffect(() => {
     if (isOpen) {
+      console.log(`⚙️ [Settings] Settings panel opened, loading config`);
       loadConfig();
     }
   }, [isOpen, loadConfig]);
 
   const handleSave = async () => {
-    if (!config) return;
+    if (!config) {
+      console.error(`❌ [Settings] Cannot save: config is null`);
+      return;
+    }
+    
+    console.log(`⚙️ [Settings] User clicked save configuration`);
+    console.log(`⚙️ [Settings] Configuration to save:`, config);
+    console.log(`⚙️ [Settings] Timestamp: ${new Date().toISOString()}`);
     
     setIsSaving(true);
     try {
+      console.log(`⚙️ [Settings] Calling api.updateConfig()...`);
       const response = await api.updateConfig(config);
+      
+      console.log(`✅ [Settings] API Response:`, response);
+      
       if (response.success) {
+        console.log(`✅ [Settings] Configuration saved successfully: ${response.message}`);
         toast({
           title: "Success",
           description: response.message,
         });
         onClose();
+      } else {
+        console.error(`❌ [Settings] Save failed - response.success = false`);
+        console.error(`❌ [Settings] Error message: ${response.message || 'No message provided'}`);
+        throw new Error(response.message || 'Configuration save failed');
       }
     } catch (error) {
+      console.error(`❌ [Settings] Configuration save failed:`, error);
+      console.error(`❌ [Settings] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [Settings] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`❌ [Settings] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
+      console.error(`❌ [Settings] Failed config data:`, config);
+      
       toast({
-        title: "Error",
-        description: "Failed to save configuration",
+        title: "Configuration Save Error",
+        description: `Failed to save configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
       setIsSaving(false);
+      console.log(`⚙️ [Settings] Configuration save process completed`);
     }
   };
 
   const updateConfig = <K extends keyof TradingConfig>(key: K, value: TradingConfig[K]) => {
+    console.log(`⚙️ [Settings] Configuration field updated: ${String(key)} = ${value}`);
+    console.log(`⚙️ [Settings] Previous value: ${config?.[key]}`);
     setConfig(prev => prev ? { ...prev, [key]: value } : null);
   };
 

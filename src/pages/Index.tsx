@@ -25,6 +25,8 @@ import {
   Trade
 } from '@/types/trading';
 import { useCallback, useEffect, useState, type FC } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Settings, RefreshCw } from 'lucide-react';
 
 /**
  * Main dashboard page for the crypto trading application.
@@ -48,6 +50,8 @@ const Index: FC = () => {
   const [emaFast, setEmaFast] = useState<number[] | undefined>(undefined);
   const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
   const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { toast } = useToast();
 
   const loadEmaCrossover = useCallback(async () => {
     try {
@@ -169,6 +173,44 @@ const Index: FC = () => {
     }
   };
 
+  const fetchBotStatus = async () => {
+    console.log('🏠 [Index] Fetching bot status...');
+    try {
+      const status = await api.getBotStatus();
+      console.log('✅ [Index] Bot status fetched:', status);
+      setBotStatus(status);
+    } catch (error) {
+      console.error('❌ [Index] Failed to fetch bot status:', error);
+      toast({
+        title: "Status Error",
+        description: "Failed to fetch bot status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRefresh = () => {
+    console.log('🏠 [Index] Manual refresh triggered');
+    setRefreshKey(prev => prev + 1);
+    fetchBotStatus();
+  };
+
+  useEffect(() => {
+    console.log('🏠 [Index] Component mounted, fetching initial bot status');
+    fetchBotStatus();
+    
+    // Set up periodic status updates
+    const interval = setInterval(() => {
+      console.log('🏠 [Index] Periodic status update');
+      fetchBotStatus();
+    }, 30000); // Update every 30 seconds
+
+    return () => {
+      console.log('🏠 [Index] Component unmounting, clearing interval');
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
@@ -185,8 +227,17 @@ const Index: FC = () => {
               <Button 
                 variant="outline" 
                 size="sm"
+                onClick={handleRefresh}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
                 onClick={() => setIsSettingsOpen(true)}
               >
+                <Settings className="w-4 h-4 mr-2" />
                 ⚙️ Settings
               </Button>
               <ThemeToggle />
@@ -211,11 +262,11 @@ const Index: FC = () => {
               </div>
               
               <div className="col-span-12 lg:col-span-3">
-                <BotControl status={botStatus} onStatusChange={loadAllData} />
+                <BotControl status={botStatus} onStatusChange={fetchBotStatus} />
               </div>
               
               <div className="col-span-12 lg:col-span-3">
-                <ManualTradePanel onOrderPlaced={loadAllData} />
+                <ManualTradePanel onOrderPlaced={handleRefresh} />
               </div>
               
               <div className="col-span-12 lg:col-span-3">
@@ -242,7 +293,7 @@ const Index: FC = () => {
 
               {/* Third Row - Tables */}
               <div className="col-span-12 lg:col-span-6">
-                <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={loadAllData} />
+                <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={handleRefresh} />
               </div>
               
               <div className="col-span-12 lg:col-span-6">

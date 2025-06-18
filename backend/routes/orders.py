@@ -5,8 +5,13 @@ from typing import Any, Dict
 from flask import Blueprint, current_app, jsonify, request
 
 from backend.services.validation import validate_order_data
+from backend.services.order_service import OrderService
+from backend.services.exchange import ExchangeService
 
 orders_bp = Blueprint("orders", __name__)
+
+# Håll track på orders internt - Mock development service
+mock_orders = []
 
 
 def get_order_service():
@@ -256,3 +261,111 @@ def get_order_history():
         }
     ]
     return jsonify(mock_orders), 200
+
+
+def register(app):
+    @app.route("/api/orders", methods=["GET"])
+    def get_orders():
+        """Hämtar alla orders."""
+        current_app.logger.info("📋 [Backend] GET orders request received")
+        
+        try:
+            current_app.logger.info(f"📋 [Backend] Mock orders in memory: {len(mock_orders)} orders")
+            
+            # Returnera mock orders för development
+            result = {"orders": mock_orders}
+            current_app.logger.info(f"✅ [Backend] Orders retrieved successfully: {result}")
+            
+            return jsonify(result), 200
+        except Exception as e:
+            current_app.logger.error(f"❌ [Backend] Get orders failed: {str(e)}")
+            current_app.logger.error(f"❌ [Backend] Exception type: {type(e).__name__}")
+            import traceback
+            current_app.logger.error(f"❌ [Backend] Stack trace: {traceback.format_exc()}")
+            
+            return jsonify({"error": f"Failed to get orders: {str(e)}"}), 500
+
+    @app.route("/api/orders", methods=["POST"])
+    def place_order():
+        """Placerar en ny order."""
+        current_app.logger.info("📋 [Backend] POST order request received")
+        
+        try:
+            data = request.get_json()
+            current_app.logger.info(f"📋 [Backend] Order data received: {data}")
+            
+            if not data:
+                current_app.logger.error("❌ [Backend] No order data provided")
+                return jsonify({"error": "No order data provided"}), 400
+            
+            # Validera required fields
+            required_fields = ['symbol', 'order_type', 'side', 'amount']
+            for field in required_fields:
+                if field not in data:
+                    current_app.logger.error(f"❌ [Backend] Missing required field: {field}")
+                    return jsonify({"error": f"Missing required field: {field}"}), 400
+            
+            current_app.logger.info(f"📋 [Backend] Order validation passed for {data['side']} {data['amount']} {data['symbol']}")
+            
+            # Mock order creation för development
+            mock_order = {
+                "id": len(mock_orders) + 1,
+                "symbol": data['symbol'],
+                "side": data['side'],
+                "amount": data['amount'],
+                "order_type": data['order_type'],
+                "status": "filled",
+                "price": data.get('price', 50000),  # Mock price
+                "timestamp": "2024-01-01T12:00:00Z"
+            }
+            
+            mock_orders.append(mock_order)
+            current_app.logger.info(f"✅ [Backend] Mock order created: {mock_order}")
+            current_app.logger.info(f"✅ [Backend] Total mock orders now: {len(mock_orders)}")
+            
+            return jsonify({
+                "message": f"Order placed successfully - {data['side']} {data['amount']} {data['symbol']}",
+                "order": mock_order
+            }), 201
+            
+        except Exception as e:
+            current_app.logger.error(f"❌ [Backend] Place order failed: {str(e)}")
+            current_app.logger.error(f"❌ [Backend] Exception type: {type(e).__name__}")
+            current_app.logger.error(f"❌ [Backend] Request data: {request.get_json() if request else 'No request'}")
+            import traceback
+            current_app.logger.error(f"❌ [Backend] Stack trace: {traceback.format_exc()}")
+            
+            return jsonify({"error": f"Failed to place order: {str(e)}"}), 500
+
+    @app.route("/api/orders/<int:order_id>", methods=["DELETE"])
+    def cancel_order(order_id):
+        """Avbryter en order."""
+        current_app.logger.info(f"📋 [Backend] DELETE order request received for order_id: {order_id}")
+        
+        try:
+            # Hitta och ta bort order från mock data
+            order_found = False
+            for i, order in enumerate(mock_orders):
+                if order['id'] == order_id:
+                    removed_order = mock_orders.pop(i)
+                    order_found = True
+                    current_app.logger.info(f"✅ [Backend] Mock order cancelled: {removed_order}")
+                    current_app.logger.info(f"✅ [Backend] Remaining mock orders: {len(mock_orders)}")
+                    break
+            
+            if not order_found:
+                current_app.logger.warning(f"⚠️ [Backend] Order not found: {order_id}")
+                return jsonify({"error": f"Order {order_id} not found"}), 404
+            
+            return jsonify({
+                "message": f"Order {order_id} cancelled successfully"
+            }), 200
+            
+        except Exception as e:
+            current_app.logger.error(f"❌ [Backend] Cancel order failed: {str(e)}")
+            current_app.logger.error(f"❌ [Backend] Exception type: {type(e).__name__}")
+            current_app.logger.error(f"❌ [Backend] Order ID: {order_id}")
+            import traceback
+            current_app.logger.error(f"❌ [Backend] Stack trace: {traceback.format_exc()}")
+            
+            return jsonify({"error": f"Failed to cancel order: {str(e)}"}), 500
