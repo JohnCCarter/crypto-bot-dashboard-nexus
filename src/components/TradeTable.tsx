@@ -49,8 +49,8 @@ export function TradeTable({ trades, isLoading = false }: TradeTableProps) {
               <span>Entry Price</span>
               <span>P&L</span>
             </div>
-            {trades.map((trade) => (
-              <div key={trade.id} className="grid grid-cols-5 gap-4 items-center">
+            {trades.map((trade, index) => (
+              <div key={`trade-${trade.id || index}-${index}`} className="grid grid-cols-5 gap-4 items-center">
                 <span className="font-medium">{trade.symbol}</span>
                 <Badge variant={trade.side === 'buy' ? 'default' : 'destructive'} className="w-fit">
                   {trade.side?.toUpperCase() || 'UNKNOWN'}
