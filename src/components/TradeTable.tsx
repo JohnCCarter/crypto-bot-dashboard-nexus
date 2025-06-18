@@ -1,4 +1,3 @@
-
 import { Trade } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +53,7 @@ export function TradeTable({ trades, isLoading = false }: TradeTableProps) {
               <div key={trade.id} className="grid grid-cols-5 gap-4 items-center">
                 <span className="font-medium">{trade.symbol}</span>
                 <Badge variant={trade.side === 'buy' ? 'default' : 'destructive'} className="w-fit">
-                  {trade.side.toUpperCase()}
+                  {trade.side?.toUpperCase() || 'UNKNOWN'}
                 </Badge>
                 <span>{trade.amount}</span>
                 <span>${trade.entry_price.toLocaleString()}</span>

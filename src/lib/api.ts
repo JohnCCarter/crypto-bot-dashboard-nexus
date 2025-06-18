@@ -1,6 +1,6 @@
 import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, OrderBook, OrderHistoryItem, Trade, TradingConfig } from '@/types/trading';
 
-const API_BASE_URL = '';
+const API_BASE_URL = 'http://localhost:5000';
 
 // Generate mock OHLCV data
 const generateMockOHLCVData = (): OHLCVData[] => {
