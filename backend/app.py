@@ -16,7 +16,7 @@ from backend.routes.backtest import backtest_bp
 from backend.routes.balances import register as register_balances
 from backend.routes.bot_control import register as register_bot_control
 from backend.routes.config import register as register_config
-from backend.routes.orders import orders_bp
+from backend.routes.orders import register as register_orders
 from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
 from backend.routes.strategy_analysis import strategy_analysis_bp
@@ -38,6 +38,7 @@ CORS(app)
 # Registrera routes som inte använder blueprint
 register_balances(app)
 register_bot_control(app)
+register_orders(app)
 register_positions(app)
 register_config(app)
 
@@ -168,7 +169,6 @@ app._services = services
 def register_routes():
     """Register all API routes."""
     app.register_blueprint(status_bp)
-    app.register_blueprint(orders_bp)
     app.register_blueprint(backtest_bp)
     app.register_blueprint(strategy_analysis_bp)
 
