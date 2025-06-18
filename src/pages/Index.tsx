@@ -51,6 +51,12 @@ const Index: FC = () => {
 
   const loadEmaCrossover = useCallback(async () => {
     try {
+      // Säkerhetskontroll: Se till att vi har chartData
+      if (!chartData || chartData.length === 0) {
+        console.log('No chart data available for EMA crossover backtest');
+        return;
+      }
+
       // Mock: använd chartData för att skapa data-objekt
       const data = {
         timestamp: chartData.map(d => d.timestamp),
@@ -60,6 +66,9 @@ const Index: FC = () => {
         close: chartData.map(d => d.close),
         volume: chartData.map(d => d.volume)
       };
+      
+      console.log('Sending backtest data:', { dataLength: data.timestamp.length, sample: data.timestamp.slice(0, 3) });
+      
       const result = await api.runBacktestEmaCrossover(data, {
         fast_period: 3,
         slow_period: 5,
@@ -92,7 +101,6 @@ const Index: FC = () => {
   useEffect(() => {
     console.log('API keys:', Object.keys(api)); // Debug: logga vilka funktioner som finns på api-objektet
     loadAllData();
-    loadEmaCrossover();
     
     // Set up periodic updates
     const interval = setInterval(() => {
@@ -100,7 +108,14 @@ const Index: FC = () => {
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
-  }, [loadEmaCrossover]);
+  }, []);
+
+  // Load EMA crossover data when chartData is available
+  useEffect(() => {
+    if (chartData.length > 0) {
+      loadEmaCrossover();
+    }
+  }, [chartData, loadEmaCrossover]);
 
   const loadAllData = async () => {
     try {
