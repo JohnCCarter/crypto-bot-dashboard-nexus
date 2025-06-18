@@ -112,25 +112,31 @@ def run_backtest():
             result = engine.run_backtest(df, strategy, parameters)
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
+        except Exception as e:
+            print(f"❌ Backtest failed with error: {e}")
+            return jsonify({"error": str(e)}), 500
 
         # Om strategin är ema_crossover, hämta ema-linjer och signaler
         extra = {}
         if strategy_name == "ema_crossover":
             try:
+                # Anropa strategin med både data och parameters
                 strat_result = run_ema_crossover_with_params(df, parameters)
-                metadata = strat_result.metadata if strat_result.metadata else {}
+                metadata = strat_result.metadata if strat_result and strat_result.metadata else {}
                 extra = {
                     "ema_fast": metadata.get("ema_fast", 0),
                     "ema_slow": metadata.get("ema_slow", 0),
                     "signals": [],  # Signals from individual data points would be too much data
                     "signal_result": {
-                        "action": strat_result.action,
-                        "confidence": strat_result.confidence,
+                        "action": strat_result.action if strat_result else "hold",
+                        "confidence": strat_result.confidence if strat_result else 0.0,
                         "metadata": metadata
                     }
                 }
             except Exception as e:
                 print(f"⚠️ Warning: Could not get extra EMA data: {e}")
+                import traceback
+                traceback.print_exc()
                 extra = {
                     "ema_fast": 0,
                     "ema_slow": 0, 
