@@ -369,3 +369,47 @@ def register(app):
             current_app.logger.error(f"❌ [Backend] Stack trace: {traceback.format_exc()}")
             
             return jsonify({"error": f"Failed to cancel order: {str(e)}"}), 500
+
+    @app.route("/api/orders/history", methods=["GET"])
+    def get_order_history():
+        """Returnerar orderhistorik."""
+        current_app.logger.info("📋 [Backend] GET order history request received")
+        
+        try:
+            # Mock order history data
+            mock_history = [
+                {
+                    "id": "hist_1",
+                    "symbol": "BTCUSD",
+                    "order_type": "market",
+                    "side": "buy",
+                    "amount": 0.001,
+                    "price": 45000,
+                    "fee": 0.45,
+                    "timestamp": "2025-06-18T10:00:00Z",
+                    "status": "filled"
+                },
+                {
+                    "id": "hist_2", 
+                    "symbol": "BTCUSD",
+                    "order_type": "limit",
+                    "side": "sell",
+                    "amount": 0.0005,
+                    "price": 46000,
+                    "fee": 0.23,
+                    "timestamp": "2025-06-18T11:00:00Z", 
+                    "status": "filled"
+                }
+            ]
+            
+            current_app.logger.info(f"✅ [Backend] Order history retrieved: {len(mock_history)} orders")
+            
+            return jsonify(mock_history), 200
+            
+        except Exception as e:
+            current_app.logger.error(f"❌ [Backend] Get order history failed: {str(e)}")
+            current_app.logger.error(f"❌ [Backend] Exception type: {type(e).__name__}")
+            import traceback
+            current_app.logger.error(f"❌ [Backend] Stack trace: {traceback.format_exc()}")
+            
+            return jsonify({"error": f"Failed to get order history: {str(e)}"}), 500
