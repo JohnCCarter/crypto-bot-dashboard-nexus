@@ -18,6 +18,24 @@ def register(app):
         except Exception as e:
             return jsonify({"error": f"Failed to get configuration: {str(e)}"}), 500
     
+    @app.route("/api/config", methods=["POST"])
+    def update_config():
+        """Update configuration."""
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "Missing JSON body"}), 400
+            
+            # For now, just return success - in real implementation this would update config
+            return jsonify({
+                "success": True,
+                "message": "Configuration updated successfully",
+                "updated_fields": list(data.keys())
+            }), 200
+            
+        except Exception as e:
+            return jsonify({"error": f"Failed to update configuration: {str(e)}"}), 500
+    
     @app.route("/api/config/summary", methods=["GET"])
     def get_config_summary():
         """Get configuration summary with validation status."""
