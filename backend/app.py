@@ -14,6 +14,7 @@ from backend.routes.config import register as register_config
 from backend.routes.orders import orders_bp
 from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
+from backend.routes.strategy_analysis import strategy_analysis_bp
 from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
@@ -95,6 +96,7 @@ def register_routes():
     app.register_blueprint(status_bp)
     app.register_blueprint(orders_bp)
     app.register_blueprint(backtest_bp)
+    app.register_blueprint(strategy_analysis_bp)
 
 
 # Register routes

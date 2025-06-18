@@ -5,11 +5,13 @@ import { ManualTradePanel } from '@/components/ManualTradePanel';
 import { OrderBook } from '@/components/OrderBook';
 import { OrderHistory } from '@/components/OrderHistory';
 import { PriceChart } from '@/components/PriceChart';
+import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TradeTable } from '@/components/TradeTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { api } from '@/lib/api';
 import {
@@ -162,51 +164,64 @@ const Index: FC = () => {
 
       {/* Main Dashboard */}
       <main className="container mx-auto px-6 py-6">
-        <div className="grid grid-cols-12 gap-6">
-          {/* Top Row - Key Metrics */}
-          <div className="col-span-12 lg:col-span-3">
-            <BalanceCard balances={balances} isLoading={isLoading} />
-          </div>
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="dashboard">Trading Dashboard</TabsTrigger>
+            <TabsTrigger value="analysis">Probability Analysis</TabsTrigger>
+          </TabsList>
           
-          <div className="col-span-12 lg:col-span-3">
-            <BotControl status={botStatus} onStatusChange={loadAllData} />
-          </div>
-          
-          <div className="col-span-12 lg:col-span-3">
-            <ManualTradePanel onOrderPlaced={loadAllData} />
-          </div>
-          
-          <div className="col-span-12 lg:col-span-3">
-            <TradeTable trades={activeTrades} isLoading={isLoading} />
-          </div>
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="grid grid-cols-12 gap-6">
+              {/* Top Row - Key Metrics */}
+              <div className="col-span-12 lg:col-span-3">
+                <BalanceCard balances={balances} isLoading={isLoading} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-3">
+                <BotControl status={botStatus} onStatusChange={loadAllData} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-3">
+                <ManualTradePanel onOrderPlaced={loadAllData} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-3">
+                <TradeTable trades={activeTrades} isLoading={isLoading} />
+              </div>
 
-          {/* Second Row - Chart and Order Book */}
-          <div className="col-span-12 lg:col-span-8">
-            <PriceChart 
-              data={chartData} 
-              symbol="BTCUSD" 
-              isLoading={isLoading} 
-              emaFast={emaFast}
-              emaSlow={emaSlow}
-              signals={signals}
-            />
-          </div>
-          
-          <div className="col-span-12 lg:col-span-4">
-            {orderBook && (
-              <OrderBook orderBook={orderBook} isLoading={isLoading} />
-            )}
-          </div>
+              {/* Second Row - Chart and Order Book */}
+              <div className="col-span-12 lg:col-span-8">
+                <PriceChart 
+                  data={chartData} 
+                  symbol="BTCUSD" 
+                  isLoading={isLoading} 
+                  emaFast={emaFast}
+                  emaSlow={emaSlow}
+                  signals={signals}
+                />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-4">
+                {orderBook && (
+                  <OrderBook orderBook={orderBook} isLoading={isLoading} />
+                )}
+              </div>
 
-          {/* Third Row - Tables */}
-          <div className="col-span-12 lg:col-span-6">
-            <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={loadAllData} />
-          </div>
+              {/* Third Row - Tables */}
+              <div className="col-span-12 lg:col-span-6">
+                <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={loadAllData} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-6">
+                <LogViewer logs={logs} isLoading={isLoading} />
+              </div>
+            </div>
+          </TabsContent>
           
-          <div className="col-span-12 lg:col-span-6">
-            <LogViewer logs={logs} isLoading={isLoading} />
-          </div>
-        </div>
+          <TabsContent value="analysis" className="space-y-6">
+            <ProbabilityAnalysis />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Settings Panel */}
