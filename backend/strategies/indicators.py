@@ -132,3 +132,32 @@ def find_fvg_zones(
                         "direction": "bearish"
                     })
     return fvg_zones
+
+
+def calculate_signal_probabilities(
+    indicator_value: float,
+    buy_threshold: float,
+    sell_threshold: float
+) -> tuple[float, float, float]:
+    """
+    Beräknar sannolikheter för buy, sell och hold baserat på indikatorvärde och trösklar.
+    Args:
+        indicator_value (float): Värde från indikator (t.ex. RSI, EMA-diff).
+        buy_threshold (float): Tröskel för köp.
+        sell_threshold (float): Tröskel för sälj.
+    Returns:
+        tuple: (probability_buy, probability_sell, probability_hold)
+    """
+    if indicator_value >= buy_threshold:
+        prob_buy = 0.7
+        prob_sell = 0.1
+        prob_hold = 0.2
+    elif indicator_value <= sell_threshold:
+        prob_buy = 0.1
+        prob_sell = 0.7
+        prob_hold = 0.2
+    else:
+        prob_buy = 0.2
+        prob_sell = 0.2
+        prob_hold = 0.6
+    return prob_buy, prob_sell, prob_hold

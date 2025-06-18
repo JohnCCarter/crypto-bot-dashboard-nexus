@@ -21,8 +21,12 @@ STRATEGY_MODULES = [
 def test_run_strategy_interface(mod_name):
     """Each strategy must implement run_strategy and return a valid TradeSignal."""
     module = importlib.import_module(f"backend.strategies.{mod_name}")
-    assert hasattr(module, "run_strategy"), f"{mod_name} missing run_strategy"
-    assert hasattr(module, "TradeSignal"), f"{mod_name} missing TradeSignal"
+    assert hasattr(module, "run_strategy"), (
+        f"{mod_name} missing run_strategy"
+    )
+    assert hasattr(module, "TradeSignal"), (
+        f"{mod_name} missing TradeSignal"
+    )
     if mod_name == "fvg_strategy":
         df = pd.DataFrame({
             "open": [1.0, 2.0, 3.0, 2.5, 2.8],
@@ -30,9 +34,24 @@ def test_run_strategy_interface(mod_name):
             "low": [0.8, 1.8, 2.8, 2.3, 2.6],
             "close": [1.0, 2.0, 3.0, 2.5, 2.8],
         })
+        params = {
+            "direction": "both",
+            "lookback": 3
+        }
+    elif mod_name == "ema_crossover_strategy":
+        df = pd.DataFrame({
+            "close": [1.0, 2.0, 3.0, 2.5, 2.8]
+        })
+        params = {
+            "fast_period": 3,
+            "slow_period": 5
+        }
     else:
-        df = pd.DataFrame({"close": [1.0, 2.0, 3.0, 2.5, 2.8]})
-    signal = module.run_strategy(df)
+        df = pd.DataFrame({
+            "close": [1.0, 2.0, 3.0, 2.5, 2.8]
+        })
+        params = {}
+    signal = module.run_strategy(df, params)
     assert isinstance(signal, module.TradeSignal)
     assert hasattr(signal, "action") and hasattr(signal, "confidence")
     assert signal.action in ("buy", "sell", "hold")
@@ -105,7 +124,14 @@ def test_ema_crossover_bullish():
     data = pd.DataFrame({
         'close': [1]*10 + [16]*5
     })
-    signal = ema_crossover_strategy.run_strategy(data, fast_period=3, slow_period=5, lookback=5)
+    params = {
+        "fast_period": 3,
+        "slow_period": 5,
+        "lookback": 5
+    }
+    signal = ema_crossover_strategy.run_strategy(
+        data, params
+    )
     assert signal.action == "buy"
     assert 0.0 < signal.confidence <= 1.0
 
@@ -115,7 +141,14 @@ def test_ema_crossover_bearish():
     data = pd.DataFrame({
         'close': [16]*10 + [1]*5
     })
-    signal = ema_crossover_strategy.run_strategy(data, fast_period=3, slow_period=5, lookback=5)
+    params = {
+        "fast_period": 3,
+        "slow_period": 5,
+        "lookback": 5
+    }
+    signal = ema_crossover_strategy.run_strategy(
+        data, params
+    )
     assert signal.action == "sell"
     assert 0.0 < signal.confidence <= 1.0
 
@@ -123,7 +156,13 @@ def test_ema_crossover_bearish():
 def test_ema_crossover_hold():
     # Skapa data där ingen crossover sker
     data = pd.DataFrame({'close': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]})
-    signal = ema_crossover_strategy.run_strategy(data, fast_period=3, slow_period=5)
+    params = {
+        "fast_period": 3,
+        "slow_period": 5
+    }
+    signal = ema_crossover_strategy.run_strategy(
+        data, params
+    )
     assert signal.action == "hold"
     assert signal.confidence == 0.0
 
@@ -131,33 +170,72 @@ def test_ema_crossover_hold():
 def test_ema_crossover_too_little_data():
     # För kort serie för att avgöra crossover
     data = pd.DataFrame({'close': [1, 2, 3, 4]})
-    signal = ema_crossover_strategy.run_strategy(data, fast_period=2, slow_period=3)
+    params = {
+        "fast_period": 2,
+        "slow_period": 3
+    }
+    signal = ema_crossover_strategy.run_strategy(
+        data, params
+    )
     assert signal.action == "hold"
 
 
 def test_ema_crossover_invalid_params():
     data = pd.DataFrame({'close': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
     with pytest.raises(ValueError):
-        ema_crossover_strategy.run_strategy(data, fast_period=5, slow_period=3)
+        params = {
+            "fast_period": 5,
+            "slow_period": 3
+        }
+        ema_crossover_strategy.run_strategy(
+            data, params
+        )
     with pytest.raises(ValueError):
-        ema_crossover_strategy.run_strategy(data, fast_period=3, slow_period=3)
+        params = {
+            "fast_period": 3,
+            "slow_period": 3
+        }
+        ema_crossover_strategy.run_strategy(
+            data, params
+        )
 
 
 def test_ema_crossover_min_gap():
     # Skapa crossover men med litet gap
     data = pd.DataFrame({'close': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
-    # Sätt min_gap större än möjligt gap
-    signal = ema_crossover_strategy.run_strategy(data, fast_period=3, slow_period=5, min_gap=100)
+    params = {
+        "fast_period": 3,
+        "slow_period": 5,
+        "min_gap": 100
+    }
+    signal = ema_crossover_strategy.run_strategy(
+        data, params
+    )
     assert signal.action == "hold"
 
 
 def test_ema_crossover_direction_filter():
     # Data med bullish crossover
     data = pd.DataFrame({'close': [1]*10 + [16]*5})
-    # Endast bullish tillåts
-    signal = ema_crossover_strategy.run_strategy(data, fast_period=3, slow_period=5, direction="bullish", lookback=5)
+    params = {
+        "fast_period": 3,
+        "slow_period": 5,
+        "direction": "bullish",
+        "lookback": 5
+    }
+    signal = ema_crossover_strategy.run_strategy(
+        data, params
+    )
     assert signal.action == "buy"
     # Endast bearish tillåts
     data = pd.DataFrame({'close': [16]*10 + [1]*5})
-    signal = ema_crossover_strategy.run_strategy(data, fast_period=3, slow_period=5, direction="bearish", lookback=5)
+    params = {
+        "fast_period": 3,
+        "slow_period": 5,
+        "direction": "bearish",
+        "lookback": 5
+    }
+    signal = ema_crossover_strategy.run_strategy(
+        data, params
+    )
     assert signal.action == "sell"

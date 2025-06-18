@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from backend.strategies.indicators import rsi
+from backend.strategies.indicators import rsi, calculate_signal_probabilities
 from backend.strategies.sample_strategy import TradeSignal
 
 
@@ -76,14 +76,35 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
     rsi_period = params.get('rsi_period', 14)
     overbought = params.get('overbought', 70)
     oversold = params.get('oversold', 30)
-    position_size = params.get('position_size', 0.1)
+    position_size = params.get('position_size', 1.0)
+    symbol = params.get('symbol', None)
+    timeframe = params.get('timeframe', None)
     if 'close' not in data:
         raise ValueError("Data måste innehålla kolumnen 'close'")
-    rsi_values = rsi(data["close"], rsi_period)
-    last_rsi = rsi_values.iloc[-1] if not rsi_values.empty else None
-    if last_rsi is not None and last_rsi < oversold:
-        return TradeSignal("buy", 1.0, position_size, metadata={"rsi": last_rsi, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')})
-    elif last_rsi is not None and last_rsi > overbought:
-        return TradeSignal("sell", 1.0, position_size, metadata={"rsi": last_rsi, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')})
+    rsi_series = rsi(data['close'], length=rsi_period)
+    rsi_value = float(rsi_series.iloc[-1])
+    prob_buy, prob_sell, prob_hold = calculate_signal_probabilities(
+        rsi_value, overbought, oversold
+    )
+    if rsi_value >= overbought:
+        action = "sell"
+        confidence = prob_sell
+    elif rsi_value <= oversold:
+        action = "buy"
+        confidence = prob_buy
     else:
-        return TradeSignal("hold", 0.0, 0.0, metadata={"rsi": last_rsi, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')})
+        action = "hold"
+        confidence = prob_hold
+    return TradeSignal(
+        action=action,
+        confidence=confidence,
+        position_size=position_size,
+        metadata={
+            "rsi": rsi_value,
+            "probability_buy": prob_buy,
+            "probability_sell": prob_sell,
+            "probability_hold": prob_hold,
+            "symbol": symbol,
+            "timeframe": timeframe
+        }
+    )

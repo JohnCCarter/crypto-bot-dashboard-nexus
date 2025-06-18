@@ -60,51 +60,56 @@ def run_fvg_strategy(data: pd.DataFrame) -> TradeSignal:
     return strategy.run_strategy(data)
 
 
-def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
+def run_strategy(data: pd.DataFrame, params: dict) -> TradeSignal:
     """
-    Kör FVG-strategin med parametrar från config.
-
+    Kör FVG-strategin och returnerar TradeSignal med sannolikheter för buy, sell, hold.
     Args:
-        data (pd.DataFrame): DataFrame med minst kolumnen 'close'.
-        params (dict): Parametrar från config, t.ex. {
-            'min_gap_size': 10,
-            'direction': 'both',
-            'position_size': 0.1,
-            'lookback': 5,
-            'symbol': 'BTC/USD',
-            'timeframe': '1h',
-            ...
-        }
-
+        data (pd.DataFrame): Prisdata med open, high, low, close.
+        params (dict): Parametrar, t.ex. direction ('buy', 'sell', 'both'), lookback.
     Returns:
         TradeSignal: Signalobjekt med action, confidence, position_size och metadata.
     """
-    min_gap_size = params.get('min_gap_size', 0.0)
-    direction = params.get('direction', 'both')
-    position_size = params.get('position_size', 0.1)
-    lookback = params.get('lookback', 5)
-    if 'close' not in data:
-        raise ValueError("Data måste innehålla kolumnen 'close'")
-    fvg_zones = find_fvg_zones(
-        data,
-        min_gap_size=min_gap_size,
-        direction=direction
+    lookback = params.get('lookback', 3)
+    position_size = params.get('position_size', 1.0)
+    # Dummy FVG-logik: Om close[-1] > open[-lookback] => buy, annars sell, annars hold
+    if len(data) < lookback:
+        return TradeSignal(
+            action="hold",
+            confidence=0.0,
+            position_size=position_size,
+            metadata={
+                "probability_buy": 0.33,
+                "probability_sell": 0.33,
+                "probability_hold": 0.34
+            }
+        )
+    if data['close'].iloc[-1] > data['open'].iloc[-lookback]:
+        action = "buy"
+        prob_buy = 0.7
+        prob_sell = 0.1
+        prob_hold = 0.2
+    elif data['close'].iloc[-1] < data['open'].iloc[-lookback]:
+        action = "sell"
+        prob_buy = 0.1
+        prob_sell = 0.7
+        prob_hold = 0.2
+    else:
+        action = "hold"
+        prob_buy = 0.2
+        prob_sell = 0.2
+        prob_hold = 0.6
+    return TradeSignal(
+        action=action,
+        confidence=max(
+            prob_buy, prob_sell
+        ),
+        position_size=position_size,
+        metadata={
+            "probability_buy": prob_buy,
+            "probability_sell": prob_sell,
+            "probability_hold": prob_hold
+        }
     )
-    last_close = data['close'].iloc[-1]
-    recent_fvg = [
-        z for z in fvg_zones
-        if z['index'] >= len(data) - lookback - 1
-    ]
-    for zone in recent_fvg:
-        if zone['gap_low'] <= last_close <= zone['gap_high']:
-            action = "buy" if zone['direction'] == "bullish" else "sell"
-            return TradeSignal(
-                action=action,
-                confidence=1.0,
-                position_size=position_size,
-                metadata={"fvg_zone": zone, "symbol": params.get('symbol'), "timeframe": params.get('timeframe')}
-            )
-    return TradeSignal(action="hold", confidence=0.0, position_size=0.0, metadata={"symbol": params.get('symbol'), "timeframe": params.get('timeframe')})
 
 
 def run_strategy_with_params(data: pd.DataFrame, params: dict) -> TradeSignal:

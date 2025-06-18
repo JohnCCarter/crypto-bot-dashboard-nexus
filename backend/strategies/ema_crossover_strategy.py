@@ -2,7 +2,7 @@
 
 from typing import Any, Dict
 import pandas as pd
-from backend.strategies.indicators import ema
+from backend.strategies.indicators import ema, calculate_signal_probabilities
 from backend.strategies.sample_strategy import TradeSignal
 
 
@@ -78,16 +78,27 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
             break
     if last_signal:
         action = str(last_signal["type"])
+        gap = abs(float(ema_fast.iloc[-1]) - float(ema_slow.iloc[-1]))
         confidence = min(
             1.0,
-            abs(float(ema_fast.iloc[-1]) - float(ema_slow.iloc[-1])) /
+            gap /
             (abs(float(ema_slow.iloc[-1])) + 1e-9)
         )
         position_size = params.get('position_size', 1.0)
+        # Beräkna sannolikheter baserat på gap och tröskelvärden
+        gap_value = float(ema_fast.iloc[-1]) - float(ema_slow.iloc[-1])
+        buy_threshold = params.get('buy_threshold', 0.0)
+        sell_threshold = params.get('sell_threshold', 0.0)
+        prob_buy, prob_sell, prob_hold = calculate_signal_probabilities(
+            gap_value, buy_threshold, sell_threshold
+        )
     else:
         action = "hold"
         confidence = 0.0
         position_size = 0.0
+        gap_value = 0.0
+        prob_buy = prob_sell = 0.2
+        prob_hold = 0.6
     return TradeSignal(
         action=action,
         confidence=confidence,
@@ -95,10 +106,9 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
         metadata={
             "ema_fast": float(ema_fast.iloc[-1]),
             "ema_slow": float(ema_slow.iloc[-1]),
-            "ema_fast_series": [float(x) for x in ema_fast],
-            "ema_slow_series": [float(x) for x in ema_slow],
-            "signals": signals[-lookback:] if lookback > 0 else signals,
-            "symbol": params.get('symbol'),
-            "timeframe": params.get('timeframe')
+            "gap": gap_value,
+            "probability_buy": prob_buy,
+            "probability_sell": prob_sell,
+            "probability_hold": prob_hold
         }
     )
