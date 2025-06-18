@@ -38,9 +38,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({ logs: propLogs, isLoading 
       message
     };
 
-    setFrontendLogs(prev => {
-      const updated = [logEntry, ...prev];
-      return updated.slice(0, maxLogs);
+    // Use requestAnimationFrame to prevent setState during render
+    requestAnimationFrame(() => {
+      setFrontendLogs(prev => {
+        const updated = [logEntry, ...prev];
+        return updated.slice(0, maxLogs);
+      });
     });
   }, [maxLogs]);
 

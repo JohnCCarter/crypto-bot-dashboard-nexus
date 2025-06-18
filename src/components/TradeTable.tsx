@@ -17,7 +17,7 @@ export function TradeTable({ trades, isLoading = false }: TradeTableProps) {
         <CardContent>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse flex justify-between">
+              <div key={`skeleton-${i}`} className="animate-pulse flex justify-between">
                 <div className="h-4 bg-muted rounded w-1/4"></div>
                 <div className="h-4 bg-muted rounded w-1/6"></div>
                 <div className="h-4 bg-muted rounded w-1/6"></div>
