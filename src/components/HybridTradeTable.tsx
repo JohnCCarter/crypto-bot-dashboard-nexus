@@ -78,9 +78,9 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
       .slice(0, maxTrades)
       .map(trade => {
         // Calculate live P&L using current market price
-        const livePrice = currentPrice > 0 ? currentPrice : trade.entry_price;
-        const direction = trade.side === 'buy' ? 1 : -1;
-        const livePnL = (livePrice - trade.entry_price) * direction * trade.amount;
+        const livePrice = currentPrice > 0 ? currentPrice : (trade.entry_price || 0);
+        const direction = (trade.side === 'buy') ? 1 : -1;
+        const livePnL = (livePrice - (trade.entry_price || 0)) * direction * (trade.amount || 0);
         
         return {
           ...trade,
@@ -90,10 +90,10 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
       });
 
     // Calculate aggregated statistics
-    const totalVolume = recentTrades.reduce((sum, trade) => sum + trade.amount, 0);
-    const totalPnL = recentTrades.reduce((sum, trade) => sum + trade.livePnL, 0);
+    const totalVolume = recentTrades.reduce((sum, trade) => sum + (trade.amount || 0), 0);
+    const totalPnL = recentTrades.reduce((sum, trade) => sum + (trade.livePnL || 0), 0);
     const avgPrice = recentTrades.length > 0 
-      ? recentTrades.reduce((sum, trade) => sum + trade.entry_price, 0) / recentTrades.length 
+      ? recentTrades.reduce((sum, trade) => sum + (trade.entry_price || 0), 0) / recentTrades.length 
       : 0;
     
     const activePositions = recentTrades.length;
@@ -121,7 +121,12 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
   };
 
   const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString();
+    if (!timestamp) return 'N/A';
+    try {
+      return new Date(timestamp).toLocaleTimeString();
+    } catch {
+      return 'Invalid';
+    }
   };
 
   if (isLoading && trades.length === 0) {
@@ -246,12 +251,12 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
           
           {/* Position Rows */}
           {processedTrades.recentTrades.length > 0 ? (
-            processedTrades.recentTrades.map((trade) => (
+            processedTrades.recentTrades.map((trade, index) => (
               <div 
-                key={`${trade.id}-${trade.timestamp}`}
+                key={`${trade.id || 'unknown'}-${trade.timestamp || index}`}
                 className={`grid grid-cols-4 gap-4 text-xs py-2 px-2 rounded transition-colors ${
-                  trade.livePnL > 0 ? 'bg-green-50 hover:bg-green-100' :
-                  trade.livePnL < 0 ? 'bg-red-50 hover:bg-red-100' :
+                  (trade.livePnL || 0) > 0 ? 'bg-green-50 hover:bg-green-100' :
+                  (trade.livePnL || 0) < 0 ? 'bg-red-50 hover:bg-red-100' :
                   'hover:bg-muted'
                 }`}
               >
@@ -260,25 +265,25 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
                 </span>
                 
                 <Badge 
-                  variant={trade.side === 'buy' ? 'default' : 'destructive'} 
+                  variant={(trade.side === 'buy') ? 'default' : 'destructive'} 
                   className="w-fit text-xs"
                 >
-                  {trade.side.toUpperCase()}
+                  {trade.side?.toUpperCase() || 'UNKNOWN'}
                 </Badge>
                 
                 <span className="text-right font-mono">
-                  {formatPrice(trade.entry_price)}
+                  {formatPrice(trade.entry_price || 0)}
                 </span>
                 
                 <span className={`text-right font-mono ${
-                  trade.livePnL > 0 ? 'text-green-600' :
-                  trade.livePnL < 0 ? 'text-red-600' :
+                  (trade.livePnL || 0) > 0 ? 'text-green-600' :
+                  (trade.livePnL || 0) < 0 ? 'text-red-600' :
                   'text-muted-foreground'
                 }`}>
-                  {trade.livePnL >= 0 ? '+' : ''}{formatPrice(trade.livePnL)}
-                  {trade.livePnL !== 0 && (
+                  {(trade.livePnL || 0) >= 0 ? '+' : ''}{formatPrice(trade.livePnL || 0)}
+                  {(trade.livePnL || 0) !== 0 && (
                     <span className="ml-1">
-                      {trade.livePnL > 0 ? '↗' : '↘'}
+                      {(trade.livePnL || 0) > 0 ? '↗' : '↘'}
                     </span>
                   )}
                 </span>
