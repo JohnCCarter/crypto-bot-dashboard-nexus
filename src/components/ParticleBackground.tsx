@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import * as THREE from 'three';
 
 interface ParticleBackgroundProps {
@@ -35,6 +35,20 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
   const materialRef = useRef<THREE.PointsMaterial | null>(null);
   const animationIdRef = useRef<number | null>(null);
   const hueRef = useRef<number>(0);
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  // Check for reduced motion preference
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      setIsReducedMotion(mediaQuery.matches);
+      
+      const handleChange = () => setIsReducedMotion(mediaQuery.matches);
+      mediaQuery.addEventListener('change', handleChange);
+      
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
 
   // Check WebGL support
   const isWebGLSupported = useCallback(() => {
@@ -45,6 +59,12 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     } catch (error) {
       return false;
     }
+  }, []);
+
+  // Detect mobile device for performance optimization
+  const isMobileDevice = useCallback(() => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           window.innerWidth < 768;
   }, []);
 
   // Handle window resize
@@ -67,6 +87,10 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
     const container = containerRef.current;
     const { offsetWidth, offsetHeight } = container;
+    const isMobile = isMobileDevice();
+
+    // Reduce particle count on mobile for better performance
+    const adjustedParticleCount = isMobile ? Math.min(particleCount, 800) : particleCount;
 
     // Scene setup
     const scene = new THREE.Scene();
@@ -77,14 +101,17 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     camera.position.z = 5;
     cameraRef.current = camera;
 
-    // Renderer setup
+    // Renderer setup with mobile optimizations
     const renderer = new THREE.WebGLRenderer({ 
       alpha: true,
-      antialias: true,
+      antialias: !isMobile, // Disable antialiasing on mobile for performance
       powerPreference: 'low-power' // Optimize for battery life
     });
     renderer.setSize(offsetWidth, offsetHeight);
     renderer.setClearColor(0x000000, 0); // Transparent background
+    
+    // Lower pixel ratio on mobile for better performance
+    renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
     rendererRef.current = renderer;
 
     // Clear container and append renderer
@@ -96,7 +123,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     const positions: number[] = [];
 
     // Generate spherical particle positions
-    for (let i = 0; i < particleCount; i++) {
+    for (let i = 0; i < adjustedParticleCount; i++) {
       const theta = 2 * Math.PI * Math.random();
       const phi = Math.acos(2 * Math.random() - 1);
       const r = sphereRadius;
@@ -108,9 +135,9 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 
-    // Create particle material
+    // Create particle material with mobile optimizations
     const material = new THREE.PointsMaterial({
-      size: particleSize,
+      size: isMobile ? particleSize * 1.5 : particleSize, // Slightly larger particles on mobile
       vertexColors: false,
       transparent: true,
       opacity: alpha,
@@ -125,7 +152,7 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
 
     // Add resize listener
     window.addEventListener('resize', handleResize);
-  }, [isWebGLSupported, particleCount, sphereRadius, particleSize, alpha, handleResize]);
+  }, [isWebGLSupported, particleCount, sphereRadius, particleSize, alpha, handleResize, isMobileDevice]);
 
   // Animation loop
   const animate = useCallback(() => {
@@ -133,21 +160,24 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
       return;
     }
 
-    // Update rotation
-    pointCloudRef.current.rotation.x += rotationSpeed.x;
-    pointCloudRef.current.rotation.y += rotationSpeed.y;
+    // Skip animation if user prefers reduced motion
+    if (!isReducedMotion) {
+      // Update rotation
+      pointCloudRef.current.rotation.x += rotationSpeed.x;
+      pointCloudRef.current.rotation.y += rotationSpeed.y;
 
-    // Update color cycling
-    hueRef.current = (hueRef.current + colorSpeed) % 360;
-    const color = new THREE.Color(`hsl(${hueRef.current}, 70%, 60%)`);
-    materialRef.current.color.set(color);
+      // Update color cycling
+      hueRef.current = (hueRef.current + colorSpeed) % 360;
+      const color = new THREE.Color(`hsl(${hueRef.current}, 70%, 60%)`);
+      materialRef.current.color.set(color);
+    }
 
     // Render scene
     rendererRef.current.render(sceneRef.current, cameraRef.current);
 
     // Continue animation
     animationIdRef.current = requestAnimationFrame(animate);
-  }, [rotationSpeed, colorSpeed]);
+  }, [rotationSpeed, colorSpeed, isReducedMotion]);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -197,6 +227,11 @@ export const ParticleBackground: React.FC<ParticleBackgroundProps> = ({
     // Cleanup on unmount
     return cleanup;
   }, [initScene, animate, cleanup]);
+
+  // Don't render anything if reduced motion is preferred and no WebGL support
+  if (isReducedMotion && !isWebGLSupported()) {
+    return null;
+  }
 
   return (
     <div
