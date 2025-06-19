@@ -10,7 +10,7 @@
     "LOOKBACK": 15,
     "RSI_PERIOD": 14,
     "STOP_LOSS_PERCENT": 0.1,
-    "SYMBOL": "BTCUSD",
+    "SYMBOL": "ETHUSD",
     "TAKE_PROFIT_PERCENT": 0.1,
     "TIMEFRAME": "15m",
     "VOLUME_MULTIPLIER": 1.5,
