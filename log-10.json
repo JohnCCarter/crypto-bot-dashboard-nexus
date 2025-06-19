@@ -1,0 +1,26 @@
+[
+    {
+      "timestamp": "2025-06-19T10:28:50.059Z",
+      "level": "warning",
+      "source": "Frontend",
+      "message": "⚠️ 🔌 WebSocket Disconnected: Code 1006"
+    },
+    {
+      "timestamp": "2025-06-19T10:28:50.056Z",
+      "level": "warning",
+      "source": "Frontend",
+      "message": "⚠️ 🔌 WebSocket Disconnected: Code 1006"
+    },
+    {
+      "timestamp": "2025-06-19T10:28:50.053Z",
+      "level": "warning",
+      "source": "Frontend",
+      "message": "⚠️ 🔌 WebSocket Disconnected: Code 1006"
+    },
+    {
+      "timestamp": "2025-06-19T10:28:50.048Z",
+      "level": "warning",
+      "source": "Frontend",
+      "message": "⚠️ 🔌 WebSocket Disconnected: Code 1006"
+    }
+  ]

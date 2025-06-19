@@ -1,0 +1,14 @@
+[
+    {
+      "timestamp": "2025-06-19T10:29:04.946Z",
+      "level": "error",
+      "source": "Backend",
+      "message": "Test error"
+    },
+    {
+      "timestamp": "2025-06-19T10:28:50.047Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [ERROR] WebSocket Error: WebSocket connection closed by server"
+    }
+  ]
