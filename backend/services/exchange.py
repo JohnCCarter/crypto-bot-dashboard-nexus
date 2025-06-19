@@ -291,6 +291,53 @@ class ExchangeService:
         except Exception as e:
             raise ExchangeError(f"Failed to fetch recent trades: {str(e)}")
 
+    def fetch_positions(self, symbols: Optional[list] = None) -> list:
+        """
+        Fetch current positions from exchange.
+
+        Args:
+            symbols: Optional list of symbols to filter by
+
+        Returns:
+            List of position dictionaries
+
+        Raises:
+            ExchangeError: If positions fetch fails
+        """
+        try:
+            positions = self.exchange.fetch_positions(symbols)
+            
+            # Filter out positions with no size
+            active_positions = []
+            for position in positions:
+                if float(position.get('size', 0)) != 0:
+                    active_positions.append({
+                        "id": position.get("id", ""),
+                        "symbol": position["symbol"],
+                        "side": position["side"],  # 'long' or 'short'
+                        "amount": float(position["size"]),
+                        "entry_price": float(position.get("entryPrice", 0)),
+                        "mark_price": float(position.get("markPrice", 0)),
+                        "pnl": float(position.get("unrealizedPnl", 0)),
+                        "pnl_percentage": float(position.get("percentage", 0)),
+                        "timestamp": position.get(
+                            "timestamp", 
+                            int(datetime.utcnow().timestamp() * 1000)
+                        ),
+                        "contracts": float(position.get("contracts", 0)),
+                        "notional": float(position.get("notional", 0)),
+                        "collateral": float(position.get("collateral", 0)),
+                        "margin_mode": position.get("marginMode", "isolated"),
+                        "maintenance_margin": float(
+                            position.get("maintenanceMargin", 0)
+                        )
+                    })
+            
+            return active_positions
+            
+        except Exception as e:
+            raise ExchangeError(f"Failed to fetch positions: {str(e)}")
+
     def get_markets(self) -> Dict[str, Any]:
         """
         Get available trading markets from exchange.
