@@ -8,11 +8,11 @@
  * - Live asset allocation display
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useWebSocketMarket } from '@/hooks/useWebSocketMarket';
+import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Balance } from '@/types/trading';
@@ -27,8 +27,26 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
   symbol = 'BTCUSD',
   showDetails = true 
 }) => {
-  // Get live pricing data via WebSocket
-  const wsData = useWebSocketMarket(symbol);
+  // Get global WebSocket data (shared single connection)
+  const { 
+    connected, 
+    getTickerForSymbol, 
+    subscribeToSymbol, 
+    unsubscribeFromSymbol 
+  } = useGlobalWebSocketMarket();
+  
+  // Subscribe to symbol on mount
+  useEffect(() => {
+    subscribeToSymbol(symbol);
+    
+    return () => {
+      // Note: Don't unsubscribe automatically as other components might use the same symbol
+      // unsubscribeFromSymbol(symbol);
+    };
+  }, [symbol, subscribeToSymbol]);
+  
+  // Get ticker data for this specific symbol
+  const ticker = getTickerForSymbol(symbol);
   
   // Get balance data via REST
   const { data: balances = [], isLoading, error, refetch } = useQuery<Balance[]>({
@@ -40,7 +58,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
 
   // Calculate live portfolio values
   const portfolioData = useMemo(() => {
-    if (!balances.length || !wsData.ticker) {
+    if (!balances.length || !ticker) {
       return {
         totalValue: 0,
         totalPnL: 0,
@@ -51,7 +69,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       };
     }
 
-    const currentPrice = wsData.ticker.price;
+    const currentPrice = ticker.price;
     let totalValue = 0;
     let totalPnL = 0;
     let cashBalance = 0;
@@ -110,7 +128,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       cashBalance,
       cryptoValue
     };
-  }, [balances, wsData.ticker]);
+  }, [balances, ticker]);
 
   // Format currency values
   const formatCurrency = (value: number, currency = 'USD') => {
@@ -175,7 +193,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
           </CardTitle>
           
           <div className="flex items-center gap-2">
-            {wsData.connected ? (
+            {connected ? (
               <Badge variant="default" className="bg-green-500">
                 <Wifi className="w-3 h-3 mr-1" />
                 Live
@@ -232,11 +250,11 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
               <span className="font-medium">{formatCurrency(portfolioData.cryptoValue)}</span>
             </div>
             
-            {wsData.ticker && (
+            {ticker && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">BTC Price (Live):</span>
                 <span className="font-medium font-mono text-green-600">
-                  {formatCurrency(wsData.ticker.price)}
+                  {formatCurrency(ticker.price)}
                 </span>
               </div>
             )}
@@ -286,10 +304,10 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
         {/* Live Data Status */}
         <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t">
           <span>
-            Last update: {wsData.ticker ? new Date(wsData.ticker.timestamp).toLocaleTimeString() : 'N/A'}
+            Last update: {ticker ? new Date(ticker.timestamp).toLocaleTimeString() : 'N/A'}
           </span>
           <span>
-            {wsData.connected ? '🟢 Live pricing' : '🟡 Polling mode'}
+            {connected ? '🟢 Live pricing' : '🟡 Polling mode'}
           </span>
         </div>
       </CardContent>

@@ -1,112 +1,142 @@
 /**
- * Hybrid Trade Table - Live PnL Tracking med WebSocket + REST - Performance Optimized
+ * Hybrid Trade Table - Live active positions med WebSocket + REST fallback
  * 
  * Features:
- * - Live profit/loss tracking med real-time pricing
- * - Real-time position valuation
- * - Live percentage returns
- * - Smart fallback till REST data
- * - Performance optimizations med memoization
+ * - Live active position data via WebSocket + REST
+ * - Smart fallback till REST data vid anslutningsproblem
+ * - Position P&L visualization med buy/sell indicators
+ * - Volume analysis och position tracking
  */
 
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Trade } from '@/types/trading';
-import { TrendingUp, TrendingDown, Activity, RefreshCw, Wifi, DollarSign } from 'lucide-react';
-import { useWebSocketMarket } from '@/hooks/useWebSocketMarket';
-
-// Enhanced Trade interface with live data
-interface EnhancedTrade extends Trade {
-  unrealizedPnl: number;
-  pnlPercentage: number;
-  currentPrice: number;
-}
+import { Activity, Wifi, RefreshCw, TrendingUp, TrendingDown, Volume2 } from 'lucide-react';
 
 interface HybridTradeTableProps {
   symbol?: string;
   maxTrades?: number;
+  showVolume?: boolean;
 }
 
-export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({ 
+export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({ 
   symbol = 'BTCUSD',
-  maxTrades = 10 
+  maxTrades = 20,
+  showVolume = true 
 }) => {
-  // Get live pricing data via WebSocket Market
-  const wsData = useWebSocketMarket(symbol);
+  // Get global WebSocket data (shared single connection)
+  const { 
+    connected, 
+    getTickerForSymbol,
+    subscribeToSymbol,
+    platformStatus
+  } = useGlobalWebSocketMarket();
   
-  // Get trades data via REST
+  // Subscribe to symbol on mount for live pricing data
+  useEffect(() => {
+    subscribeToSymbol(symbol);
+    
+    return () => {
+      // Note: Don't unsubscribe automatically as other components might use the same symbol
+      // unsubscribeFromSymbol(symbol);
+    };
+  }, [symbol, subscribeToSymbol]);
+  
+  // Get current price for P&L calculation
+  const ticker = getTickerForSymbol(symbol);
+  
+  // Get active trades/positions data
   const { data: trades = [], isLoading, error, refetch } = useQuery<Trade[]>({
-    queryKey: ['trades', symbol],
+    queryKey: ['active-trades'],
     queryFn: () => api.getActiveTrades(),
-    refetchInterval: 5000,
+    refetchInterval: connected ? 10000 : 3000, // Slower polling if WS connected
     staleTime: 2000
   });
 
-  // Enhance trades with live pricing and calculate P&L
-  const enhancedTrades: EnhancedTrade[] = React.useMemo(() => {
-    if (!trades) return [];
-    
-    const currentPrice = wsData.ticker?.price || 0;
-    
-    return trades.slice(0, maxTrades).map((trade): EnhancedTrade => {
-      const direction = trade.side === 'buy' ? 1 : -1;
-      const unrealizedPnl = currentPrice > 0 ? (currentPrice - trade.entry_price) * direction * trade.amount : 0;
-      const pnlPercentage = trade.entry_price > 0 ? (unrealizedPnl / (trade.entry_price * trade.amount)) * 100 : 0;
-      
+  // Process trades for display with live P&L
+  const processedTrades = useMemo(() => {
+    if (!trades || trades.length === 0) {
       return {
-        ...trade,
-        unrealizedPnl,
-        pnlPercentage,
-        currentPrice
+        recentTrades: [],
+        totalVolume: 0,
+        totalPnL: 0,
+        avgPrice: 0,
+        activePositions: 0
       };
-    });
-  }, [trades, wsData.ticker, maxTrades]);
-
-  // Safe format functions with null checks
-  const formatCurrency = (value: number | null | undefined) => {
-    if (value === null || value === undefined || isNaN(value)) {
-      return '$0.00';
     }
+
+    const currentPrice = ticker?.price || 0;
+    
+    // Limit and sort trades by timestamp (newest first)
+    const recentTrades = [...trades]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, maxTrades)
+      .map(trade => {
+        // Calculate live P&L using current market price
+        const livePrice = currentPrice > 0 ? currentPrice : trade.entry_price;
+        const direction = trade.side === 'buy' ? 1 : -1;
+        const livePnL = (livePrice - trade.entry_price) * direction * trade.amount;
+        
+        return {
+          ...trade,
+          currentPrice: livePrice,
+          livePnL
+        };
+      });
+
+    // Calculate aggregated statistics
+    const totalVolume = recentTrades.reduce((sum, trade) => sum + trade.amount, 0);
+    const totalPnL = recentTrades.reduce((sum, trade) => sum + trade.livePnL, 0);
+    const avgPrice = recentTrades.length > 0 
+      ? recentTrades.reduce((sum, trade) => sum + trade.entry_price, 0) / recentTrades.length 
+      : 0;
+    
+    const activePositions = recentTrades.length;
+
+    return {
+      recentTrades,
+      totalVolume,
+      totalPnL,
+      avgPrice,
+      activePositions
+    };
+  }, [trades, maxTrades, ticker]);
+
+  const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(value);
+    }).format(price);
   };
 
-  const formatCrypto = (value: number | null | undefined, decimals = 6) => {
-    if (value === null || value === undefined || isNaN(value)) {
-      return '0.000000';
-    }
-    return value.toFixed(decimals);
+  const formatAmount = (amount: number) => {
+    return amount.toFixed(6);
   };
 
-  const formatPercentage = (value: number | null | undefined) => {
-    if (value === null || value === undefined || isNaN(value)) {
-      return '0.00';
-    }
-    return value.toFixed(2);
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString();
   };
 
-  if (isLoading) {
+  if (isLoading && trades.length === 0) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Live Active Trades</CardTitle>
+          <CardTitle className="text-sm font-medium">Active Positions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={`skeleton-${i}`} className="animate-pulse flex justify-between">
+          <div className="space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="animate-pulse flex justify-between">
                 <div className="h-4 bg-muted rounded w-1/4"></div>
-                <div className="h-4 bg-muted rounded w-1/6"></div>
-                <div className="h-4 bg-muted rounded w-1/6"></div>
-                <div className="h-4 bg-muted rounded w-1/6"></div>
+                <div className="h-4 bg-muted rounded w-1/4"></div>
+                <div className="h-4 bg-muted rounded w-1/4"></div>
               </div>
             ))}
           </div>
@@ -115,15 +145,15 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
     );
   }
 
-  if (error) {
+  if (error && trades.length === 0) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Live Active Trades</CardTitle>
+          <CardTitle className="text-sm font-medium">Active Positions</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-4">
-            <p className="text-red-500">Failed to load trades data</p>
+            <p className="text-red-500">Failed to load position data</p>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
@@ -138,21 +168,13 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <DollarSign className="w-4 h-4" />
-            Live Active Trades ({enhancedTrades.length})
-          </CardTitle>
+          <CardTitle className="text-sm font-medium">Active Positions ({symbol})</CardTitle>
           
           <div className="flex items-center gap-2">
-            {wsData.connected ? (
+            {connected ? (
               <Badge variant="default" className="bg-green-500">
                 <Wifi className="w-3 h-3 mr-1" />
                 Live P&L
-              </Badge>
-            ) : wsData.error ? (
-              <Badge variant="destructive" className="max-w-48 truncate" title={wsData.error}>
-                <Activity className="w-3 h-3 mr-1" />
-                {wsData.error.includes('Failed to connect') ? 'Connection Failed' : 'WebSocket Error'}
               </Badge>
             ) : (
               <Badge variant="secondary">
@@ -161,146 +183,126 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
               </Badge>
             )}
             
+            {platformStatus === 'maintenance' && (
+              <Badge variant="destructive">Maintenance</Badge>
+            )}
+            
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-3 h-3" />
             </Button>
           </div>
         </div>
-
-        {/* Live Portfolio Summary */}
-        {enhancedTrades.length > 0 && (
-          <div className="mt-3 p-3 bg-muted rounded-lg">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className={`text-lg font-bold ${
-                  enhancedTrades[0].unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(enhancedTrades[0].unrealizedPnl)}
-                </div>
-                <div className="text-xs text-muted-foreground">Total P&L</div>
-              </div>
-              
-              <div>
-                <div className={`text-lg font-bold ${
-                  enhancedTrades[0].pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {enhancedTrades[0].pnlPercentage >= 0 ? '+' : ''}{formatPercentage(enhancedTrades[0].pnlPercentage)}%
-                </div>
-                <div className="text-xs text-muted-foreground">Total Return</div>
-              </div>
-              
-              <div>
-                <div className="text-lg font-bold">
-                  {enhancedTrades.filter(t => t.unrealizedPnl > 0).length}/{enhancedTrades.filter(t => t.unrealizedPnl < 0).length}
-                </div>
-                <div className="text-xs text-muted-foreground">W/L Ratio</div>
-              </div>
-            </div>
-          </div>
-        )}
       </CardHeader>
 
-      <CardContent>
-        {enhancedTrades.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>No active trades</p>
-            <p className="text-xs mt-1">Open positions will appear here with live P&L</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Table Header */}
-            <div className="grid grid-cols-6 gap-2 text-xs font-medium text-muted-foreground border-b pb-2">
-              <span>Symbol</span>
-              <span>Side</span>
-              <span>Amount</span>
-              <span>Entry → Current</span>
-              <span>Live P&L</span>
-              <span>Return %</span>
+      <CardContent className="space-y-4">
+        {/* Position Statistics */}
+        {showVolume && processedTrades.activePositions > 0 && (
+          <div className="grid grid-cols-3 gap-4 p-3 bg-muted rounded-lg">
+            <div className="text-center">
+              <div className="text-sm text-muted-foreground">Total P&L</div>
+              <div className={`font-bold ${
+                processedTrades.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {formatPrice(processedTrades.totalPnL)}
+              </div>
+              <div className={`text-xs flex items-center justify-center gap-1 ${
+                processedTrades.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {processedTrades.totalPnL >= 0 ? 
+                  <TrendingUp className="w-3 h-3" /> : 
+                  <TrendingDown className="w-3 h-3" />
+                }
+                {ticker ? 'Live' : 'Static'}
+              </div>
             </div>
             
-            {/* Trade Rows */}
-            {enhancedTrades.map((trade, index) => (
-              <div key={`trade-${trade.id || index}-${index}`} 
-                   className={`grid grid-cols-6 gap-2 items-center p-2 rounded-lg transition-colors ${
-                     trade.unrealizedPnl > 0 ? 'bg-green-50 border border-green-200' :
-                     trade.unrealizedPnl < 0 ? 'bg-red-50 border border-red-200' :
-                     'bg-muted/50'
-                   }`}>
-                
-                {/* Symbol */}
-                <span className="font-medium text-sm">{trade.symbol}</span>
-                
-                {/* Side */}
-                <Badge variant={trade.side === 'buy' ? 'default' : 'destructive'} className="w-fit text-xs">
-                  {trade.side?.toUpperCase() || 'UNKNOWN'}
-                </Badge>
-                
-                {/* Amount */}
-                <span className="text-sm font-mono">{formatCrypto(trade.amount, 4)}</span>
-                
-                {/* Price Movement */}
-                <div className="text-sm">
-                  <div className="font-mono">{formatCurrency(trade.entry_price)}</div>
-                  <div className={`font-mono text-xs ${
-                    trade.unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    → {formatCurrency(trade.currentPrice)}
-                  </div>
-                </div>
-                
-                {/* Live P&L */}
-                <div className={`text-sm font-medium ${
-                  trade.unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  <div className="flex items-center gap-1">
-                    {trade.unrealizedPnl >= 0 ? 
-                      <TrendingUp className="w-3 h-3" /> : 
-                      <TrendingDown className="w-3 h-3" />
-                    }
-                    {formatCurrency(Math.abs(trade.unrealizedPnl))}
-                  </div>
-                </div>
-                
-                {/* Return % */}
-                <div className={`text-sm font-bold ${
-                  trade.pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {trade.pnlPercentage >= 0 ? '+' : ''}{formatPercentage(trade.pnlPercentage)}%
-                </div>
+            <div className="text-center">
+              <div className="text-sm text-muted-foreground">Volume</div>
+              <div className="font-bold">{formatAmount(processedTrades.totalVolume)} BTC</div>
+              <div className="text-xs text-muted-foreground">
+                {processedTrades.activePositions} positions
               </div>
-            ))}
+            </div>
+            
+            <div className="text-center">
+              <div className="text-sm text-muted-foreground">Avg Entry</div>
+              <div className="font-bold">{formatPrice(processedTrades.avgPrice)}</div>
+              <div className="text-xs text-muted-foreground">
+                Current: {ticker ? formatPrice(ticker.price) : 'N/A'}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Live Data Status */}
-        <div className="flex justify-between items-center text-xs text-muted-foreground pt-4 border-t mt-4">
-          <span>
-            Market price: {wsData.ticker ? formatCurrency(wsData.ticker.price) : 'Loading...'}
-          </span>
-          <div className="flex items-center gap-2">
-            {wsData.connected ? (
-              <span className="text-green-600">🟢 Live P&L updates</span>
-            ) : wsData.error ? (
-              <div className="flex items-center gap-2">
-                <span className="text-red-600">🔴 WebSocket Error</span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => refetch()} 
-                  className="h-6 px-2 text-xs"
-                >
-                  Refresh
-                </Button>
-              </div>
-            ) : (
-              <span className="text-yellow-600">🟡 Static P&L</span>
-            )}
+        {/* Position List */}
+        <div className="space-y-1 max-h-96 overflow-y-auto">
+          {/* Header */}
+          <div className="grid grid-cols-4 gap-4 text-xs font-semibold text-muted-foreground py-2 border-b">
+            <span>Time</span>
+            <span>Side</span>
+            <span className="text-right">Entry Price</span>
+            <span className="text-right">P&L</span>
           </div>
+          
+          {/* Position Rows */}
+          {processedTrades.recentTrades.length > 0 ? (
+            processedTrades.recentTrades.map((trade) => (
+              <div 
+                key={`${trade.id}-${trade.timestamp}`}
+                className={`grid grid-cols-4 gap-4 text-xs py-2 px-2 rounded transition-colors ${
+                  trade.livePnL > 0 ? 'bg-green-50 hover:bg-green-100' :
+                  trade.livePnL < 0 ? 'bg-red-50 hover:bg-red-100' :
+                  'hover:bg-muted'
+                }`}
+              >
+                <span className="text-muted-foreground">
+                  {formatTime(trade.timestamp)}
+                </span>
+                
+                <Badge 
+                  variant={trade.side === 'buy' ? 'default' : 'destructive'} 
+                  className="w-fit text-xs"
+                >
+                  {trade.side.toUpperCase()}
+                </Badge>
+                
+                <span className="text-right font-mono">
+                  {formatPrice(trade.entry_price)}
+                </span>
+                
+                <span className={`text-right font-mono ${
+                  trade.livePnL > 0 ? 'text-green-600' :
+                  trade.livePnL < 0 ? 'text-red-600' :
+                  'text-muted-foreground'
+                }`}>
+                  {trade.livePnL >= 0 ? '+' : ''}{formatPrice(trade.livePnL)}
+                  {trade.livePnL !== 0 && (
+                    <span className="ml-1">
+                      {trade.livePnL > 0 ? '↗' : '↘'}
+                    </span>
+                  )}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Volume2 className="w-8 h-8 mx-auto mb-2" />
+              <p>No active positions</p>
+              <p className="text-xs">Open positions will appear here with live P&L</p>
+            </div>
+          )}
+        </div>
+
+        {/* Data Source Status */}
+        <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t">
+          <span>
+            Showing {processedTrades.recentTrades.length} active positions
+          </span>
+          <span>
+            {connected && ticker ? '🟢 Live P&L updates' : '🟡 Static P&L data'}
+          </span>
         </div>
       </CardContent>
     </Card>
   );
-});
-
-HybridTradeTable.displayName = 'HybridTradeTable';
+};
