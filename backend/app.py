@@ -20,6 +20,7 @@ from backend.routes.orders import register as register_orders
 from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
 from backend.routes.strategy_analysis import strategy_analysis_bp
+from backend.routes.live_portfolio import live_portfolio_bp
 from backend.routes import market_data
 from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"])
 
 # Registrera routes som inte använder blueprint
 register_balances(app)
@@ -173,6 +174,7 @@ def register_routes():
     app.register_blueprint(status_bp)
     app.register_blueprint(backtest_bp)
     app.register_blueprint(strategy_analysis_bp)
+    app.register_blueprint(live_portfolio_bp)
 
 
 # Register routes
@@ -204,6 +206,13 @@ def api_documentation():
                 "positions": "/api/positions", 
                 "balances": "/api/balances"
             },
+            "live_portfolio": {
+                "snapshot": "/api/live-portfolio/snapshot?symbols=BTC/USD,ETH/USD",
+                "position_value": "/api/live-portfolio/position-value?symbol=BTC/USD&amount=0.1",
+                "validate_trade": "/api/live-portfolio/validate-trade (POST)",
+                "performance": "/api/live-portfolio/performance?timeframe=24h",
+                "market_overview": "/api/live-portfolio/market-overview?symbols=BTC/USD,ETH/USD"
+            },
             "bot_control": {
                 "start": "/api/start-bot",
                 "stop": "/api/stop-bot",
@@ -218,6 +227,10 @@ def api_documentation():
             "Live Bitfinex integration",
             "Real-time OHLCV data", 
             "Live order book data",
+            "Live portfolio management with real-time pricing",
+            "Real-time position valuation and PnL tracking",
+            "Live trading capacity validation",
+            "Market overview with live data quality metrics", 
             "Trading bot control",
             "Strategy backtesting",
             "Risk management",
