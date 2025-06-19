@@ -22,8 +22,16 @@ class MinimalLogger {
   }
 
   // SYSTEM STATUS (startup, shutdown, major state changes)
-  status(source: string, message: string): void {
-    this.addLogWithRateLimit('status', source, message, 2 * 60 * 1000); // 2 min rate limit
+  status(source: string, message: string): void
+  status(message: string): void
+  status(...args: string[]): void {
+    if (args.length === 1) {
+      // Single argument - treat as message with 'System' source
+      this.addLogWithRateLimit('status', 'System', args[0], 2 * 60 * 1000);
+    } else if (args.length >= 2) {
+      // Two or more arguments - treat as (source, message)
+      this.addLogWithRateLimit('status', args[0], args[1], 2 * 60 * 1000);
+    }
   }
 
   // ERRORS (always logged, but rate limited)
