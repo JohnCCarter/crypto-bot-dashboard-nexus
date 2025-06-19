@@ -5,12 +5,13 @@ import { ManualTradePanel } from '@/components/ManualTradePanel';
 import { OrderBook } from '@/components/OrderBook';
 import { OrderHistory } from '@/components/OrderHistory';
 import { PriceChart } from '@/components/PriceChart';
+import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TradeTable } from '@/components/TradeTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useWebSocket } from '@/hooks/useWebSocket';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
 import {
   Balance,
@@ -23,6 +24,8 @@ import {
   Trade
 } from '@/types/trading';
 import { useCallback, useEffect, useState, type FC } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Settings, RefreshCw } from 'lucide-react';
 
 /**
  * Main dashboard page for the crypto trading application.
@@ -46,9 +49,20 @@ const Index: FC = () => {
   const [emaFast, setEmaFast] = useState<number[] | undefined>(undefined);
   const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
   const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
+  const { toast } = useToast();
 
   const loadEmaCrossover = useCallback(async () => {
     try {
+      // Säkerhetskontroll: Se till att vi har chartData
+      if (!chartData || chartData.length === 0) {
+        console.log('❌ No chart data available for EMA crossover backtest');
+        return;
+      }
+
+      console.log(`📊 loadEmaCrossover called with ${chartData.length} data points`);
+
       // Mock: använd chartData för att skapa data-objekt
       const data = {
         timestamp: chartData.map(d => d.timestamp),
@@ -58,6 +72,9 @@ const Index: FC = () => {
         close: chartData.map(d => d.close),
         volume: chartData.map(d => d.volume)
       };
+      
+      console.log('🚀 Sending backtest data:', { dataLength: data.timestamp.length, sample: data.timestamp.slice(0, 3) });
+      
       const result = await api.runBacktestEmaCrossover(data, {
         fast_period: 3,
         slow_period: 5,
@@ -66,31 +83,30 @@ const Index: FC = () => {
       setEmaFast(result.ema_fast);
       setEmaSlow(result.ema_slow);
       setSignals(result.signals);
+      console.log('✅ EMA crossover loaded successfully');
     } catch (error) {
-      console.error('Failed to load EMA crossover data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('❌ Failed to load EMA crossover data:', errorMessage);
+      console.error('❌ Full error object:', error);
+      
+      // Log detailed error information for debugging
+      console.error('❌ Error details:', {
+        chartDataLength: chartData?.length || 0,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      });
+      
+      // Reset EMA data on error to prevent stale data
+      setEmaFast(undefined);
+      setEmaSlow(undefined);
+      setSignals(undefined);
     }
   }, [chartData]);
-
-  // WebSocket for real-time updates (prepared for future use)
-  const { isConnected } = useWebSocket('ws://localhost:5000/ws', (data: unknown) => {
-    console.log('WebSocket data received:', data);
-    // Type guard for expected data shape
-    if (typeof data === 'object' && data !== null && 'type' in data && 'data' in data) {
-      const d = data as { type: string; data: OrderBookType | BotStatus };
-      if (d.type === 'orderbook') {
-        setOrderBook(d.data as OrderBookType);
-      }
-      if (d.type === 'status') {
-        setBotStatus(d.data as BotStatus);
-      }
-    }
-  });
 
   // Load initial data
   useEffect(() => {
     console.log('API keys:', Object.keys(api)); // Debug: logga vilka funktioner som finns på api-objektet
     loadAllData();
-    loadEmaCrossover();
     
     // Set up periodic updates
     const interval = setInterval(() => {
@@ -98,7 +114,14 @@ const Index: FC = () => {
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
-  }, [loadEmaCrossover]);
+  }, []);
+
+  // Load EMA crossover data when chartData is available
+  useEffect(() => {
+    if (chartData.length > 0) {
+      loadEmaCrossover();
+    }
+  }, [chartData, loadEmaCrossover]);
 
   const loadAllData = async () => {
     try {
@@ -120,6 +143,7 @@ const Index: FC = () => {
         api.getChartData('BTCUSD')
       ]);
 
+      console.log(`📈 Chart data loaded: ${chartDataResponse.length} data points`);
       setBalances(balancesData);
       setActiveTrades(tradesData);
       setOrderHistory(ordersData);
@@ -127,12 +151,52 @@ const Index: FC = () => {
       setOrderBook(orderBookData);
       setLogs(logsData);
       setChartData(chartDataResponse);
+      setIsConnected(true); // Set connected to true when API calls succeed
     } catch (error) {
       console.error('Failed to load data:', error);
+      setIsConnected(false); // Set connected to false when API calls fail
     } finally {
       setIsLoading(false);
     }
   };
+
+  const fetchBotStatus = async () => {
+    console.log('🏠 [Index] Fetching bot status...');
+    try {
+      const status = await api.getBotStatus();
+      console.log('✅ [Index] Bot status fetched:', status);
+      setBotStatus(status);
+    } catch (error) {
+      console.error('❌ [Index] Failed to fetch bot status:', error);
+      toast({
+        title: "Status Error",
+        description: "Failed to fetch bot status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRefresh = () => {
+    console.log('🏠 [Index] Manual refresh triggered');
+    setRefreshKey(prev => prev + 1);
+    fetchBotStatus();
+  };
+
+  useEffect(() => {
+    console.log('🏠 [Index] Component mounted, fetching initial bot status');
+    fetchBotStatus();
+    
+    // Set up periodic status updates
+    const interval = setInterval(() => {
+      console.log('🏠 [Index] Periodic status update');
+      fetchBotStatus();
+    }, 30000); // Update every 30 seconds
+
+    return () => {
+      console.log('🏠 [Index] Component unmounting, clearing interval');
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -150,8 +214,17 @@ const Index: FC = () => {
               <Button 
                 variant="outline" 
                 size="sm"
+                onClick={handleRefresh}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
                 onClick={() => setIsSettingsOpen(true)}
               >
+                <Settings className="w-4 h-4 mr-2" />
                 ⚙️ Settings
               </Button>
               <ThemeToggle />
@@ -162,51 +235,64 @@ const Index: FC = () => {
 
       {/* Main Dashboard */}
       <main className="container mx-auto px-6 py-6">
-        <div className="grid grid-cols-12 gap-6">
-          {/* Top Row - Key Metrics */}
-          <div className="col-span-12 lg:col-span-3">
-            <BalanceCard balances={balances} isLoading={isLoading} />
-          </div>
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="dashboard">Trading Dashboard</TabsTrigger>
+            <TabsTrigger value="analysis">Probability Analysis</TabsTrigger>
+          </TabsList>
           
-          <div className="col-span-12 lg:col-span-3">
-            <BotControl status={botStatus} onStatusChange={loadAllData} />
-          </div>
-          
-          <div className="col-span-12 lg:col-span-3">
-            <ManualTradePanel onOrderPlaced={loadAllData} />
-          </div>
-          
-          <div className="col-span-12 lg:col-span-3">
-            <TradeTable trades={activeTrades} isLoading={isLoading} />
-          </div>
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="grid grid-cols-12 gap-6">
+              {/* Top Row - Key Metrics */}
+              <div className="col-span-12 lg:col-span-3">
+                <BalanceCard balances={balances} isLoading={isLoading} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-3">
+                <BotControl status={botStatus} onStatusChange={fetchBotStatus} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-3">
+                <ManualTradePanel onOrderPlaced={handleRefresh} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-3">
+                <TradeTable trades={activeTrades} isLoading={isLoading} />
+              </div>
 
-          {/* Second Row - Chart and Order Book */}
-          <div className="col-span-12 lg:col-span-8">
-            <PriceChart 
-              data={chartData} 
-              symbol="BTCUSD" 
-              isLoading={isLoading} 
-              emaFast={emaFast}
-              emaSlow={emaSlow}
-              signals={signals}
-            />
-          </div>
-          
-          <div className="col-span-12 lg:col-span-4">
-            {orderBook && (
-              <OrderBook orderBook={orderBook} isLoading={isLoading} />
-            )}
-          </div>
+              {/* Second Row - Chart and Order Book */}
+              <div className="col-span-12 lg:col-span-8">
+                <PriceChart 
+                  data={chartData} 
+                  symbol="BTCUSD" 
+                  isLoading={isLoading} 
+                  emaFast={emaFast}
+                  emaSlow={emaSlow}
+                  signals={signals}
+                />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-4">
+                {orderBook && (
+                  <OrderBook orderBook={orderBook} isLoading={isLoading} />
+                )}
+              </div>
 
-          {/* Third Row - Tables */}
-          <div className="col-span-12 lg:col-span-6">
-            <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={loadAllData} />
-          </div>
+              {/* Third Row - Tables */}
+              <div className="col-span-12 lg:col-span-6">
+                <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={handleRefresh} />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-6">
+                <LogViewer logs={logs} isLoading={isLoading} />
+              </div>
+            </div>
+          </TabsContent>
           
-          <div className="col-span-12 lg:col-span-6">
-            <LogViewer logs={logs} isLoading={isLoading} />
-          </div>
-        </div>
+          <TabsContent value="analysis" className="space-y-6">
+            <ProbabilityAnalysis />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Settings Panel */}

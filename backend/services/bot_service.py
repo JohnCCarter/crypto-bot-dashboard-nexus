@@ -15,7 +15,11 @@ def start_bot():
     bot_status["running"] = True
     bot_status["start_time"] = now
     bot_status["last_update"] = datetime.now(UTC).isoformat()
-    return {"message": "Bot started", "status": "running"}
+    return {
+        "success": True,
+        "message": "Bot started successfully",
+        "status": "running"
+    }
 
 
 def stop_bot():
@@ -23,7 +27,11 @@ def stop_bot():
     bot_status["running"] = False
     bot_status["start_time"] = None
     bot_status["last_update"] = datetime.now(UTC).isoformat()
-    return {"message": "Bot stopped", "status": "stopped"}
+    return {
+        "success": True,
+        "message": "Bot stopped successfully", 
+        "status": "stopped"
+    }
 
 
 def get_bot_status():

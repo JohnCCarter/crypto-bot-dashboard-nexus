@@ -1,6 +1,7 @@
 import { OrderHistoryItem } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -102,7 +103,7 @@ export function OrderHistory({ orders, isLoading = false, onOrderCancelled }: Or
                     {order.status === 'pending' && (
                       <Button
                         variant="destructive"
-                        size="xs"
+                        size="sm"
                         className="ml-2"
                         onClick={() => handleCancelOrder(order.id)}
                       >

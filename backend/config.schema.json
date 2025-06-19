@@ -33,9 +33,14 @@
         "lookback": { "type": "integer", "minimum": 1, "description": "Lookback-period" },
         "stop_loss_percent": { "type": "number", "minimum": 0, "maximum": 100, "description": "Stop loss (%)" },
         "take_profit_percent": { "type": "number", "minimum": 0, "maximum": 100, "description": "Take profit (%)" },
-        "risk_per_trade": { "type": "number", "minimum": 0, "maximum": 1, "description": "Risk per trade (andel)" }
+        "risk_per_trade": { "type": "number", "minimum": 0, "maximum": 1, "description": "Risk per trade (andel)" },
+        "max_position_size": { "type": "number", "minimum": 0, "maximum": 1, "description": "Max positionsstorlek (andel av portfölj)" },
+        "max_leverage": { "type": "number", "minimum": 1, "description": "Max hävstång" },
+        "max_open_positions": { "type": "integer", "minimum": 1, "description": "Max antal öppna positioner" },
+        "min_signal_confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Minsta confidence för att handla" },
+        "probability_weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "Vikt för sannolikhetsdata vs confidence" }
       },
-      "required": ["max_daily_loss", "lookback", "stop_loss_percent", "take_profit_percent", "risk_per_trade"]
+      "required": ["max_daily_loss", "lookback", "stop_loss_percent", "take_profit_percent", "risk_per_trade", "max_position_size", "max_leverage", "max_open_positions"]
     },
     "notifications": {
       "type": "object",
@@ -74,6 +79,64 @@
         }
       },
       "required": ["min_gap_size", "direction", "position_size", "lookback"]
+    },
+    "portfolio_strategies": {
+      "type": "object",
+      "properties": {
+        "ema_crossover": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "description": "Om strategin är aktiverad" },
+            "weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "Vikt i portfolio (0-1)" },
+            "min_confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Minsta confidence för denna strategi" },
+            "fast_period": { "type": "integer", "minimum": 1, "description": "Snabb EMA period" },
+            "slow_period": { "type": "integer", "minimum": 1, "description": "Långsam EMA period" }
+          },
+          "required": ["enabled", "weight", "min_confidence"]
+        },
+        "rsi": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "description": "Om strategin är aktiverad" },
+            "weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "Vikt i portfolio (0-1)" },
+            "min_confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Minsta confidence för denna strategi" },
+            "rsi_period": { "type": "integer", "minimum": 1, "description": "RSI period" },
+            "overbought": { "type": "number", "minimum": 50, "maximum": 100, "description": "Överköpt nivå" },
+            "oversold": { "type": "number", "minimum": 0, "maximum": 50, "description": "Översåld nivå" }
+          },
+          "required": ["enabled", "weight", "min_confidence"]
+        },
+        "fvg": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "description": "Om strategin är aktiverad" },
+            "weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "Vikt i portfolio (0-1)" },
+            "min_confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Minsta confidence för denna strategi" },
+            "lookback": { "type": "integer", "minimum": 1, "description": "Lookback period" }
+          },
+          "required": ["enabled", "weight", "min_confidence"]
+        },
+        "sample": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "description": "Om strategin är aktiverad" },
+            "weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "Vikt i portfolio (0-1)" },
+            "min_confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Minsta confidence för denna strategi" }
+          },
+          "required": ["enabled", "weight", "min_confidence"]
+        }
+      }
+    },
+    "probability_settings": {
+      "type": "object",
+      "properties": {
+        "confidence_threshold_buy": { "type": "number", "minimum": 0, "maximum": 1, "description": "Tröskelvärde för buy confidence" },
+        "confidence_threshold_sell": { "type": "number", "minimum": 0, "maximum": 1, "description": "Tröskelvärde för sell confidence" },
+        "confidence_threshold_hold": { "type": "number", "minimum": 0, "maximum": 1, "description": "Tröskelvärde för hold confidence" },
+        "risk_score_threshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "Max risk score för att utföra trade" },
+        "combination_method": { "type": "string", "enum": ["weighted_average", "majority_vote"], "description": "Metod för att kombinera strategier" },
+        "enable_dynamic_weights": { "type": "boolean", "description": "Om viktning ska justeras dynamiskt baserat på prestanda" }
+      }
     }
   },
   "required": ["strategy", "trading_window", "risk", "notifications"]

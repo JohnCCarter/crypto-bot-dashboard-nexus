@@ -31,7 +31,12 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
   const { toast } = useToast();
 
   const handleSubmitOrder = async (side: 'buy' | 'sell') => {
+    console.log(`📈 [ManualTrade] User initiated ${side.toUpperCase()} order`);
+    console.log(`📈 [ManualTrade] Order parameters:`, { symbol, orderType, amount, price, side });
+    console.log(`📈 [ManualTrade] Timestamp: ${new Date().toISOString()}`);
+    
     if (!amount || parseFloat(amount) <= 0) {
+      console.error(`❌ [ManualTrade] Validation failed: Invalid amount "${amount}"`);
       toast({
         title: 'Invalid Amount',
         description: 'Please enter a valid amount.',
@@ -41,6 +46,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
     }
 
     if (orderType === 'limit' && (!price || parseFloat(price) <= 0)) {
+      console.error(`❌ [ManualTrade] Validation failed: Invalid price "${price}" for limit order`);
       toast({
         title: 'Invalid Price',
         description: 'Please enter a valid price for limit orders.',
@@ -57,33 +63,51 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
       ...(orderType === 'limit' && { price: parseFloat(price) })
     };
 
+    console.log(`📈 [ManualTrade] Order data prepared:`, orderData);
     setIsSubmitting(true);
 
     try {
-      // Skicka order till backend
-      await api.placeOrder(orderData);
+      console.log(`📈 [ManualTrade] Calling api.placeOrder()...`);
+      
+      const result = await api.placeOrder(orderData);
+      
+      console.log(`✅ [ManualTrade] Order submitted successfully:`, result);
+      console.log(`✅ [ManualTrade] Order ID: ${(result as any).order?.id || result.message || 'N/A'}`);
+      
       toast({
         title: 'Order Submitted',
         description: `${side.toUpperCase()} order for ${amount} ${symbol} has been placed successfully.`,
       });
+      
       // Uppdatera orderhistorik i parent om prop finns
       if (typeof onOrderPlaced === 'function') {
+        console.log(`📈 [ManualTrade] Calling onOrderPlaced callback`);
         onOrderPlaced();
       }
+      
       // Reset form after successful submission
+      console.log(`📈 [ManualTrade] Resetting form fields`);
       setAmount('');
       if (orderType === 'limit') {
         setPrice('');
       }
     } catch (error) {
+      console.error(`❌ [ManualTrade] Order submission failed:`, error);
+      console.error(`❌ [ManualTrade] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [ManualTrade] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`❌ [ManualTrade] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
+      console.error(`❌ [ManualTrade] Failed order data:`, orderData);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       toast({
         title: 'Order Failed',
-        description: 'Failed to submit order. Please try again.',
+        description: `Failed to submit ${side} order: ${errorMessage}`,
         variant: 'destructive'
       });
-      console.error('Order submission failed:', error);
     } finally {
       setIsSubmitting(false);
+      console.log(`📈 [ManualTrade] Order submission process completed`);
     }
   };
 

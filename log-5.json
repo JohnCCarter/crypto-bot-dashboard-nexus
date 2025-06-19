@@ -1,0 +1,146 @@
+[
+  {
+    "timestamp": "2025-06-18T18:46:42.389Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Operation completed, loading state reset"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:42.387Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Stack trace: Error: Bot stopped\n    at handleToggleBot (http://localhost:8080/src/components/BotControl.tsx?t=1750271983562:70:23)"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:42.387Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error message: Bot stopped"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:42.387Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error type: Error"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:42.387Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Exception caught: {}"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:42.386Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error message: Bot stopped"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:42.386Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] STOP failed - response.success = false"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:42.385Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "✅ [BotControl] API Response: {\n  \"message\": \"Bot stopped\",\n  \"status\": \"stopped\"\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:41.251Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Calling api.stopBot()..."
+  },
+  {
+    "timestamp": "2025-06-18T18:46:41.251Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Timestamp: 2025-06-18T18:46:41.251Z"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:41.250Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Current status: {\n  \"last_update\": \"2025-06-18T18:46:27.711704+00:00\",\n  \"status\": \"running\",\n  \"uptime\": 2.667097568511963\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:41.250Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] User clicked STOP button"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.780Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Operation completed, loading state reset"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.780Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Stack trace: Error: Bot started\n    at handleToggleBot (http://localhost:8080/src/components/BotControl.tsx?t=1750271983562:70:23)"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.780Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error message: Bot started"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.780Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error type: Error"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.779Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Exception caught: {}"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.779Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] Error message: Bot started"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.778Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [BotControl] START failed - response.success = false"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:37.778Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "✅ [BotControl] API Response: {\n  \"message\": \"Bot started\",\n  \"status\": \"running\"\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:36.666Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Calling api.startBot()..."
+  },
+  {
+    "timestamp": "2025-06-18T18:46:36.666Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Timestamp: 2025-06-18T18:46:36.666Z"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:36.666Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] Current status: {\n  \"last_update\": \"2025-06-18T18:46:21.639631+00:00\",\n  \"status\": \"stopped\",\n  \"uptime\": 0\n}"
+  },
+  {
+    "timestamp": "2025-06-18T18:46:36.665Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "🤖 [BotControl] User clicked START button"
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "timestamp": "2025-06-18T18:33:54.150Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "⚙️ [Settings] Configuration loading completed"
+  },
+  {
+    "timestamp": "2025-06-18T18:33:54.150Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [Settings] Stack trace: TypeError: Failed to fetch\n    at Object.getConfig (http://localhost:8080/src/lib/api.ts:46:27)\n    at http://localhost:8080/src/components/SettingsPanel.tsx:45:42\n    at http://localhost:8080/src/components/SettingsPanel.tsx:69:13\n    at commitHookEffectListMount (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:16915:34)\n    at commitPassiveMountOnFiber (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:18156:19)\n    at commitPassiveMountEffects_complete (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:18129:17)\n    at commitPassiveMountEffects_begin (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:18119:15)\n    at commitPassiveMountEffects (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:18109:11)\n    at flushPassiveEffectsImpl (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:19490:11)\n    at flushPassiveEffects (http://localhost:8080/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=bfb32294:19447:22)"
+  },
+  {
+    "timestamp": "2025-06-18T18:33:54.149Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [Settings] Error message: Failed to fetch"
+  },
+  {
+    "timestamp": "2025-06-18T18:33:54.149Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [Settings] Error type: TypeError"
+  },
+  {
+    "timestamp": "2025-06-18T18:33:54.149Z",
+    "level": "error",
+    "source": "Frontend",
+    "message": "❌ [Settings] Failed to load configuration: {}"
+  },
+  {
+    "timestamp": "2025-06-18T18:33:51.830Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "⚙️ [Settings] Calling api.getConfig()..."
+  },
+  {
+    "timestamp": "2025-06-18T18:33:51.830Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "⚙️ [Settings] Timestamp: 2025-06-18T18:33:51.830Z"
+  },
+  {
+    "timestamp": "2025-06-18T18:33:51.830Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "⚙️ [Settings] Loading configuration..."
+  },
+  {
+    "timestamp": "2025-06-18T18:33:51.830Z",
+    "level": "info",
+    "source": "Frontend",
+    "message": "⚙️ [Settings] Settings panel opened, loading config"
+  }
+]

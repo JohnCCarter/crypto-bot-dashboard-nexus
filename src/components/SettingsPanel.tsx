@@ -23,52 +23,92 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
   const { toast } = useToast();
 
   const loadConfig = useCallback(async () => {
+    console.log(`⚙️ [Settings] Loading configuration...`);
+    console.log(`⚙️ [Settings] Timestamp: ${new Date().toISOString()}`);
+    
     setIsLoading(true);
     try {
+      console.log(`⚙️ [Settings] Calling api.getConfig()...`);
       const configData = await api.getConfig();
+      
+      console.log(`✅ [Settings] Configuration loaded successfully:`, configData);
+      console.log(`✅ [Settings] Config keys: ${Object.keys(configData).join(', ')}`);
+      
       setConfig(configData);
     } catch (error) {
+      console.error(`❌ [Settings] Failed to load configuration:`, error);
+      console.error(`❌ [Settings] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [Settings] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`❌ [Settings] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
+      
       toast({
-        title: "Error",
-        description: "Failed to load configuration",
+        title: "Configuration Load Error",
+        description: `Failed to load configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+      console.log(`⚙️ [Settings] Configuration loading completed`);
     }
   }, [toast]);
 
   useEffect(() => {
     if (isOpen) {
+      console.log(`⚙️ [Settings] Settings panel opened, loading config`);
       loadConfig();
     }
   }, [isOpen, loadConfig]);
 
   const handleSave = async () => {
-    if (!config) return;
+    if (!config) {
+      console.error(`❌ [Settings] Cannot save: config is null`);
+      return;
+    }
+    
+    console.log(`⚙️ [Settings] User clicked save configuration`);
+    console.log(`⚙️ [Settings] Configuration to save:`, config);
+    console.log(`⚙️ [Settings] Timestamp: ${new Date().toISOString()}`);
     
     setIsSaving(true);
     try {
+      console.log(`⚙️ [Settings] Calling api.updateConfig()...`);
       const response = await api.updateConfig(config);
+      
+      console.log(`✅ [Settings] API Response:`, response);
+      
       if (response.success) {
+        console.log(`✅ [Settings] Configuration saved successfully: ${response.message}`);
         toast({
           title: "Success",
           description: response.message,
         });
         onClose();
+      } else {
+        console.error(`❌ [Settings] Save failed - response.success = false`);
+        console.error(`❌ [Settings] Error message: ${response.message || 'No message provided'}`);
+        throw new Error(response.message || 'Configuration save failed');
       }
     } catch (error) {
+      console.error(`❌ [Settings] Configuration save failed:`, error);
+      console.error(`❌ [Settings] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [Settings] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`❌ [Settings] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
+      console.error(`❌ [Settings] Failed config data:`, config);
+      
       toast({
-        title: "Error",
-        description: "Failed to save configuration",
+        title: "Configuration Save Error",
+        description: `Failed to save configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
       setIsSaving(false);
+      console.log(`⚙️ [Settings] Configuration save process completed`);
     }
   };
 
   const updateConfig = <K extends keyof TradingConfig>(key: K, value: TradingConfig[K]) => {
+    console.log(`⚙️ [Settings] Configuration field updated: ${String(key)} = ${value}`);
+    console.log(`⚙️ [Settings] Previous value: ${config?.[key]}`);
     setConfig(prev => prev ? { ...prev, [key]: value } : null);
   };
 
@@ -131,7 +171,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <Input
                         id="ema_length"
                         type="number"
-                        value={config.EMA_LENGTH}
+                        value={config.EMA_LENGTH || ''}
                         onChange={(e) => updateConfig('EMA_LENGTH', parseInt(e.target.value))}
                       />
                     </div>
@@ -141,7 +181,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <Input
                         id="ema_fast"
                         type="number"
-                        value={config.EMA_FAST}
+                        value={config.EMA_FAST || ''}
                         onChange={(e) => updateConfig('EMA_FAST', parseInt(e.target.value))}
                       />
                     </div>
@@ -151,7 +191,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <Input
                         id="ema_slow"
                         type="number"
-                        value={config.EMA_SLOW}
+                        value={config.EMA_SLOW || ''}
                         onChange={(e) => updateConfig('EMA_SLOW', parseInt(e.target.value))}
                       />
                     </div>
@@ -161,7 +201,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <Input
                         id="rsi_period"
                         type="number"
-                        value={config.RSI_PERIOD}
+                        value={config.RSI_PERIOD || ''}
                         onChange={(e) => updateConfig('RSI_PERIOD', parseInt(e.target.value))}
                       />
                     </div>
@@ -172,7 +212,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         id="atr_multiplier"
                         type="number"
                         step="0.1"
-                        value={config.ATR_MULTIPLIER}
+                        value={config.ATR_MULTIPLIER || ''}
                         onChange={(e) => updateConfig('ATR_MULTIPLIER', parseFloat(e.target.value))}
                       />
                     </div>
@@ -183,7 +223,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         id="volume_multiplier"
                         type="number"
                         step="0.1"
-                        value={config.VOLUME_MULTIPLIER}
+                        value={config.VOLUME_MULTIPLIER || ''}
                         onChange={(e) => updateConfig('VOLUME_MULTIPLIER', parseFloat(e.target.value))}
                       />
                     </div>
@@ -193,7 +233,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <Input
                         id="lookback"
                         type="number"
-                        value={config.LOOKBACK}
+                        value={config.LOOKBACK || ''}
                         onChange={(e) => updateConfig('LOOKBACK', parseInt(e.target.value))}
                       />
                     </div>
@@ -209,7 +249,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         type="number"
                         min="0"
                         max="23"
-                        value={config.TRADING_START_HOUR}
+                        value={config.TRADING_START_HOUR || ''}
                         onChange={(e) => updateConfig('TRADING_START_HOUR', parseInt(e.target.value))}
                       />
                     </div>
@@ -221,7 +261,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         type="number"
                         min="0"
                         max="23"
-                        value={config.TRADING_END_HOUR}
+                        value={config.TRADING_END_HOUR || ''}
                         onChange={(e) => updateConfig('TRADING_END_HOUR', parseInt(e.target.value))}
                       />
                     </div>
@@ -232,7 +272,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         id="stop_loss"
                         type="number"
                         step="0.1"
-                        value={config.STOP_LOSS_PERCENT}
+                        value={config.STOP_LOSS_PERCENT || ''}
                         onChange={(e) => updateConfig('STOP_LOSS_PERCENT', parseFloat(e.target.value))}
                       />
                     </div>
@@ -243,7 +283,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         id="take_profit"
                         type="number"
                         step="0.1"
-                        value={config.TAKE_PROFIT_PERCENT}
+                        value={config.TAKE_PROFIT_PERCENT || ''}
                         onChange={(e) => updateConfig('TAKE_PROFIT_PERCENT', parseFloat(e.target.value))}
                       />
                     </div>
@@ -253,7 +293,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <Input
                         id="max_trades"
                         type="number"
-                        value={config.MAX_TRADES_PER_DAY}
+                        value={config.MAX_TRADES_PER_DAY || ''}
                         onChange={(e) => updateConfig('MAX_TRADES_PER_DAY', parseInt(e.target.value))}
                       />
                     </div>
@@ -263,7 +303,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                       <Input
                         id="max_loss"
                         type="number"
-                        value={config.MAX_DAILY_LOSS}
+                        value={config.MAX_DAILY_LOSS || ''}
                         onChange={(e) => updateConfig('MAX_DAILY_LOSS', parseFloat(e.target.value))}
                       />
                     </div>
@@ -274,7 +314,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                         id="risk_per_trade"
                         type="number"
                         step="0.1"
-                        value={config.RISK_PER_TRADE}
+                        value={config.RISK_PER_TRADE || ''}
                         onChange={(e) => updateConfig('RISK_PER_TRADE', parseFloat(e.target.value))}
                       />
                     </div>
@@ -298,7 +338,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                           <Input
                             id="email_sender"
                             type="email"
-                            value={config.EMAIL_SENDER}
+                            value={config.EMAIL_SENDER || ''}
                             onChange={(e) => updateConfig('EMAIL_SENDER', e.target.value)}
                           />
                         </div>
@@ -308,7 +348,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                           <Input
                             id="email_receiver"
                             type="email"
-                            value={config.EMAIL_RECEIVER}
+                            value={config.EMAIL_RECEIVER || ''}
                             onChange={(e) => updateConfig('EMAIL_RECEIVER', e.target.value)}
                           />
                         </div>
@@ -317,7 +357,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                           <Label htmlFor="smtp_server">SMTP Server</Label>
                           <Input
                             id="smtp_server"
-                            value={config.EMAIL_SMTP_SERVER}
+                            value={config.EMAIL_SMTP_SERVER || ''}
                             onChange={(e) => updateConfig('EMAIL_SMTP_SERVER', e.target.value)}
                           />
                         </div>
@@ -327,7 +367,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                           <Input
                             id="smtp_port"
                             type="number"
-                            value={config.EMAIL_SMTP_PORT}
+                            value={config.EMAIL_SMTP_PORT || ''}
                             onChange={(e) => updateConfig('EMAIL_SMTP_PORT', parseInt(e.target.value))}
                           />
                         </div>

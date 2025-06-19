@@ -1,4 +1,3 @@
-
 import { Trade } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +17,7 @@ export function TradeTable({ trades, isLoading = false }: TradeTableProps) {
         <CardContent>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse flex justify-between">
+              <div key={`skeleton-${i}`} className="animate-pulse flex justify-between">
                 <div className="h-4 bg-muted rounded w-1/4"></div>
                 <div className="h-4 bg-muted rounded w-1/6"></div>
                 <div className="h-4 bg-muted rounded w-1/6"></div>
@@ -50,11 +49,11 @@ export function TradeTable({ trades, isLoading = false }: TradeTableProps) {
               <span>Entry Price</span>
               <span>P&L</span>
             </div>
-            {trades.map((trade) => (
-              <div key={trade.id} className="grid grid-cols-5 gap-4 items-center">
+            {trades.map((trade, index) => (
+              <div key={`trade-${trade.id || index}-${index}`} className="grid grid-cols-5 gap-4 items-center">
                 <span className="font-medium">{trade.symbol}</span>
                 <Badge variant={trade.side === 'buy' ? 'default' : 'destructive'} className="w-fit">
-                  {trade.side.toUpperCase()}
+                  {trade.side?.toUpperCase() || 'UNKNOWN'}
                 </Badge>
                 <span>{trade.amount}</span>
                 <span>${trade.entry_price.toLocaleString()}</span>
