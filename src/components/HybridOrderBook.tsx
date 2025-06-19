@@ -13,12 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useHybridMarketData } from '@/hooks/useHybridMarketData';
-import { TrendingUp, TrendingDown, Wifi, Activity, RefreshCw, Settings, Heart } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wifi, Activity, RefreshCw, Settings, Heart, AlertTriangle } from 'lucide-react';
 import { useWebSocketMarket } from '@/hooks/useWebSocketMarket';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTriangle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { OrderBook } from '@/types/trading';
 
 interface HybridOrderBookProps {
