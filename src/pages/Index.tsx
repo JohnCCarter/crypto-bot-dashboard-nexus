@@ -2,9 +2,9 @@ import { BalanceCard } from '@/components/BalanceCard';
 import { BotControl } from '@/components/BotControl';
 import { LogViewer } from '@/components/LogViewer';
 import { ManualTradePanel } from '@/components/ManualTradePanel';
-import { OrderBook } from '@/components/OrderBook';
+import { HybridOrderBook } from '@/components/HybridOrderBook';
 import { OrderHistory } from '@/components/OrderHistory';
-import { PriceChart } from '@/components/PriceChart';
+import { HybridPriceChart } from '@/components/HybridPriceChart';
 import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -262,20 +262,19 @@ const Index: FC = () => {
 
               {/* Second Row - Chart and Order Book */}
               <div className="col-span-12 lg:col-span-8">
-                <PriceChart 
-                  data={chartData} 
+                <HybridPriceChart 
                   symbol="BTCUSD" 
-                  isLoading={isLoading} 
-                  emaFast={emaFast}
-                  emaSlow={emaSlow}
-                  signals={signals}
+                  height={400}
+                  showControls={true}
                 />
               </div>
               
               <div className="col-span-12 lg:col-span-4">
-                {orderBook && (
-                  <OrderBook orderBook={orderBook} isLoading={isLoading} />
-                )}
+                <HybridOrderBook 
+                  symbol="BTCUSD" 
+                  maxLevels={10}
+                  showControls={true}
+                />
               </div>
 
               {/* Third Row - Tables */}
