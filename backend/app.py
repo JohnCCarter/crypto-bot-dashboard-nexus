@@ -284,5 +284,125 @@ def get_alerts():
         return jsonify({"error": str(e)}), 500
 
 
+# Add WebSocket proxy endpoints for frontend
+import websocket
+import threading
+import time
+
+# WebSocket proxy globals
+bitfinex_ws = None
+latest_ticker_data = None
+ws_connection_status = {
+    'connected': False,
+    'error': None,
+    'last_heartbeat': None
+}
+
+def on_bitfinex_message(ws, message):
+    """Hantera meddelanden från Bitfinex WebSocket"""
+    global latest_ticker_data, ws_connection_status
+    try:
+        data = json.loads(message)
+        
+        # Uppdatera heartbeat
+        if isinstance(data, list) and len(data) >= 2 and data[1] == 'hb':
+            ws_connection_status['last_heartbeat'] = time.time()
+            
+        # Hantera ticker data 
+        if (isinstance(data, list) and len(data) >= 2 and 
+                isinstance(data[1], list) and len(data[1]) >= 10):
+            ticker_data = data[1]
+            latest_ticker_data = {
+                'symbol': 'BTCUSD',
+                'bid': float(ticker_data[0]),
+                'ask': float(ticker_data[2]), 
+                'price': float(ticker_data[6]),
+                'volume': float(ticker_data[7]),
+                'timestamp': time.time()
+            }
+            logger.debug(f"WebSocket ticker update: {latest_ticker_data['price']}")
+            
+    except Exception as e:
+        logger.error(f"Error processing Bitfinex WebSocket message: {e}")
+
+def on_bitfinex_error(ws, error):
+    """Hantera WebSocket errors"""
+    global ws_connection_status
+    logger.error(f"Bitfinex WebSocket error: {error}")
+    ws_connection_status['connected'] = False
+    ws_connection_status['error'] = str(error)
+
+def on_bitfinex_close(ws, close_status_code, close_msg):
+    """Hantera WebSocket disconnect"""
+    global ws_connection_status
+    logger.info(f"Bitfinex WebSocket closed: {close_status_code}")
+    ws_connection_status['connected'] = False
+
+def on_bitfinex_open(ws):
+    """Hantera WebSocket connection"""
+    global ws_connection_status
+    logger.info("✅ Backend WebSocket connected to Bitfinex")
+    ws_connection_status['connected'] = True
+    ws_connection_status['error'] = None
+    
+    # Subscribe till BTCUSD ticker
+    ticker_msg = {
+        'event': 'subscribe',
+        'channel': 'ticker',
+        'symbol': 'tBTCUSD'
+    }
+    ws.send(json.dumps(ticker_msg))
+    logger.info("📡 Subscribed to BTCUSD ticker via WebSocket")
+
+def init_bitfinex_websocket():
+    """Initiera WebSocket anslutning till Bitfinex"""
+    global bitfinex_ws
+    
+    try:
+        bitfinex_ws = websocket.WebSocketApp(
+            "wss://api-pub.bitfinex.com/ws/2",
+            on_open=on_bitfinex_open,
+            on_message=on_bitfinex_message,
+            on_error=on_bitfinex_error,
+            on_close=on_bitfinex_close
+        )
+        
+        # Kör WebSocket i daemon thread
+        def run_websocket():
+            bitfinex_ws.run_forever()
+        
+        ws_thread = threading.Thread(target=run_websocket, daemon=True)
+        ws_thread.start()
+        
+        logger.info("🚀 Started Bitfinex WebSocket connection thread")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize Bitfinex WebSocket: {e}")
+        ws_connection_status['error'] = str(e)
+        return False
+
+@app.route("/api/ws-proxy/status", methods=["GET"])
+def get_websocket_status():
+    """Get WebSocket proxy status"""
+    return jsonify({
+        'connected': ws_connection_status['connected'],
+        'error': ws_connection_status['error'],
+        'last_heartbeat': ws_connection_status['last_heartbeat'],
+        'has_ticker_data': latest_ticker_data is not None
+    })
+
+@app.route("/api/ws-proxy/ticker", methods=["GET"])  
+def get_websocket_ticker():
+    """Get latest ticker data från WebSocket"""
+    if latest_ticker_data:
+        return jsonify(latest_ticker_data)
+    else:
+        return jsonify({'error': 'No WebSocket ticker data available'}), 503
+
+# Initialize WebSocket connection on startup
+init_bitfinex_websocket()
+
+
 if __name__ == "__main__":
     app.run(debug=False, port=5000)

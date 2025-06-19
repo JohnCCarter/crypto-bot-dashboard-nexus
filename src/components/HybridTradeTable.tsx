@@ -12,11 +12,11 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useWebSocketMarket } from '@/hooks/useWebSocketMarket';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Trade } from '@/types/trading';
 import { TrendingUp, TrendingDown, Activity, RefreshCw, Wifi, DollarSign } from 'lucide-react';
+import { useBackendWebSocket } from '@/hooks/useBackendWebSocket';
 
 // Enhanced Trade interface with live data
 interface EnhancedTrade extends Trade {
@@ -40,8 +40,8 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
   symbol = 'BTCUSD',
   maxTrades = 10 
 }) => {
-  // Get live pricing data via WebSocket
-  const wsData = useWebSocketMarket(symbol);
+  // Get live pricing data via Backend WebSocket Proxy
+  const wsData = useBackendWebSocket(symbol);
   
   // Get trades data via REST
   const { data: trades = [], isLoading, error, refetch } = useQuery<Trade[]>({
@@ -65,60 +65,88 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
     }
 
     const currentPrice = wsData.ticker.price;
+    
+    // Safety check for currentPrice
+    if (!currentPrice || typeof currentPrice !== 'number' || isNaN(currentPrice)) {
+      console.warn('[HybridTradeTable] Invalid current price:', currentPrice);
+      return {
+        trades: trades as EnhancedTrade[],
+        totalPnL: 0,
+        totalPnLPct: 0,
+        totalValue: 0,
+        winners: 0,
+        losers: 0
+      };
+    }
+
     let totalPnL = 0;
     let totalValue = 0;
     let totalCostBasis = 0;
     let winners = 0;
     let losers = 0;
 
-    const enhancedTrades: EnhancedTrade[] = trades.map(trade => {
-      // Calculate live PnL
-      const priceChange = currentPrice - trade.entry_price;
-      const positionMultiplier = trade.side === 'buy' ? 1 : -1;
-      const livePnL = priceChange * trade.amount * positionMultiplier;
-      const livePnLPct = (priceChange / trade.entry_price) * 100 * positionMultiplier;
-      
-      // Current position value
-      const currentValue = trade.amount * currentPrice;
-      const costBasis = trade.amount * trade.entry_price;
-      
-      // Update totals
-      totalPnL += livePnL;
-      totalValue += currentValue;
-      totalCostBasis += costBasis;
-      
-      if (livePnL > 0) winners++;
-      else if (livePnL < 0) losers++;
+    const enhancedTrades: EnhancedTrade[] = trades
+      .filter(trade => {
+        // Filter out invalid trades
+        return trade && 
+               typeof trade.amount === 'number' && 
+               typeof trade.entry_price === 'number' &&
+               !isNaN(trade.amount) && 
+               !isNaN(trade.entry_price) &&
+               trade.amount > 0 && 
+               trade.entry_price > 0;
+      })
+      .map(trade => {
+        // Calculate live PnL with safety checks
+        const priceChange = currentPrice - trade.entry_price;
+        const positionMultiplier = trade.side === 'buy' ? 1 : -1;
+        const livePnL = priceChange * trade.amount * positionMultiplier;
+        const livePnLPct = (priceChange / trade.entry_price) * 100 * positionMultiplier;
+        
+        // Current position value
+        const currentValue = trade.amount * currentPrice;
+        const costBasis = trade.amount * trade.entry_price;
+        
+        // Update totals
+        totalPnL += livePnL;
+        totalValue += currentValue;
+        totalCostBasis += costBasis;
+        
+        if (livePnL > 0) winners++;
+        else if (livePnL < 0) losers++;
 
-      return {
-        ...trade,
-        current_price: currentPrice,
-        live_pnl: livePnL,
-        live_pnl_pct: livePnLPct,
-        current_value: currentValue,
-        cost_basis: costBasis,
-        price_change: priceChange,
-        price_change_pct: (priceChange / trade.entry_price) * 100,
-        is_winning: livePnL > 0,
-        is_losing: livePnL < 0
-      };
-    });
+        return {
+          ...trade,
+          current_price: currentPrice,
+          live_pnl: livePnL,
+          live_pnl_pct: livePnLPct,
+          current_value: currentValue,
+          cost_basis: costBasis,
+          price_change: priceChange,
+          price_change_pct: (priceChange / trade.entry_price) * 100,
+          is_winning: livePnL > 0,
+          is_losing: livePnL < 0
+        };
+      });
 
     const totalPnLPct = totalCostBasis > 0 ? (totalPnL / totalCostBasis) * 100 : 0;
 
     return {
       trades: enhancedTrades,
-      totalPnL,
-      totalPnLPct,
-      totalValue,
-      totalCostBasis,
+      totalPnL: isNaN(totalPnL) ? 0 : totalPnL,
+      totalPnLPct: isNaN(totalPnLPct) ? 0 : totalPnLPct,
+      totalValue: isNaN(totalValue) ? 0 : totalValue,
+      totalCostBasis: isNaN(totalCostBasis) ? 0 : totalCostBasis,
       winners,
       losers
     };
   }, [trades, wsData.ticker]);
 
-  // Format currency values
-  const formatCurrency = (value: number) => {
+  // Safe format functions with null checks
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '$0.00';
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -127,8 +155,18 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
     }).format(value);
   };
 
-  const formatCrypto = (value: number, decimals = 6) => {
+  const formatCrypto = (value: number | null | undefined, decimals = 6) => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '0.000000';
+    }
     return value.toFixed(decimals);
+  };
+
+  const formatPercentage = (value: number | null | undefined) => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '0.00';
+    }
+    return value.toFixed(2);
   };
 
   if (isLoading) {
@@ -187,6 +225,11 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
                 <Wifi className="w-3 h-3 mr-1" />
                 Live P&L
               </Badge>
+            ) : wsData.error ? (
+              <Badge variant="destructive" className="max-w-48 truncate" title={wsData.error}>
+                <Activity className="w-3 h-3 mr-1" />
+                {wsData.error.includes('Failed to connect') ? 'Connection Failed' : 'WebSocket Error'}
+              </Badge>
             ) : (
               <Badge variant="secondary">
                 <Activity className="w-3 h-3 mr-1" />
@@ -217,7 +260,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
                 <div className={`text-lg font-bold ${
                   liveTradesData.totalPnLPct >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {liveTradesData.totalPnLPct >= 0 ? '+' : ''}{liveTradesData.totalPnLPct.toFixed(2)}%
+                  {liveTradesData.totalPnLPct >= 0 ? '+' : ''}{formatPercentage(liveTradesData.totalPnLPct)}%
                 </div>
                 <div className="text-xs text-muted-foreground">Total Return</div>
               </div>
@@ -301,7 +344,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
                 <div className={`text-sm font-bold ${
                   trade.live_pnl_pct >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {trade.live_pnl_pct >= 0 ? '+' : ''}{trade.live_pnl_pct.toFixed(2)}%
+                  {trade.live_pnl_pct >= 0 ? '+' : ''}{formatPercentage(trade.live_pnl_pct)}%
                 </div>
               </div>
             ))}
@@ -313,9 +356,25 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
           <span>
             Market price: {wsData.ticker ? formatCurrency(wsData.ticker.price) : 'Loading...'}
           </span>
-          <span>
-            {wsData.connected ? '🟢 Live P&L updates' : '🟡 Static P&L'}
-          </span>
+          <div className="flex items-center gap-2">
+            {wsData.connected ? (
+              <span className="text-green-600">🟢 Live P&L updates</span>
+            ) : wsData.error ? (
+              <div className="flex items-center gap-2">
+                <span className="text-red-600">🔴 WebSocket Error</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => refetch()} 
+                  className="h-6 px-2 text-xs"
+                >
+                  Refresh
+                </Button>
+              </div>
+            ) : (
+              <span className="text-yellow-600">🟡 Static P&L</span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

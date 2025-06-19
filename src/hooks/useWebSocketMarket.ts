@@ -431,7 +431,32 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
 
       ws.current.onerror = (error) => {
         console.error('❌ [WS] WebSocket error:', error);
-        setError('WebSocket connection error');
+        
+        // Detaljerad error diagnostik
+        let errorMessage = 'WebSocket connection error';
+        
+        // Försök identifiera error type
+        if (error instanceof Event) {
+          const target = error.target as WebSocket;
+          if (target) {
+            switch (target.readyState) {
+              case WebSocket.CONNECTING:
+                errorMessage = 'Failed to connect to Bitfinex WebSocket server. Check internet connection.';
+                break;
+              case WebSocket.CLOSING:
+                errorMessage = 'WebSocket connection closing unexpectedly';
+                break;
+              case WebSocket.CLOSED:
+                errorMessage = 'WebSocket connection closed by server. Possible network issue or firewall blocking.';
+                break;
+              default:
+                errorMessage = 'Unknown WebSocket error';
+            }
+          }
+        }
+        
+        console.warn(`🚨 [WS] Detailed error: ${errorMessage}`);
+        setError(errorMessage);
         setConnecting(false);
       };
 
