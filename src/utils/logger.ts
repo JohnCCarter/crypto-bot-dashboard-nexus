@@ -1,224 +1,135 @@
 /**
- * Smart Enhanced Logger - Show Status & Errors, Suppress Spam
- * Shows system activity status without overwhelming detail
+ * MINIMAL PRODUCTION LOGGER
+ * Only logs critical events, errors, and system status
+ * NO API SPAM - NO SUCCESS MESSAGES - NO DEBUG INFO
  */
 
-// Environment detection
-const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-const isProduction = process.env.NODE_ENV === 'production';
-
-// Smart Logger configuration - Show important status, suppress spam
-const LOG_CONFIG = {
-  enableConsoleLogging: true, // Show important messages
-  enableErrorLogging: true, // Always show errors
-  enableWarningLogging: true, // Show warnings  
-  enableInfoLogging: true, // Show status info
-  enableDebugLogging: isDevelopment, // Debug only in dev
-  enableStatusMessages: true, // Show system status
-  enableSpamSuppression: true, // Suppress repetitive messages
-};
-
-// Rate limiting for different message types
-const ERROR_LOG_CACHE = new Map<string, number>();
-const STATUS_LOG_CACHE = new Map<string, number>();
-const WEBSOCKET_ERROR_CACHE = new Map<string, number>();
-const ERROR_LOG_COOLDOWN = 30000; // 30 seconds between same errors
-const STATUS_LOG_COOLDOWN = 60000; // 1 minute between same status messages
-const WEBSOCKET_ERROR_COOLDOWN = 300000; // 5 minutes between WebSocket errors
-
-// Categories for smart filtering
-const STATUS_KEYWORDS = [
-  'Connected', 'Disconnected', 'Started', 'Stopped', 'Ready', 'Initialized',
-  'System', 'Bot', 'Server', 'Database', 'API', 'Authentication'
-];
-
-const SPAM_KEYWORDS = [
-  'Ticker update', 'Heartbeat', 'Ping', 'Pong', 'Subscribe', 'Update received',
-  'Data received', 'Message', 'Processing', 'Polling', 'Code 1006', 'connection closed'
-];
-
-// WebSocket specific spam keywords
-const WEBSOCKET_SPAM_KEYWORDS = [
-  'Code 1006', 'connection closed by server', 'WebSocket error', 'Disconnected: Code'
-];
-
-class SmartLogger {
-  // Enhanced status logging - shows system activity
-  static status(message: string, ...args: unknown[]) {
-    if (!LOG_CONFIG.enableStatusMessages) return;
-    
-    // Rate limit status messages to avoid spam
-    const now = Date.now();
-    const lastLogged = STATUS_LOG_CACHE.get(message) || 0;
-    
-    if (now - lastLogged > STATUS_LOG_COOLDOWN) {
-      console.log(`🔷 [STATUS] ${message}`, ...args);
-      STATUS_LOG_CACHE.set(message, now);
-    }
-  }
-
-  // Regular info - but smart about spam
-  static log(...args: unknown[]) {
-    if (!LOG_CONFIG.enableConsoleLogging) return;
-    
-    const message = args.join(' ');
-    
-    // Suppress spam messages
-    if (LOG_CONFIG.enableSpamSuppression && this.isSpamMessage(message)) {
-      return;
-    }
-    
-    console.log(...args);
-  }
-
-  static info(...args: unknown[]) {
-    if (!LOG_CONFIG.enableInfoLogging) return;
-    
-    const message = args.join(' ');
-    
-    // Show status messages prominently
-    if (this.isStatusMessage(message)) {
-      this.status(message);
-      return;
-    }
-    
-    // Suppress spam messages
-    if (LOG_CONFIG.enableSpamSuppression && this.isSpamMessage(message)) {
-      return;
-    }
-    
-    console.info(...args);
-  }
-
-  static warn(...args: unknown[]) {
-    if (!LOG_CONFIG.enableWarningLogging) return;
-    
-    const message = args.join(' ');
-    
-    // Aggressive WebSocket warning suppression
-    if (this.isWebSocketSpam(message)) {
-      const now = Date.now();
-      const lastLogged = WEBSOCKET_ERROR_CACHE.get(message) || 0;
-      
-      // Only log WebSocket warnings every 5 minutes
-      if (now - lastLogged < WEBSOCKET_ERROR_COOLDOWN) {
-        return; // Suppress this WebSocket warning
-      }
-      
-      WEBSOCKET_ERROR_CACHE.set(message, now);
-    }
-    
-    console.warn('⚠️', ...args);
-  }
-
-  static error(...args: unknown[]) {
-    if (!LOG_CONFIG.enableErrorLogging) return;
-
-    const message = args.join(' ');
-    
-    // Aggressive WebSocket error suppression
-    if (this.isWebSocketSpam(message)) {
-      const now = Date.now();
-      const lastLogged = WEBSOCKET_ERROR_CACHE.get(message) || 0;
-      
-      // Only log WebSocket errors every 5 minutes
-      if (now - lastLogged < WEBSOCKET_ERROR_COOLDOWN) {
-        return; // Suppress this WebSocket error
-      }
-      
-      WEBSOCKET_ERROR_CACHE.set(message, now);
-    }
-
-    // Rate limiting for other errors
-    const errorKey = args.join(' ');
-    const now = Date.now();
-    const lastLogged = ERROR_LOG_CACHE.get(errorKey) || 0;
-
-    if (now - lastLogged > ERROR_LOG_COOLDOWN) {
-      console.error('❌ [ERROR]', ...args);
-      ERROR_LOG_CACHE.set(errorKey, now);
-    }
-  }
-
-  static debug(...args: unknown[]) {
-    if (!LOG_CONFIG.enableDebugLogging) return;
-    console.debug('🔍', ...args);
-  }
-
-  // Smart WebSocket logging - status only, no spam
-  static wsStatus(message: string, ...args: unknown[]) {
-    // Only log important WebSocket status changes
-    if (message.includes('Connected') || 
-        message.includes('Disconnected') || 
-        message.includes('Error') ||
-        message.includes('Failed')) {
-      this.status(`WebSocket: ${message}`, ...args);
-    }
-  }
-
-  static wsError(...args: unknown[]) {
-    this.error('WebSocket:', ...args);
-  }
-
-  static wsInfo(message: string, ...args: unknown[]) {
-    // Only show important WebSocket info, suppress spam
-    if (message.includes('Connected') || 
-        message.includes('Subscribed to') ||
-        message.includes('Maintenance') ||
-        message.includes('Platform')) {
-      this.info(message, ...args);
-    }
-    // Suppress: ticker updates, heartbeats, pings, etc.
-  }
-
-  static wsWarn(...args: unknown[]) {
-    this.warn('WebSocket:', ...args);
-  }
-
-  // Helper methods
-  private static isStatusMessage(message: string): boolean {
-    return STATUS_KEYWORDS.some(keyword => 
-      message.toLowerCase().includes(keyword.toLowerCase())
-    );
-  }
-
-  private static isSpamMessage(message: string): boolean {
-    return SPAM_KEYWORDS.some(keyword => 
-      message.toLowerCase().includes(keyword.toLowerCase())
-    );
-  }
-
-  private static isWebSocketSpam(message: string): boolean {
-    return WEBSOCKET_SPAM_KEYWORDS.some(keyword => 
-      message.toLowerCase().includes(keyword.toLowerCase())
-    );
-  }
-
-  // System health logger - periodic status updates
-  static systemHealth() {
-    const now = new Date().toLocaleTimeString();
-    this.status(`System Health Check - ${now} - All services operational`);
-  }
-
-  // Enhanced group logging for complex operations
-  static group(label: string) {
-    if (LOG_CONFIG.enableConsoleLogging) {
-      console.group(`📁 ${label}`);
-    }
-  }
-
-  static groupEnd() {
-    if (LOG_CONFIG.enableConsoleLogging) {
-      console.groupEnd();
-    }
-  }
-
-  static table(data: unknown) {
-    if (LOG_CONFIG.enableConsoleLogging) {
-      console.table(data);
-    }
-  }
+interface LogEntry {
+  timestamp: string;
+  level: 'error' | 'warn' | 'critical' | 'status';
+  source: string;
+  message: string;
 }
 
-export { SmartLogger as logger };
-export default SmartLogger;
+class MinimalLogger {
+  private logs: LogEntry[] = [];
+  private maxLogs = 25; // Keep only last 25 critical entries
+  private lastCriticalLog = new Map<string, number>(); // Rate limiting
+
+  // CRITICAL EVENTS ONLY (system failures, trading issues)
+  critical(source: string, message: string): void {
+    this.addLogWithRateLimit('critical', source, message, 5 * 60 * 1000); // 5 min rate limit
+  }
+
+  // SYSTEM STATUS (startup, shutdown, major state changes)
+  status(source: string, message: string): void {
+    this.addLogWithRateLimit('status', source, message, 2 * 60 * 1000); // 2 min rate limit
+  }
+
+  // ERRORS (always logged, but rate limited)
+  error(source: string, message: string): void {
+    this.addLogWithRateLimit('error', source, message, 30 * 1000); // 30 sec rate limit
+  }
+
+  // WARNINGS (rate limited)
+  warn(source: string, message: string): void {
+    this.addLogWithRateLimit('warn', source, message, 60 * 1000); // 1 min rate limit
+  }
+
+  // SUPPRESSED METHODS - NO LOGGING FOR REGULAR OPERATIONS
+  info(): void {} // Suppressed
+  debug(): void {} // Suppressed
+  log(): void {} // Suppressed
+  
+  // API Methods - ALL SUPPRESSED
+  apiRequest(): void {} // Suppressed
+  apiResponse(): void {} // Suppressed
+  apiSuccess(): void {} // Suppressed
+  
+  // WebSocket Methods - ONLY ERRORS
+  wsStatus(): void {} // Suppressed
+  wsInfo(): void {} // Suppressed
+  wsWarn(message: string): void {
+    // Only log WebSocket warnings if they contain critical keywords
+    if (message.includes('Failed') || message.includes('Timeout') || message.includes('Disconnected')) {
+      this.warn('WebSocket', message);
+    }
+  }
+  wsError(message: string): void {
+    this.error('WebSocket', message);
+  }
+
+  private addLogWithRateLimit(
+    level: LogEntry['level'], 
+    source: string, 
+    message: string, 
+    rateLimitMs: number
+  ): void {
+    const key = `${level}:${source}:${message.substring(0, 50)}`;
+    const now = Date.now();
+    const lastTime = this.lastCriticalLog.get(key) || 0;
+    
+    // Rate limiting
+    if (now - lastTime < rateLimitMs) {
+      return; // Suppressed due to rate limit
+    }
+    
+    this.lastCriticalLog.set(key, now);
+    this.addLog(level, source, message);
+  }
+
+  private addLog(level: LogEntry['level'], source: string, message: string): void {
+    const entry: LogEntry = {
+      timestamp: new Date().toISOString(),
+      level,
+      source,
+      message
+    };
+
+    this.logs.unshift(entry);
+    
+    // Keep only recent critical logs
+    if (this.logs.length > this.maxLogs) {
+      this.logs = this.logs.slice(0, this.maxLogs);
+    }
+
+    // Console output ONLY for important events
+    const emoji = {
+      error: '🚨',
+      warn: '⚠️', 
+      critical: '🔥',
+      status: '✅'
+    }[level];
+
+    console.log(`${emoji} [${source}] ${message}`);
+  }
+
+  getLogs(): LogEntry[] {
+    return [...this.logs];
+  }
+
+  clear(): void {
+    this.logs = [];
+    this.lastCriticalLog.clear();
+    console.log('🗑️ Minimal logs cleared');
+  }
+
+  // System health check (once per hour max)
+  systemHealth(): void {
+    this.status('System', 'Health check - All services operational');
+  }
+
+  // Convenience methods that forward to appropriate levels
+  group(): void {} // Suppressed
+  groupEnd(): void {} // Suppressed
+  table(): void {} // Suppressed
+}
+
+// Export single instance
+export const logger = new MinimalLogger();
+
+// Auto-log system startup (once)
+logger.status('System', 'Minimal production logging active - API spam suppressed');
+
+// Default export for compatibility
+export default logger;
