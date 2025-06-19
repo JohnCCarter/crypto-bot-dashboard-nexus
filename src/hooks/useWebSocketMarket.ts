@@ -279,7 +279,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
           if (data.event === 'info') {
             if (data.platform) {
               setPlatformStatus(data.platform.status === 1 ? 'operative' : 'maintenance');
-              logger.status(`Bitfinex Platform Status: ${data.platform.status === 1 ? 'Operative' : 'Maintenance'}`);
+              logger.status('WebSocket', `Bitfinex Platform Status: ${data.platform.status === 1 ? 'Operative' : 'Maintenance'}`);
             }
             
             // Hantera viktiga meddelanden
@@ -321,12 +321,12 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
               symbol: data.symbol
             };
             subscriptions.current.set(data.chanId, subscription);
-            logger.status(`✅ WebSocket: Subscribed to ${data.channel}:${data.symbol}`);
+            logger.status('WebSocket', `✅ WebSocket: Subscribed to ${data.channel}:${data.symbol}`);
             return;
           }
           
           if (data.event === 'error') {
-            logger.error('WebSocket Error:', data.msg, `(Code: ${data.code})`);
+            logger.error('WebSocket', `Error: ${data.msg} (Code: ${data.code})`);
             setError(`${data.msg} (Code: ${data.code})`);
             return;
           }
@@ -436,7 +436,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
           
           // Only log reconnection attempts for non-1006 codes or first attempt
           if (event.code !== 1006 || reconnectAttempts.current === 0) {
-            logger.status(`🔄 WebSocket: Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+            logger.status('WebSocket', `🔄 WebSocket: Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
           }
           
           reconnectTimeout.current = setTimeout(() => {
@@ -444,7 +444,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
             connect();
           }, delay);
         } else if (reconnectAttempts.current >= maxReconnectAttempts) {
-          logger.error('WebSocket: Max reconnection attempts reached');
+          logger.error('WebSocket', 'Max reconnection attempts reached');
           setError('Max reconnection attempts reached');
         }
       };
@@ -550,7 +550,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
       ws.current.send(JSON.stringify(tickerMsg));
       ws.current.send(JSON.stringify(bookMsg));
       
-      logger.status(`📡 WebSocket: Subscribing to ${symbol} data feeds`);
+      logger.status('WebSocket', `📡 WebSocket: Subscribing to ${symbol} data feeds`);
     } catch (error) {
       logger.error('WebSocket: Failed to send subscription:', error);
       setError('Failed to subscribe to symbol');
@@ -588,7 +588,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
     });
     
     if (channelsToUnsubscribe.length > 0) {
-      logger.status(`📡 WebSocket: Unsubscribed from ${symbol} data feeds`);
+      logger.status('WebSocket', `📡 WebSocket: Unsubscribed from ${symbol} data feeds`);
     }
   }, []);
 

@@ -27,13 +27,33 @@ class MinimalLogger {
   }
 
   // ERRORS (always logged, but rate limited)
-  error(source: string, message: string): void {
-    this.addLogWithRateLimit('error', source, message, 30 * 1000); // 30 sec rate limit
+  error(source: string, message: string): void
+  error(message: string): void
+  error(...args: string[]): void {
+    if (args.length === 1) {
+      // Single argument - treat as message with 'System' source
+      this.addLogWithRateLimit('error', 'System', args[0], 30 * 1000);
+    } else if (args.length >= 2) {
+      // Two or more arguments - treat as (source, message, ...)
+      const source = args[0];
+      const message = args.slice(1).join(' ');
+      this.addLogWithRateLimit('error', source, message, 30 * 1000);
+    }
   }
 
   // WARNINGS (rate limited)
-  warn(source: string, message: string): void {
-    this.addLogWithRateLimit('warn', source, message, 60 * 1000); // 1 min rate limit
+  warn(source: string, message: string): void
+  warn(message: string): void  
+  warn(...args: string[]): void {
+    if (args.length === 1) {
+      // Single argument - treat as message with 'System' source  
+      this.addLogWithRateLimit('warn', 'System', args[0], 60 * 1000);
+    } else if (args.length >= 2) {
+      // Two or more arguments - treat as (source, message, ...)
+      const source = args[0];
+      const message = args.slice(1).join(' ');
+      this.addLogWithRateLimit('warn', source, message, 60 * 1000);
+    }
   }
 
   // SUPPRESSED METHODS - NO LOGGING FOR REGULAR OPERATIONS
@@ -49,13 +69,15 @@ class MinimalLogger {
   // WebSocket Methods - ONLY ERRORS
   wsStatus(): void {} // Suppressed
   wsInfo(): void {} // Suppressed
-  wsWarn(message: string): void {
+  wsWarn(...args: string[]): void {
+    const message = args.join(' ');
     // Only log WebSocket warnings if they contain critical keywords
     if (message.includes('Failed') || message.includes('Timeout') || message.includes('Disconnected')) {
       this.warn('WebSocket', message);
     }
   }
-  wsError(message: string): void {
+  wsError(...args: string[]): void {
+    const message = args.join(' ');
     this.error('WebSocket', message);
   }
 
