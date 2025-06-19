@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 interface BotControlProps {
   status: BotStatus;
@@ -33,40 +34,33 @@ export function BotControl({ status, onStatusChange }: BotControlProps) {
   const handleToggleBot = async () => {
     setIsLoading(true);
     
-    // Debug logging
-    console.log(`🤖 [BotControl] User clicked ${status.status === 'running' ? 'STOP' : 'START'} button`);
-    console.log(`🤖 [BotControl] Current status:`, status);
-    console.log(`🤖 [BotControl] Timestamp: ${new Date().toISOString()}`);
-    
     try {
       const action = status.status === 'running' ? 'stop' : 'start';
-      console.log(`🤖 [BotControl] Calling api.${action}Bot()...`);
       
       const response = status.status === 'running' 
         ? await api.stopBot()
         : await api.startBot();
       
-      console.log(`✅ [BotControl] API Response:`, response);
-      
       if (response.success) {
-        console.log(`✅ [BotControl] ${action.toUpperCase()} successful: ${response.message}`);
+        // Log bot status change using trading logger
+        if (action === 'start') {
+          logger.botActivated();
+        } else {
+          logger.botDeactivated();
+        }
+        
         toast({
           title: "Success",
           description: response.message,
         });
         onStatusChange();
       } else {
-        console.error(`❌ [BotControl] ${action.toUpperCase()} failed - response.success = false`);
-        console.error(`❌ [BotControl] Error message: ${response.message}`);
+        logger.botError(action, response.message);
         throw new Error(response.message);
       }
     } catch (error) {
-      console.error(`❌ [BotControl] Exception caught:`, error);
-      console.error(`❌ [BotControl] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
-      console.error(`❌ [BotControl] Error message: ${error instanceof Error ? error.message : String(error)}`);
-      console.error(`❌ [BotControl] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
-      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      logger.botError(status.status === 'running' ? 'stop' : 'start', errorMessage);
       
       toast({
         title: "Bot Control Error",
@@ -75,7 +69,6 @@ export function BotControl({ status, onStatusChange }: BotControlProps) {
       });
     } finally {
       setIsLoading(false);
-      console.log(`🤖 [BotControl] Operation completed, loading state reset`);
     }
   };
 

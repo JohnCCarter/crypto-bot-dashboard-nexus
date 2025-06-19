@@ -9,10 +9,12 @@ import { useWebSocketMarket } from '@/hooks/useWebSocketMarket';
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Wifi, Activity } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface ManualTradePanelProps {
   className?: string;
   onOrderPlaced?: () => void;
+  symbol?: string;
 }
 
 interface OrderData {
@@ -23,10 +25,8 @@ interface OrderData {
   price?: number;
 }
 
-const symbols = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'ADAUSD'];
-
-export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, onOrderPlaced }) => {
-  const [symbol, setSymbol] = useState<string>('BTCUSD');
+export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, onOrderPlaced, symbol }) => {
+  const currentSymbol = symbol || 'BTCUSD';
   const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
   const [amount, setAmount] = useState<string>('');
   const [price, setPrice] = useState<string>('');
@@ -34,7 +34,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
   const { toast } = useToast();
 
   // 🚀 LIVE WEBSOCKET DATA INTEGRATION
-  const wsData = useWebSocketMarket(symbol);
+  const wsData = useWebSocketMarket(currentSymbol);
   
   // Auto-update price when switching symbols or when market data updates
   useEffect(() => {
@@ -42,7 +42,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
       // Auto-fill with current market price for limit orders
       setPrice(wsData.ticker.price.toString());
     }
-  }, [wsData.ticker?.price, symbol, orderType]);
+  }, [wsData.ticker?.price, currentSymbol, orderType]);
 
   // Calculate live spread and market info
   const marketInfo = React.useMemo(() => {
@@ -75,14 +75,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
   };
 
   const handleSubmitOrder = async (side: 'buy' | 'sell') => {
-    console.log(`📈 [ManualTrade] User initiated ${side.toUpperCase()} order`);
-    console.log(`📈 [ManualTrade] Live market data:`, marketInfo);
-    console.log(`📈 [ManualTrade] Order parameters:`, { symbol, orderType, amount, price, side });
-    console.log(`📈 [ManualTrade] WebSocket connected:`, wsData.connected);
-    console.log(`📈 [ManualTrade] Timestamp: ${new Date().toISOString()}`);
-    
     if (!amount || parseFloat(amount) <= 0) {
-      console.error(`❌ [ManualTrade] Validation failed: Invalid amount "${amount}"`);
       toast({
         title: 'Invalid Amount',
         description: 'Please enter a valid amount.',
@@ -94,7 +87,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
     // Enhanced validation with live market data
     if (orderType === 'limit') {
       if (!price || parseFloat(price) <= 0) {
-        console.error(`❌ [ManualTrade] Validation failed: Invalid price "${price}" for limit order`);
         toast({
           title: 'Invalid Price',
           description: 'Please enter a valid price for limit orders.',
@@ -123,58 +115,45 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
       parseFloat(price);
 
     const orderData: OrderData = {
-      symbol,
+      symbol: currentSymbol,
       order_type: orderType,
       side,
       amount: parseFloat(amount),
       ...(orderType === 'limit' && { price: parseFloat(price) })
     };
-
-    console.log(`📈 [ManualTrade] Order data prepared (with live pricing):`, orderData);
-    console.log(`📈 [ManualTrade] Market context:`, {
-      currentPrice: marketInfo?.currentPrice,
-      bestBid: marketInfo?.bestBid,
-      bestAsk: marketInfo?.bestAsk,
-      spread: marketInfo?.spread,
-      finalPrice
-    });
     
     setIsSubmitting(true);
 
     try {
-      console.log(`📈 [ManualTrade] Calling api.placeOrder() with live market context...`);
-      
       const result = await api.placeOrder(orderData);
       
-      console.log(`✅ [ManualTrade] Order submitted successfully:`, result);
-      console.log(`✅ [ManualTrade] Order ID: ${(result as any).order?.id || result.message || 'N/A'}`);
+      // Log successful trade using trading logger
+      if (side === 'buy') {
+        logger.buyApproved(currentSymbol, parseFloat(amount), orderType === 'limit' ? parseFloat(price) : undefined);
+      } else {
+        logger.sellApproved(currentSymbol, parseFloat(amount), orderType === 'limit' ? parseFloat(price) : undefined);
+      }
       
       toast({
         title: 'Order Submitted',
-        description: `${side.toUpperCase()} order for ${amount} ${symbol} has been placed successfully at ${orderType === 'market' ? 'market price' : `$${price}`}.`,
+        description: `${side.toUpperCase()} order for ${amount} ${currentSymbol} has been placed successfully at ${orderType === 'market' ? 'market price' : `$${price}`}.`,
       });
       
       // Uppdatera orderhistorik i parent om prop finns
       if (typeof onOrderPlaced === 'function') {
-        console.log(`📈 [ManualTrade] Calling onOrderPlaced callback`);
         onOrderPlaced();
       }
       
       // Reset form after successful submission
-      console.log(`📈 [ManualTrade] Resetting form fields`);
       setAmount('');
       if (orderType === 'limit') {
         setPrice('');
       }
     } catch (error) {
-      console.error(`❌ [ManualTrade] Order submission failed:`, error);
-      console.error(`❌ [ManualTrade] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
-      console.error(`❌ [ManualTrade] Error message: ${error instanceof Error ? error.message : String(error)}`);
-      console.error(`❌ [ManualTrade] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
-      console.error(`❌ [ManualTrade] Failed order data:`, orderData);
-      console.error(`❌ [ManualTrade] Market context at failure:`, marketInfo);
-      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Log trade error using trading logger
+      logger.tradeError(side, currentSymbol, errorMessage);
       
       toast({
         title: 'Order Failed',
@@ -183,7 +162,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
       });
     } finally {
       setIsSubmitting(false);
-      console.log(`📈 [ManualTrade] Order submission process completed`);
     }
   };
 
@@ -191,7 +169,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
     <Card className={className}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">Manual Trade</CardTitle>
+          <CardTitle className="text-lg font-semibold">Manual Trade - {currentSymbol}</CardTitle>
           {/* Live connection status */}
           <div className="flex items-center gap-2">
             {wsData.connected ? (
@@ -237,23 +215,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ className, o
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Symbol Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="symbol">Symbol</Label>
-          <Select value={symbol} onValueChange={setSymbol}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select symbol" />
-            </SelectTrigger>
-            <SelectContent>
-              {symbols.map((sym) => (
-                <SelectItem key={sym} value={sym}>
-                  {sym}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Order Type */}
         <div className="space-y-2">
           <Label htmlFor="orderType">Order Type</Label>

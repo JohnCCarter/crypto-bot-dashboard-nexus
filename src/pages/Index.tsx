@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { HybridTradeTable } from '@/components/HybridTradeTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
 import {
@@ -25,7 +26,7 @@ import {
 } from '@/types/trading';
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, RefreshCw } from 'lucide-react';
+import { Settings, RefreshCw, TrendingUp } from 'lucide-react';
 
 /**
  * Main dashboard page for the crypto trading application.
@@ -53,15 +54,18 @@ const Index: FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
 
+  // Global symbol selection state
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('BTCUSD');
+
+  // Available trading symbols
+  const SYMBOLS = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'ADAUSD'];
+
   const loadEmaCrossover = useCallback(async () => {
     try {
       // Säkerhetskontroll: Se till att vi har chartData
       if (!chartData || chartData.length === 0) {
-        console.log('❌ No chart data available for EMA crossover backtest');
         return;
       }
-
-      console.log(`📊 loadEmaCrossover called with ${chartData.length} data points`);
 
       // Mock: använd chartData för att skapa data-objekt
       const data = {
@@ -73,8 +77,6 @@ const Index: FC = () => {
         volume: chartData.map(d => d.volume)
       };
       
-      console.log('🚀 Sending backtest data:', { dataLength: data.timestamp.length, sample: data.timestamp.slice(0, 3) });
-      
       const result = await api.runBacktestEmaCrossover(data, {
         fast_period: 3,
         slow_period: 5,
@@ -83,19 +85,7 @@ const Index: FC = () => {
       setEmaFast(result.ema_fast);
       setEmaSlow(result.ema_slow);
       setSignals(result.signals);
-      console.log('✅ EMA crossover loaded successfully');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('❌ Failed to load EMA crossover data:', errorMessage);
-      console.error('❌ Full error object:', error);
-      
-      // Log detailed error information for debugging
-      console.error('❌ Error details:', {
-        chartDataLength: chartData?.length || 0,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent
-      });
-      
       // Reset EMA data on error to prevent stale data
       setEmaFast(undefined);
       setEmaSlow(undefined);
@@ -105,7 +95,6 @@ const Index: FC = () => {
 
   // Load initial data
   useEffect(() => {
-    console.log('API keys:', Object.keys(api)); // Debug: logga vilka funktioner som finns på api-objektet
     loadAllData();
     
     // Set up periodic updates
@@ -114,7 +103,7 @@ const Index: FC = () => {
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedSymbol]); // Add selectedSymbol as dependency
 
   // Load EMA crossover data when chartData is available
   useEffect(() => {
@@ -138,12 +127,11 @@ const Index: FC = () => {
         api.getActiveTrades(),
         api.getOrderHistory(),
         api.getBotStatus(),
-        api.getOrderBook('BTCUSD'),
+        api.getOrderBook(selectedSymbol),
         api.getLogs(),
-        api.getChartData('BTCUSD')
+        api.getChartData(selectedSymbol)
       ]);
 
-      console.log(`📈 Chart data loaded: ${chartDataResponse.length} data points`);
       setBalances(balancesData);
       setActiveTrades(tradesData);
       setOrderHistory(ordersData);
@@ -153,7 +141,6 @@ const Index: FC = () => {
       setChartData(chartDataResponse);
       setIsConnected(true); // Set connected to true when API calls succeed
     } catch (error) {
-      console.error('Failed to load data:', error);
       setIsConnected(false); // Set connected to false when API calls fail
     } finally {
       setIsLoading(false);
@@ -161,13 +148,10 @@ const Index: FC = () => {
   };
 
   const fetchBotStatus = async () => {
-    console.log('🏠 [Index] Fetching bot status...');
     try {
       const status = await api.getBotStatus();
-      console.log('✅ [Index] Bot status fetched:', status);
       setBotStatus(status);
     } catch (error) {
-      console.error('❌ [Index] Failed to fetch bot status:', error);
       toast({
         title: "Status Error",
         description: "Failed to fetch bot status",
@@ -177,23 +161,19 @@ const Index: FC = () => {
   };
 
   const handleRefresh = () => {
-    console.log('🏠 [Index] Manual refresh triggered');
     setRefreshKey(prev => prev + 1);
     fetchBotStatus();
   };
 
   useEffect(() => {
-    console.log('🏠 [Index] Component mounted, fetching initial bot status');
     fetchBotStatus();
     
     // Set up periodic status updates
     const interval = setInterval(() => {
-      console.log('🏠 [Index] Periodic status update');
       fetchBotStatus();
     }, 30000); // Update every 30 seconds
 
     return () => {
-      console.log('🏠 [Index] Component unmounting, clearing interval');
       clearInterval(interval);
     };
   }, []);
@@ -209,6 +189,22 @@ const Index: FC = () => {
               <Badge variant="outline" className="text-xs">
                 {isConnected ? '🟢 Connected' : '🔴 Offline'}
               </Badge>
+              {/* Global Symbol Selector */}
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Symbol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SYMBOLS.map((symbol) => (
+                      <SelectItem key={symbol} value={symbol}>
+                        {symbol}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <Button 
@@ -246,7 +242,7 @@ const Index: FC = () => {
               {/* Top Row - Key Metrics */}
               <div className="col-span-12 lg:col-span-3">
                 <HybridBalanceCard 
-                  symbol="BTCUSD" 
+                  symbol={selectedSymbol} 
                   showDetails={true}
                 />
               </div>
@@ -256,12 +252,15 @@ const Index: FC = () => {
               </div>
               
               <div className="col-span-12 lg:col-span-3">
-                <ManualTradePanel onOrderPlaced={handleRefresh} />
+                <ManualTradePanel 
+                  symbol={selectedSymbol}
+                  onOrderPlaced={handleRefresh} 
+                />
               </div>
               
               <div className="col-span-12 lg:col-span-3">
                 <HybridTradeTable 
-                  symbol="BTCUSD" 
+                  symbol={selectedSymbol} 
                   maxTrades={5}
                 />
               </div>
@@ -269,7 +268,7 @@ const Index: FC = () => {
               {/* Second Row - Chart and Order Book */}
               <div className="col-span-12 lg:col-span-8">
                 <HybridPriceChart 
-                  symbol="BTCUSD" 
+                  symbol={selectedSymbol} 
                   height={400}
                   showControls={true}
                 />
@@ -277,7 +276,7 @@ const Index: FC = () => {
               
               <div className="col-span-12 lg:col-span-4">
                 <HybridOrderBook 
-                  symbol="BTCUSD" 
+                  symbol={selectedSymbol} 
                   maxLevels={10}
                   showControls={true}
                 />
