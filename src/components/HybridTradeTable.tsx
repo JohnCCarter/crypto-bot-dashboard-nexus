@@ -1,14 +1,15 @@
 /**
- * Hybrid Trade Table - Live PnL Tracking med WebSocket + REST
+ * Hybrid Trade Table - Live PnL Tracking med WebSocket + REST - Performance Optimized
  * 
  * Features:
  * - Live profit/loss tracking med real-time pricing
  * - Real-time position valuation
  * - Live percentage returns
  * - Smart fallback till REST data
+ * - Performance optimizations med memoization
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,7 @@ interface HybridTradeTableProps {
   maxTrades?: number;
 }
 
-export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({ 
+export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({ 
   symbol = 'BTCUSD',
   maxTrades = 10 
 }) => {
@@ -379,4 +380,6 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+HybridTradeTable.displayName = 'HybridTradeTable';

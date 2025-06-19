@@ -27,11 +27,19 @@ from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
 from backend.services.risk_manager import RiskManager, RiskParameters
 
-# Configure logging
+# Configure logging for production performance
+log_level = logging.WARNING if os.getenv("ENVIRONMENT") == "production" else logging.INFO
 logging.basicConfig(
-    level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    level=log_level, 
+    format="[%(asctime)s] %(levelname)s: %(message)s"  # Shorter format
 )
 logger = logging.getLogger(__name__)
+
+# Silence verbose libraries in production
+if os.getenv("ENVIRONMENT") == "production":
+    logging.getLogger("werkzeug").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -298,15 +306,21 @@ ws_connection_status = {
     'last_heartbeat': None
 }
 
+# Rate limiting för logging
+last_ticker_log = 0
+last_error_log = 0
+ticker_update_count = 0
+
 def on_bitfinex_message(ws, message):
-    """Hantera meddelanden från Bitfinex WebSocket"""
-    global latest_ticker_data, ws_connection_status
+    """Hantera meddelanden från Bitfinex WebSocket - Performance Optimized"""
+    global latest_ticker_data, ws_connection_status, last_ticker_log, ticker_update_count
     try:
         data = json.loads(message)
         
-        # Uppdatera heartbeat
+        # Uppdatera heartbeat utan logging
         if isinstance(data, list) and len(data) >= 2 and data[1] == 'hb':
             ws_connection_status['last_heartbeat'] = time.time()
+            return
             
         # Hantera ticker data 
         if (isinstance(data, list) and len(data) >= 2 and 
@@ -320,30 +334,46 @@ def on_bitfinex_message(ws, message):
                 'volume': float(ticker_data[7]),
                 'timestamp': time.time()
             }
-            logger.debug(f"WebSocket ticker update: {latest_ticker_data['price']}")
+            
+            # Rate limited logging - endast var 30:e sekund
+            ticker_update_count += 1
+            now = time.time()
+            if now - last_ticker_log > 30:
+                logger.info(f"📊 WebSocket updates: {ticker_update_count} tickers, price: ${latest_ticker_data['price']:,.0f}")
+                last_ticker_log = now
+                ticker_update_count = 0
             
     except Exception as e:
-        logger.error(f"Error processing Bitfinex WebSocket message: {e}")
+        # Rate limited error logging - max 1 error per 60 sekunder
+        global last_error_log
+        now = time.time()
+        if now - last_error_log > 60:
+            logger.error(f"Error processing Bitfinex WebSocket message: {e}")
+            last_error_log = now
 
 def on_bitfinex_error(ws, error):
-    """Hantera WebSocket errors"""
-    global ws_connection_status
-    logger.error(f"Bitfinex WebSocket error: {error}")
+    """Hantera WebSocket errors - Rate Limited"""
+    global ws_connection_status, last_error_log
+    now = time.time()
+    if now - last_error_log > 60:  # Max 1 error log per minute
+        logger.error(f"Bitfinex WebSocket error: {error}")
+        last_error_log = now
     ws_connection_status['connected'] = False
     ws_connection_status['error'] = str(error)
 
 def on_bitfinex_close(ws, close_status_code, close_msg):
     """Hantera WebSocket disconnect"""
     global ws_connection_status
-    logger.info(f"Bitfinex WebSocket closed: {close_status_code}")
+    logger.warning(f"Bitfinex WebSocket closed: {close_status_code}")  # Changed to warning
     ws_connection_status['connected'] = False
 
 def on_bitfinex_open(ws):
     """Hantera WebSocket connection"""
-    global ws_connection_status
+    global ws_connection_status, ticker_update_count
     logger.info("✅ Backend WebSocket connected to Bitfinex")
     ws_connection_status['connected'] = True
     ws_connection_status['error'] = None
+    ticker_update_count = 0  # Reset counter
     
     # Subscribe till BTCUSD ticker
     ticker_msg = {
