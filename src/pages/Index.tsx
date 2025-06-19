@@ -9,6 +9,7 @@ import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { HybridTradeTable } from '@/components/HybridTradeTable';
+import { ParticleBackground } from '@/components/ParticleBackground';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -179,9 +180,16 @@ const Index: FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative">
+      {/* Particle Background */}
+      <ParticleBackground 
+        className="fixed inset-0" 
+        particleCount={1500}
+        alpha={0.3}
+      />
+      
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm relative z-10">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -230,9 +238,9 @@ const Index: FC = () => {
       </header>
 
       {/* Main Dashboard */}
-      <main className="container mx-auto px-6 py-6">
+      <main className="container mx-auto px-6 py-6 relative z-10">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 bg-card/80 backdrop-blur-sm">
             <TabsTrigger value="dashboard">Trading Dashboard</TabsTrigger>
             <TabsTrigger value="analysis">Probability Analysis</TabsTrigger>
           </TabsList>
