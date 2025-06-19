@@ -10,7 +10,7 @@ import './index.css';
 import { logger } from './utils/logger';
 
 // Log frontend startup
-logger.status('🚀 Trading Bot Frontend Started - Dashboard initializing...');
+logger.status('Frontend', '🚀 Trading Bot Frontend Started - Dashboard initializing...');
 
 // React DevTools-scriptinjektion borttagen för att undvika CORS- och nätverksfel.
 
@@ -27,5 +27,5 @@ if (rootElement) {
 
 // Log when React app is mounted
 setTimeout(() => {
-  logger.status('✅ Trading Bot Dashboard - Ready for trading operations');
+  logger.status('Frontend', '✅ Trading Bot Dashboard - Ready for trading operations');
 }, 1000);

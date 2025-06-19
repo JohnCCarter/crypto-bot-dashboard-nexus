@@ -248,14 +248,14 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
 
     setConnecting(true);
     setError(null);
-    logger.status('🔄 WebSocket: Connecting to Bitfinex...');
+    logger.status('WebSocket', '🔄 WebSocket: Connecting to Bitfinex...');
 
     try {
       // Bitfinex WebSocket API
       ws.current = new WebSocket('wss://api-pub.bitfinex.com/ws/2');
 
       ws.current.onopen = () => {
-        logger.status('✅ WebSocket Connected to Bitfinex');
+        logger.status('WebSocket', '✅ WebSocket Connected to Bitfinex');
         setConnected(true);
         setConnecting(false);
         setError(null);
@@ -290,7 +290,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
               logger.warn('🔧 WebSocket: Entering maintenance mode');
               setPlatformStatus('maintenance');
             } else if (data.code === 20061) {
-              logger.status('✅ WebSocket: Maintenance ended - system operative');
+              logger.status('WebSocket', '✅ WebSocket: Maintenance ended - system operative');
               setPlatformStatus('operative');
               // Resubscribe to all channels
               subscribeToSymbol(currentSymbol.current);
@@ -413,7 +413,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
             sessionStorage.setItem('ws_1006_logged', 'true');
           }
         } else if (event.code === 1000) {
-          logger.status('🔌 WebSocket Disconnected (Clean)');
+          logger.status('WebSocket', '🔌 WebSocket Disconnected (Clean)');
         } else {
           logger.warn(`🔌 WebSocket Disconnected: Code ${event.code}`);
         }

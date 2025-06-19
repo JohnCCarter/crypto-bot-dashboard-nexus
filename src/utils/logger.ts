@@ -65,6 +65,12 @@ class MinimalLogger {
     message: string, 
     rateLimitMs: number
   ): void {
+    // Guard against undefined/null values
+    if (!message || !source) {
+      console.warn('⚠️ Logger: Invalid parameters', { level, source, message });
+      return;
+    }
+    
     const key = `${level}:${source}:${message.substring(0, 50)}`;
     const now = Date.now();
     const lastTime = this.lastCriticalLog.get(key) || 0;
