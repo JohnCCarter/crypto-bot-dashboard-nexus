@@ -64,11 +64,20 @@ class LivePortfolioService:
         try:
             balance_data = fetch_balances()
             # Extract 'free' balances which are available for trading
-            return {currency: data.get('free', 0) for currency, data in balance_data.get('info', {}).items() if data.get('free', 0) > 0}
+            result = {}
+            for currency, data in balance_data.get('info', {}).items():
+                free_amount = data.get('free', 0)
+                if free_amount > 0:
+                    result[currency] = free_amount
+            return result
         except Exception as e:
-            logger.warning(f"Failed to fetch live balances: {e}, using mock data")
-            # Return mock balance for testing
-            return {'USD': 10000.0, 'BTC': 0.1, 'ETH': 1.0}
+            logger.error(
+                f"❌ [LivePortfolio] CRITICAL: Failed to fetch live balances: {e}. "
+                f"NO MOCK DATA will be provided for trading safety."
+            )
+            # Return empty dict instead of mock data for trading safety
+            # This ensures trading bot knows balance data is unavailable
+            return {}
     
     def get_live_portfolio_snapshot(self, symbols: List[str] = None) -> LivePortfolioSnapshot:
         """

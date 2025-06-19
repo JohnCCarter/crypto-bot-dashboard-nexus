@@ -121,13 +121,17 @@ class ExchangeService:
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order: {str(e)}")
 
-    def cancel_order(self, order_id: str, symbol: str) -> bool:
+    def cancel_order(
+        self, 
+        order_id: str, 
+        symbol: Optional[str] = None
+    ) -> bool:
         """
         Cancel an existing order.
 
         Args:
             order_id: Exchange order ID
-            symbol: Trading pair
+            symbol: Trading pair (optional for some exchanges)
 
         Returns:
             True if order was cancelled
@@ -367,3 +371,107 @@ class ExchangeService:
             }
         except Exception as e:
             raise ExchangeError(f"Failed to fetch markets: {str(e)}")
+
+    def fetch_order_history(
+        self, 
+        symbols: Optional[list] = None, 
+        since: Optional[int] = None, 
+        limit: int = 100
+    ) -> list:
+        """
+        Fetch order history from exchange.
+
+        Args:
+            symbols: Optional list of symbols to filter by
+            since: Optional timestamp (in milliseconds) to fetch orders from
+            limit: Maximum number of orders to return (default 100)
+
+        Returns:
+            List of order dictionaries
+
+        Raises:
+            ExchangeError: If order history fetch fails
+        """
+        try:
+            # Fetch order history from exchange
+            if symbols:
+                # If specific symbols requested, fetch for each
+                all_orders = []
+                for symbol in symbols:
+                    orders = self.exchange.fetch_orders(symbol, since, limit)
+                    all_orders.extend(orders)
+            else:
+                # Fetch all order history (may require multiple calls)
+                all_orders = self.exchange.fetch_orders(None, since, limit)
+            
+            # Transform to standardized format
+            standardized_orders = []
+            for order in all_orders:
+                standardized_order = {
+                    "id": order["id"],
+                    "symbol": order["symbol"],
+                    "order_type": order["type"],
+                    "side": order["side"],
+                    "amount": float(order["amount"]),
+                    "price": float(order["price"] or 0),
+                    "fee": float(order.get("fee", {}).get("cost", 0)),
+                    "timestamp": order["timestamp"],
+                    "datetime": order["datetime"],
+                    "status": order["status"],
+                    "filled": float(order["filled"]),
+                    "remaining": float(order["remaining"]),
+                    "cost": float(order["cost"] or 0),
+                    "trades": order.get("trades", [])
+                }
+                standardized_orders.append(standardized_order)
+            
+            # Sort by timestamp (newest first)
+            standardized_orders.sort(
+                key=lambda x: x["timestamp"] or 0, 
+                reverse=True
+            )
+            
+            return standardized_orders
+            
+        except Exception as e:
+            raise ExchangeError(f"Failed to fetch order history: {str(e)}")
+
+    def fetch_open_orders(self, symbol: Optional[str] = None) -> list:
+        """
+        Fetch open orders from exchange.
+
+        Args:
+            symbol: Optional trading pair to filter by
+
+        Returns:
+            List of open order dictionaries
+
+        Raises:
+            ExchangeError: If open orders fetch fails
+        """
+        try:
+            # Fetch open orders from exchange
+            open_orders = self.exchange.fetch_open_orders(symbol)
+            
+            # Transform to standardized format
+            standardized_orders = []
+            for order in open_orders:
+                standardized_order = {
+                    "id": order["id"],
+                    "symbol": order["symbol"],
+                    "order_type": order["type"],
+                    "side": order["side"],
+                    "amount": float(order["amount"]),
+                    "price": float(order["price"] or 0),
+                    "status": order["status"],
+                    "filled": float(order["filled"]),
+                    "remaining": float(order["remaining"]),
+                    "timestamp": order["timestamp"],
+                    "datetime": order["datetime"]
+                }
+                standardized_orders.append(standardized_order)
+            
+            return standardized_orders
+            
+        except Exception as e:
+            raise ExchangeError(f"Failed to fetch open orders: {str(e)}")
