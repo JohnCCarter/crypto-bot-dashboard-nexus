@@ -122,7 +122,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
         cid: pingId
       };
       
-      logger.wsInfo('🏓 [WS] Sending ping:', pingId);
+      // Silent ping - no logging needed
       ws.current.send(JSON.stringify(pingMessage));
       
       // Store ping time for latency calculation
@@ -138,7 +138,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
     
     // Heartbeat ska komma var 15:e sekund enligt dokumentationen
     heartbeatTimeout.current = setTimeout(() => {
-      logger.wsWarn('💔 [WS] Heartbeat timeout - reconnecting');
+      logger.warn('💔 WebSocket: Heartbeat timeout - reconnecting');
       setError('Heartbeat timeout');
       connect();
     }, 20000); // 20 sekunder timeout (5 sekunder marginal)
@@ -152,14 +152,14 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
         flags: 32768 + 131072 // TIMESTAMP + OB_CHECKSUM
       };
       
-      logger.wsInfo('⚙️ [WS] Enabling advanced features');
+      // Silent configuration - no logging needed
       ws.current.send(JSON.stringify(confMessage));
     }
   }, []);
 
-  // WebSocket message handlers
+  // WebSocket message handlers - no spam logging
   const handleTickerUpdate = useCallback((data: BitfinexTickerData) => {
-    logger.wsInfo('📊 [WS] Ticker update:', data);
+    // Silent ticker updates - no logging spam
     setTicker({
       symbol: data.symbol,
       price: data.price,
@@ -171,8 +171,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
   }, []);
 
   const handleOrderbookUpdate = useCallback((data: BitfinexOrderbookData) => {
-    logger.wsInfo('📚 [WS] Orderbook update:', data);
-    
+    // Silent orderbook updates - no logging spam
     if (data.update) {
       // Incremental update
       setOrderbook(prev => {
@@ -230,8 +229,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
   }, []);
 
   const handleTradeUpdate = useCallback((data: BitfinexTradeData) => {
-    logger.wsInfo('💱 [WS] Trade update:', data);
-    
+    // Silent trade updates - no logging spam
     if (data.trades && Array.isArray(data.trades)) {
       setTrades(prev => {
         // Add new trades and keep only latest 100
@@ -244,19 +242,20 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
   // Connect to WebSocket
   const connect = useCallback(() => {
     if (ws.current?.readyState === WebSocket.OPEN) {
-      logger.wsInfo('🔄 [WS] Already connected');
+      // Silent - already connected
       return;
     }
 
     setConnecting(true);
     setError(null);
+    logger.status('🔄 WebSocket: Connecting to Bitfinex...');
 
     try {
       // Bitfinex WebSocket API
       ws.current = new WebSocket('wss://api-pub.bitfinex.com/ws/2');
 
       ws.current.onopen = () => {
-        logger.wsInfo('✅ [WS] Connected to Bitfinex');
+        logger.status('✅ WebSocket Connected to Bitfinex');
         setConnected(true);
         setConnecting(false);
         setError(null);
@@ -278,21 +277,20 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
           
           // Hantera info messages (kritiskt för trading bots)
           if (data.event === 'info') {
-            logger.wsInfo('ℹ️ [WS] Info message:', data);
-            
             if (data.platform) {
               setPlatformStatus(data.platform.status === 1 ? 'operative' : 'maintenance');
+              logger.status(`Bitfinex Platform Status: ${data.platform.status === 1 ? 'Operative' : 'Maintenance'}`);
             }
             
             // Hantera viktiga meddelanden
             if (data.code === 20051) {
-              logger.wsWarn('🔄 [WS] Server restart required - reconnecting');
+              logger.warn('🔄 WebSocket: Server restart required - reconnecting');
               connect();
             } else if (data.code === 20060) {
-              logger.wsWarn('🔧 [WS] Entering maintenance mode');
+              logger.warn('🔧 WebSocket: Entering maintenance mode');
               setPlatformStatus('maintenance');
             } else if (data.code === 20061) {
-              logger.wsInfo('✅ [WS] Maintenance ended - resubscribing');
+              logger.status('✅ WebSocket: Maintenance ended - system operative');
               setPlatformStatus('operative');
               // Resubscribe to all channels
               subscribeToSymbol(currentSymbol.current);
@@ -306,7 +304,10 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
             if (pingTime) {
               const latencyMs = Date.now() - parseInt(pingTime);
               setLatency(latencyMs);
-              logger.wsInfo(`🏓 [WS] Pong received - latency: ${latencyMs}ms`);
+              // Only log latency if it's unusually high
+              if (latencyMs > 1000) {
+                logger.warn(`WebSocket latency high: ${latencyMs}ms`);
+              }
               sessionStorage.removeItem(`ping_${data.cid}`);
             }
             return;
@@ -320,12 +321,12 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
               symbol: data.symbol
             };
             subscriptions.current.set(data.chanId, subscription);
-            logger.wsInfo(`✅ [WS] Subscribed to ${data.channel}:${data.symbol} (Channel ID: ${data.chanId})`);
+            logger.status(`✅ WebSocket: Subscribed to ${data.channel}:${data.symbol}`);
             return;
           }
           
           if (data.event === 'error') {
-            logger.wsError('❌ [WS] Error:', data);
+            logger.error('WebSocket Error:', data.msg, `(Code: ${data.code})`);
             setError(`${data.msg} (Code: ${data.code})`);
             return;
           }
@@ -338,14 +339,14 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
             if (messageData === 'hb') {
               setLastHeartbeat(Date.now());
               resetHeartbeatTimeout();
-              logger.wsInfo('💓 [WS] Heartbeat received');
+              // Silent heartbeat - no logging spam
               return;
             }
             
             // Hitta subscription för detta channel ID
             const subscription = subscriptions.current.get(channelId);
             if (!subscription) {
-              logger.wsWarn(`⚠️ [WS] Unknown channel ID: ${channelId}`);
+              logger.warn(`⚠️ WebSocket: Unknown channel ID: ${channelId}`);
               return;
             }
             
@@ -403,7 +404,11 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
       };
 
       ws.current.onclose = (event) => {
-        logger.wsInfo('🔌 [WS] Disconnected:', event.code, event.reason);
+        if (event.code === 1000) {
+          logger.status('🔌 WebSocket Disconnected (Clean)');
+        } else {
+          logger.warn(`🔌 WebSocket Disconnected: Code ${event.code}`);
+        }
         setConnected(false);
         setConnecting(false);
         setPlatformStatus('unknown');
@@ -419,20 +424,19 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
         // Attempt reconnection if not a clean close
         if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-          logger.wsInfo(`🔄 [WS] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+          logger.status(`🔄 WebSocket: Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
           
           reconnectTimeout.current = setTimeout(() => {
             reconnectAttempts.current++;
             connect();
           }, delay);
         } else if (reconnectAttempts.current >= maxReconnectAttempts) {
+          logger.error('WebSocket: Max reconnection attempts reached');
           setError('Max reconnection attempts reached');
         }
       };
 
       ws.current.onerror = (error) => {
-        logger.wsError('❌ [WS] WebSocket error:', error);
-        
         // Detaljerad error diagnostik
         let errorMessage = 'WebSocket connection error';
         
@@ -442,13 +446,13 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
           if (target) {
             switch (target.readyState) {
               case WebSocket.CONNECTING:
-                errorMessage = 'Failed to connect to Bitfinex WebSocket server. Check internet connection.';
+                errorMessage = 'Failed to connect to Bitfinex WebSocket server';
                 break;
               case WebSocket.CLOSING:
                 errorMessage = 'WebSocket connection closing unexpectedly';
                 break;
               case WebSocket.CLOSED:
-                errorMessage = 'WebSocket connection closed by server. Possible network issue or firewall blocking.';
+                errorMessage = 'WebSocket connection closed by server';
                 break;
               default:
                 errorMessage = 'Unknown WebSocket error';
@@ -456,13 +460,13 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
           }
         }
         
-        logger.wsWarn(`🚨 [WS] Detailed error: ${errorMessage}`);
+        logger.error('WebSocket Error:', errorMessage);
         setError(errorMessage);
         setConnecting(false);
       };
 
     } catch (error) {
-      logger.wsError('❌ [WS] Failed to create WebSocket:', error);
+      logger.error('Failed to create WebSocket connection:', error);
       setError('Failed to create WebSocket connection');
       setConnecting(false);
     }
@@ -499,7 +503,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
   // Subscribe to symbol
   const subscribeToSymbol = useCallback((symbol: string) => {
     if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-      logger.wsWarn('⚠️ [WS] Cannot subscribe - not connected');
+      logger.warn('⚠️ WebSocket: Cannot subscribe - not connected');
       return;
     }
 
@@ -527,9 +531,9 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
       ws.current.send(JSON.stringify(tickerMsg));
       ws.current.send(JSON.stringify(bookMsg));
       
-      logger.wsInfo(`📡 [WS] Subscribing to ${symbol}`);
+      logger.status(`📡 WebSocket: Subscribing to ${symbol} data feeds`);
     } catch (error) {
-      logger.wsError('❌ [WS] Failed to send subscription:', error);
+      logger.error('WebSocket: Failed to send subscription:', error);
       setError('Failed to subscribe to symbol');
     }
   }, []);
@@ -558,11 +562,15 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
       try {
         ws.current!.send(JSON.stringify(unsubMsg));
         subscriptions.current.delete(channelId);
-        logger.wsInfo(`📡 [WS] Unsubscribed from channel ${channelId}`);
+        // Silent unsubscribe - only log if there's an error
       } catch (error) {
-        logger.wsError('❌ [WS] Failed to unsubscribe:', error);
+        logger.error('WebSocket: Failed to unsubscribe:', error);
       }
     });
+    
+    if (channelsToUnsubscribe.length > 0) {
+      logger.status(`📡 WebSocket: Unsubscribed from ${symbol} data feeds`);
+    }
   }, []);
 
   // Auto-connect on mount

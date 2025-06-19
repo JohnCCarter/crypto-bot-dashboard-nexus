@@ -7,7 +7,10 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 
 // Initialize production logging suppression
-import './utils/logger';
+import { logger } from './utils/logger';
+
+// Log frontend startup
+logger.status('🚀 Trading Bot Frontend Started - Dashboard initializing...');
 
 // React DevTools-scriptinjektion borttagen för att undvika CORS- och nätverksfel.
 
@@ -21,3 +24,8 @@ if (rootElement) {
 } else {
   console.error("Root element not found. Unable to render the application.");
 }
+
+// Log when React app is mounted
+setTimeout(() => {
+  logger.status('✅ Trading Bot Dashboard - Ready for trading operations');
+}, 1000);

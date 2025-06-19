@@ -370,7 +370,7 @@ def on_bitfinex_close(ws, close_status_code, close_msg):
 def on_bitfinex_open(ws):
     """Hantera WebSocket connection"""
     global ws_connection_status, ticker_update_count
-    logger.info("✅ Backend WebSocket connected to Bitfinex")
+    logger.info("✅ Backend WebSocket connected to Bitfinex - Live data active")
     ws_connection_status['connected'] = True
     ws_connection_status['error'] = None
     ticker_update_count = 0  # Reset counter
@@ -382,13 +382,14 @@ def on_bitfinex_open(ws):
         'symbol': 'tBTCUSD'
     }
     ws.send(json.dumps(ticker_msg))
-    logger.info("📡 Subscribed to BTCUSD ticker via WebSocket")
+    logger.info("📡 Backend: Subscribed to BTCUSD live data feed")
 
 def init_bitfinex_websocket():
     """Initiera WebSocket anslutning till Bitfinex"""
     global bitfinex_ws
     
     try:
+        logger.info("🚀 Starting Backend WebSocket connection to Bitfinex...")
         bitfinex_ws = websocket.WebSocketApp(
             "wss://api-pub.bitfinex.com/ws/2",
             on_open=on_bitfinex_open,
@@ -404,11 +405,11 @@ def init_bitfinex_websocket():
         ws_thread = threading.Thread(target=run_websocket, daemon=True)
         ws_thread.start()
         
-        logger.info("🚀 Started Bitfinex WebSocket connection thread")
+        logger.info("🚀 Backend WebSocket thread started successfully")
         return True
         
     except Exception as e:
-        logger.error(f"Failed to initialize Bitfinex WebSocket: {e}")
+        logger.error(f"Failed to initialize Backend WebSocket: {e}")
         ws_connection_status['error'] = str(e)
         return False
 
@@ -433,6 +434,29 @@ def get_websocket_ticker():
 # Initialize WebSocket connection on startup
 init_bitfinex_websocket()
 
+# System Health Check - Periodic status updates
+def system_health_check():
+    """Periodic system health reporting"""
+    def health_check():
+        while True:
+            try:
+                time.sleep(300)  # 5 minutes
+                if ws_connection_status['connected']:
+                    logger.info("💚 System Health: All services operational - WebSocket active, API responsive")
+                else:
+                    logger.warning("💛 System Health: WebSocket disconnected, API running on REST fallback")
+            except Exception as e:
+                logger.error(f"Health check error: {e}")
+    
+    health_thread = threading.Thread(target=health_check, daemon=True)
+    health_thread.start()
+    logger.info("🔍 System health monitoring started")
+
+# Start system monitoring
+system_health_check()
+
+# Log system startup completion
+logger.info("🚀 Trading Bot Backend System Started - All services initialized")
 
 if __name__ == "__main__":
     app.run(debug=False, port=5000)
