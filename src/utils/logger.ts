@@ -21,8 +21,10 @@ const LOG_CONFIG = {
 // Rate limiting for different message types
 const ERROR_LOG_CACHE = new Map<string, number>();
 const STATUS_LOG_CACHE = new Map<string, number>();
+const WEBSOCKET_ERROR_CACHE = new Map<string, number>();
 const ERROR_LOG_COOLDOWN = 30000; // 30 seconds between same errors
 const STATUS_LOG_COOLDOWN = 60000; // 1 minute between same status messages
+const WEBSOCKET_ERROR_COOLDOWN = 300000; // 5 minutes between WebSocket errors
 
 // Categories for smart filtering
 const STATUS_KEYWORDS = [
@@ -32,7 +34,12 @@ const STATUS_KEYWORDS = [
 
 const SPAM_KEYWORDS = [
   'Ticker update', 'Heartbeat', 'Ping', 'Pong', 'Subscribe', 'Update received',
-  'Data received', 'Message', 'Processing', 'Polling'
+  'Data received', 'Message', 'Processing', 'Polling', 'Code 1006', 'connection closed'
+];
+
+// WebSocket specific spam keywords
+const WEBSOCKET_SPAM_KEYWORDS = [
+  'Code 1006', 'connection closed by server', 'WebSocket error', 'Disconnected: Code'
 ];
 
 class SmartLogger {
@@ -85,13 +92,44 @@ class SmartLogger {
 
   static warn(...args: unknown[]) {
     if (!LOG_CONFIG.enableWarningLogging) return;
+    
+    const message = args.join(' ');
+    
+    // Aggressive WebSocket warning suppression
+    if (this.isWebSocketSpam(message)) {
+      const now = Date.now();
+      const lastLogged = WEBSOCKET_ERROR_CACHE.get(message) || 0;
+      
+      // Only log WebSocket warnings every 5 minutes
+      if (now - lastLogged < WEBSOCKET_ERROR_COOLDOWN) {
+        return; // Suppress this WebSocket warning
+      }
+      
+      WEBSOCKET_ERROR_CACHE.set(message, now);
+    }
+    
     console.warn('⚠️', ...args);
   }
 
   static error(...args: unknown[]) {
     if (!LOG_CONFIG.enableErrorLogging) return;
 
-    // Rate limiting for errors to avoid spam
+    const message = args.join(' ');
+    
+    // Aggressive WebSocket error suppression
+    if (this.isWebSocketSpam(message)) {
+      const now = Date.now();
+      const lastLogged = WEBSOCKET_ERROR_CACHE.get(message) || 0;
+      
+      // Only log WebSocket errors every 5 minutes
+      if (now - lastLogged < WEBSOCKET_ERROR_COOLDOWN) {
+        return; // Suppress this WebSocket error
+      }
+      
+      WEBSOCKET_ERROR_CACHE.set(message, now);
+    }
+
+    // Rate limiting for other errors
     const errorKey = args.join(' ');
     const now = Date.now();
     const lastLogged = ERROR_LOG_CACHE.get(errorKey) || 0;
@@ -146,6 +184,12 @@ class SmartLogger {
 
   private static isSpamMessage(message: string): boolean {
     return SPAM_KEYWORDS.some(keyword => 
+      message.toLowerCase().includes(keyword.toLowerCase())
+    );
+  }
+
+  private static isWebSocketSpam(message: string): boolean {
+    return WEBSOCKET_SPAM_KEYWORDS.some(keyword => 
       message.toLowerCase().includes(keyword.toLowerCase())
     );
   }

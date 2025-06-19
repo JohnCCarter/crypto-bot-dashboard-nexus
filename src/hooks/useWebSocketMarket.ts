@@ -404,11 +404,20 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
       };
 
       ws.current.onclose = (event) => {
-        if (event.code === 1000) {
+        // Special handling for Code 1006 (abnormal closure) - very common and spammy
+        if (event.code === 1006) {
+          // Code 1006 is extremely common and not useful to log repeatedly
+          // Only log the first occurrence per session
+          if (!sessionStorage.getItem('ws_1006_logged')) {
+            logger.warn('🔌 WebSocket: Connection lost (will auto-reconnect)');
+            sessionStorage.setItem('ws_1006_logged', 'true');
+          }
+        } else if (event.code === 1000) {
           logger.status('🔌 WebSocket Disconnected (Clean)');
         } else {
           logger.warn(`🔌 WebSocket Disconnected: Code ${event.code}`);
         }
+        
         setConnected(false);
         setConnecting(false);
         setPlatformStatus('unknown');
@@ -424,7 +433,11 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
         // Attempt reconnection if not a clean close
         if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-          logger.status(`🔄 WebSocket: Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+          
+          // Only log reconnection attempts for non-1006 codes or first attempt
+          if (event.code !== 1006 || reconnectAttempts.current === 0) {
+            logger.status(`🔄 WebSocket: Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+          }
           
           reconnectTimeout.current = setTimeout(() => {
             reconnectAttempts.current++;
@@ -460,7 +473,13 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
           }
         }
         
-        logger.error('WebSocket Error:', errorMessage);
+        // Only log WebSocket errors once per session to avoid spam
+        const errorKey = `ws_error_${errorMessage}`;
+        if (!sessionStorage.getItem(errorKey)) {
+          logger.error('WebSocket Error:', errorMessage);
+          sessionStorage.setItem(errorKey, 'true');
+        }
+        
         setError(errorMessage);
         setConnecting(false);
       };
@@ -575,6 +594,12 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
 
   // Auto-connect on mount
   useEffect(() => {
+    // Clear WebSocket spam protection on fresh mount
+    const wsKeys = Object.keys(sessionStorage).filter(key => 
+      key.startsWith('ws_') || key.startsWith('ping_')
+    );
+    wsKeys.forEach(key => sessionStorage.removeItem(key));
+    
     connect();
 
     return () => {
