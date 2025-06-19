@@ -1,24 +1,24 @@
 /**
- * Production Logger - Minimize console spam
- * Intelligent environment-based logging with optimal development experience
+ * Production Logger - AGGRESSIVE Console Suppression
+ * Minimal logging for production performance
  */
 
-// Environment detection - more robust
+// Environment detection
 const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Logger configuration - optimized for both dev and prod
+// AGGRESSIVE Logger configuration - Minimal logging
 const LOG_CONFIG = {
-  enableConsoleLogging: isDevelopment,
-  enableErrorLogging: true, // Always log errors
-  enableWarningLogging: true, // Keep warnings in both modes  
-  enableInfoLogging: isDevelopment, // Only info in development
-  enableDebugLogging: isDevelopment, // Only debug in development
+  enableConsoleLogging: false, // Disabled in all modes
+  enableErrorLogging: isDevelopment, // Only errors in development
+  enableWarningLogging: false, // Disabled completely
+  enableInfoLogging: false, // Disabled completely
+  enableDebugLogging: false, // Disabled completely
 };
 
-// Rate limiting for error logs
+// VERY aggressive rate limiting
 const ERROR_LOG_CACHE = new Map<string, number>();
-const ERROR_LOG_COOLDOWN = isDevelopment ? 5000 : 30000; // Faster in dev
+const ERROR_LOG_COOLDOWN = 300000; // 5 minutes between error logs
 
 class ProductionLogger {
   static log(...args: unknown[]) {
@@ -42,7 +42,13 @@ class ProductionLogger {
   static error(...args: unknown[]) {
     if (!LOG_CONFIG.enableErrorLogging) return;
 
-    // Rate limiting for errors
+    // Suppress ALL WebSocket errors completely
+    const message = args.join(' ');
+    if (message.includes('[WS]') || message.includes('WebSocket')) {
+      return; // Completely suppress WebSocket errors
+    }
+
+    // Rate limiting for other errors
     const errorKey = args.join(' ');
     const now = Date.now();
     const lastLogged = ERROR_LOG_CACHE.get(errorKey) || 0;
@@ -105,6 +111,22 @@ class ProductionLogger {
         }
       };
     }
+  }
+
+  // Special WebSocket logger that does NOTHING
+  static wsError(...args: unknown[]) {
+    // Completely silent - no WebSocket logging at all
+    return;
+  }
+
+  static wsInfo(...args: unknown[]) {
+    // Completely silent - no WebSocket logging at all
+    return;
+  }
+
+  static wsWarn(...args: unknown[]) {
+    // Completely silent - no WebSocket logging at all
+    return;
   }
 }
 
