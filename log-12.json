@@ -1,0 +1,296 @@
+[
+    {
+      "timestamp": "2025-06-19T10:39:17.264Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📊 [API] Fetching live chart data for BTCUSD (5m, 100 candles)"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:17.263Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📋 [API] Fetching live order book for BTCUSD"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:17.262Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/bot-status"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:17.261Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/positions"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:17.259Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/balances"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:15.509Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [API] Successfully fetched live orderbook with 20 bids, 20 asks"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:15.508Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📋 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.716Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [Index] Bot status fetched: {\n  \"last_update\": \"2025-06-19T10:39:14.569421+00:00\",\n  \"status\": \"running\",\n  \"uptime\": 64.79529571533203\n}"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.716Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ EMA crossover loaded successfully"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.716Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ EMA crossover backtest successful: {\n  \"ema_fast\": 103.09297009746123,\n  \"ema_slow\": 102.98522615295286,\n  \"total_trades\": 3\n}"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.687Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.670Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.635Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [API] Successfully fetched 100 live candles"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.603Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📊 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.283Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [API] Successfully fetched live orderbook with 20 bids, 20 asks"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:14.282Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📋 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:13.460Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:13.355Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.699Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ Parameters: {\n  \"fast_period\": 3,\n  \"slow_period\": 5,\n  \"lookback\": 5\n}"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.699Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📊 Data points: 100"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.699Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🚀 Starting EMA crossover backtest request..."
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.699Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🚀 Sending backtest data: {\n  \"dataLength\": 100,\n  \"sample\": [\n    1364774700000,\n    1364775000000,\n    1364775900000\n  ]\n}"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.699Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📊 loadEmaCrossover called with 100 data points"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.651Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📈 Chart data loaded: 100 data points"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.649Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.453Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📋 [API] Fetching live order book for BTCUSD"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.274Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/bot-status"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.274Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🏠 [Index] Fetching bot status..."
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.274Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🏠 [Index] Periodic status update"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.273Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📊 [API] Fetching live chart data for BTCUSD (5m, 100 candles)"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.272Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📋 [API] Fetching live order book for BTCUSD"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.271Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/bot-status"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.270Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/positions"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.269Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/balances"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:12.169Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Making request to: /api/positions"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:10.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [API] Successfully fetched live orderbook with 20 bids, 20 asks"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:10.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📋 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:09.845Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [API] Successfully fetched 100 live candles"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:09.767Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📊 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:09.714Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ EMA crossover loaded successfully"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:09.714Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ EMA crossover backtest successful: {\n  \"ema_fast\": 103.09297009746123,\n  \"ema_slow\": 102.98522615295286,\n  \"total_trades\": 3\n}"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:09.101Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [API] Successfully fetched live orderbook with 20 bids, 20 asks"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:09.098Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📋 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:08.513Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:08.513Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🌐 [API] Response status: 200 OK"
+    },
+    {
+      "timestamp": "2025-06-19T10:39:08.457Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🗑️ Frontend log viewer cleared by user"
+    },
+    {
+      "timestamp": "2025-06-19T10:38:52.277Z",
+      "level": "info",
+      "source": "Backend",
+      "message": "System Health Check - All services operational"
+    },
+    {
+      "timestamp": "2025-06-19T10:37:52.277Z",
+      "level": "info",
+      "source": "Backend",
+      "message": "WebSocket Connected to Bitfinex - Live data active"
+    },
+    {
+      "timestamp": "2025-06-19T10:33:52.277Z",
+      "level": "info",
+      "source": "Backend",
+      "message": "Trading Bot System Started - All services initialized"
+    }
+  ]
