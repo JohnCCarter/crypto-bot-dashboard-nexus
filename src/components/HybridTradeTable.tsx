@@ -17,19 +17,13 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Trade } from '@/types/trading';
 import { TrendingUp, TrendingDown, Activity, RefreshCw, Wifi, DollarSign } from 'lucide-react';
-import { useBackendWebSocket } from '@/hooks/useBackendWebSocket';
+import { useWebSocketMarket } from '@/hooks/useWebSocketMarket';
 
 // Enhanced Trade interface with live data
 interface EnhancedTrade extends Trade {
-  current_price: number;
-  live_pnl: number;
-  live_pnl_pct: number;
-  current_value: number;
-  cost_basis: number;
-  price_change: number;
-  price_change_pct: number;
-  is_winning: boolean;
-  is_losing: boolean;
+  unrealizedPnl: number;
+  pnlPercentage: number;
+  currentPrice: number;
 }
 
 interface HybridTradeTableProps {
@@ -41,107 +35,36 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
   symbol = 'BTCUSD',
   maxTrades = 10 
 }) => {
-  // Get live pricing data via Backend WebSocket Proxy
-  const wsData = useBackendWebSocket(symbol);
+  // Get live pricing data via WebSocket Market
+  const wsData = useWebSocketMarket(symbol);
   
   // Get trades data via REST
   const { data: trades = [], isLoading, error, refetch } = useQuery<Trade[]>({
-    queryKey: ['activeTrades'],
-    queryFn: api.getActiveTrades,
-    refetchInterval: 5000, // Fallback polling
+    queryKey: ['trades', symbol],
+    queryFn: () => api.getActiveTrades(),
+    refetchInterval: 5000,
     staleTime: 2000
   });
 
-  // Calculate live trade metrics with current market price
-  const liveTradesData = useMemo(() => {
-    if (!trades.length || !wsData.ticker) {
-      return {
-        trades: trades as EnhancedTrade[],
-        totalPnL: 0,
-        totalPnLPct: 0,
-        totalValue: 0,
-        winners: 0,
-        losers: 0
-      };
-    }
-
-    const currentPrice = wsData.ticker.price;
+  // Enhance trades with live pricing and calculate P&L
+  const enhancedTrades: EnhancedTrade[] = React.useMemo(() => {
+    if (!trades) return [];
     
-    // Safety check for currentPrice
-    if (!currentPrice || typeof currentPrice !== 'number' || isNaN(currentPrice)) {
-      console.warn('[HybridTradeTable] Invalid current price:', currentPrice);
+    const currentPrice = wsData.ticker?.price || 0;
+    
+    return trades.slice(0, maxTrades).map((trade): EnhancedTrade => {
+      const direction = trade.side === 'buy' ? 1 : -1;
+      const unrealizedPnl = currentPrice > 0 ? (currentPrice - trade.entry_price) * direction * trade.amount : 0;
+      const pnlPercentage = trade.entry_price > 0 ? (unrealizedPnl / (trade.entry_price * trade.amount)) * 100 : 0;
+      
       return {
-        trades: trades as EnhancedTrade[],
-        totalPnL: 0,
-        totalPnLPct: 0,
-        totalValue: 0,
-        winners: 0,
-        losers: 0
+        ...trade,
+        unrealizedPnl,
+        pnlPercentage,
+        currentPrice
       };
-    }
-
-    let totalPnL = 0;
-    let totalValue = 0;
-    let totalCostBasis = 0;
-    let winners = 0;
-    let losers = 0;
-
-    const enhancedTrades: EnhancedTrade[] = trades
-      .filter(trade => {
-        // Filter out invalid trades
-        return trade && 
-               typeof trade.amount === 'number' && 
-               typeof trade.entry_price === 'number' &&
-               !isNaN(trade.amount) && 
-               !isNaN(trade.entry_price) &&
-               trade.amount > 0 && 
-               trade.entry_price > 0;
-      })
-      .map(trade => {
-        // Calculate live PnL with safety checks
-        const priceChange = currentPrice - trade.entry_price;
-        const positionMultiplier = trade.side === 'buy' ? 1 : -1;
-        const livePnL = priceChange * trade.amount * positionMultiplier;
-        const livePnLPct = (priceChange / trade.entry_price) * 100 * positionMultiplier;
-        
-        // Current position value
-        const currentValue = trade.amount * currentPrice;
-        const costBasis = trade.amount * trade.entry_price;
-        
-        // Update totals
-        totalPnL += livePnL;
-        totalValue += currentValue;
-        totalCostBasis += costBasis;
-        
-        if (livePnL > 0) winners++;
-        else if (livePnL < 0) losers++;
-
-        return {
-          ...trade,
-          current_price: currentPrice,
-          live_pnl: livePnL,
-          live_pnl_pct: livePnLPct,
-          current_value: currentValue,
-          cost_basis: costBasis,
-          price_change: priceChange,
-          price_change_pct: (priceChange / trade.entry_price) * 100,
-          is_winning: livePnL > 0,
-          is_losing: livePnL < 0
-        };
-      });
-
-    const totalPnLPct = totalCostBasis > 0 ? (totalPnL / totalCostBasis) * 100 : 0;
-
-    return {
-      trades: enhancedTrades,
-      totalPnL: isNaN(totalPnL) ? 0 : totalPnL,
-      totalPnLPct: isNaN(totalPnLPct) ? 0 : totalPnLPct,
-      totalValue: isNaN(totalValue) ? 0 : totalValue,
-      totalCostBasis: isNaN(totalCostBasis) ? 0 : totalCostBasis,
-      winners,
-      losers
-    };
-  }, [trades, wsData.ticker]);
+    });
+  }, [trades, wsData.ticker, maxTrades]);
 
   // Safe format functions with null checks
   const formatCurrency = (value: number | null | undefined) => {
@@ -217,7 +140,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
             <DollarSign className="w-4 h-4" />
-            Live Active Trades ({liveTradesData.trades.length})
+            Live Active Trades ({enhancedTrades.length})
           </CardTitle>
           
           <div className="flex items-center gap-2">
@@ -245,30 +168,30 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
         </div>
 
         {/* Live Portfolio Summary */}
-        {liveTradesData.trades.length > 0 && (
+        {enhancedTrades.length > 0 && (
           <div className="mt-3 p-3 bg-muted rounded-lg">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className={`text-lg font-bold ${
-                  liveTradesData.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'
+                  enhancedTrades[0].unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {formatCurrency(liveTradesData.totalPnL)}
+                  {formatCurrency(enhancedTrades[0].unrealizedPnl)}
                 </div>
                 <div className="text-xs text-muted-foreground">Total P&L</div>
               </div>
               
               <div>
                 <div className={`text-lg font-bold ${
-                  liveTradesData.totalPnLPct >= 0 ? 'text-green-600' : 'text-red-600'
+                  enhancedTrades[0].pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {liveTradesData.totalPnLPct >= 0 ? '+' : ''}{formatPercentage(liveTradesData.totalPnLPct)}%
+                  {enhancedTrades[0].pnlPercentage >= 0 ? '+' : ''}{formatPercentage(enhancedTrades[0].pnlPercentage)}%
                 </div>
                 <div className="text-xs text-muted-foreground">Total Return</div>
               </div>
               
               <div>
                 <div className="text-lg font-bold">
-                  {liveTradesData.winners}/{liveTradesData.losers}
+                  {enhancedTrades.filter(t => t.unrealizedPnl > 0).length}/{enhancedTrades.filter(t => t.unrealizedPnl < 0).length}
                 </div>
                 <div className="text-xs text-muted-foreground">W/L Ratio</div>
               </div>
@@ -278,7 +201,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
       </CardHeader>
 
       <CardContent>
-        {liveTradesData.trades.length === 0 ? (
+        {enhancedTrades.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p>No active trades</p>
@@ -297,13 +220,11 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
             </div>
             
             {/* Trade Rows */}
-            {liveTradesData.trades
-              .slice(0, maxTrades)
-              .map((trade, index) => (
+            {enhancedTrades.map((trade, index) => (
               <div key={`trade-${trade.id || index}-${index}`} 
                    className={`grid grid-cols-6 gap-2 items-center p-2 rounded-lg transition-colors ${
-                     trade.is_winning ? 'bg-green-50 border border-green-200' :
-                     trade.is_losing ? 'bg-red-50 border border-red-200' :
+                     trade.unrealizedPnl > 0 ? 'bg-green-50 border border-green-200' :
+                     trade.unrealizedPnl < 0 ? 'bg-red-50 border border-red-200' :
                      'bg-muted/50'
                    }`}>
                 
@@ -322,30 +243,30 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = memo(({
                 <div className="text-sm">
                   <div className="font-mono">{formatCurrency(trade.entry_price)}</div>
                   <div className={`font-mono text-xs ${
-                    trade.price_change >= 0 ? 'text-green-600' : 'text-red-600'
+                    trade.unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    → {formatCurrency(trade.current_price)}
+                    → {formatCurrency(trade.currentPrice)}
                   </div>
                 </div>
                 
                 {/* Live P&L */}
                 <div className={`text-sm font-medium ${
-                  trade.live_pnl >= 0 ? 'text-green-600' : 'text-red-600'
+                  trade.unrealizedPnl >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
                   <div className="flex items-center gap-1">
-                    {trade.live_pnl >= 0 ? 
+                    {trade.unrealizedPnl >= 0 ? 
                       <TrendingUp className="w-3 h-3" /> : 
                       <TrendingDown className="w-3 h-3" />
                     }
-                    {formatCurrency(Math.abs(trade.live_pnl))}
+                    {formatCurrency(Math.abs(trade.unrealizedPnl))}
                   </div>
                 </div>
                 
                 {/* Return % */}
                 <div className={`text-sm font-bold ${
-                  trade.live_pnl_pct >= 0 ? 'text-green-600' : 'text-red-600'
+                  trade.pnlPercentage >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {trade.live_pnl_pct >= 0 ? '+' : ''}{formatPercentage(trade.live_pnl_pct)}%
+                  {trade.pnlPercentage >= 0 ? '+' : ''}{formatPercentage(trade.pnlPercentage)}%
                 </div>
               </div>
             ))}

@@ -27,7 +27,6 @@ const generateMockOHLCVData = (): OHLCVData[] => {
     basePrice = close;
   }
 
-  console.log(`📊 generateMockOHLCVData created ${data.length} data points`);
   return data;
 };
 
@@ -41,16 +40,11 @@ export const api = {
     amount: number;
     price?: number | null;
   }): Promise<{ message: string }> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/orders`);
-    console.log(`🌐 [API] Order data:`, order);
-    
     const res = await fetch(`${API_BASE_URL}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order),
     });
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Order failed');
     return await res.json();
@@ -58,11 +52,7 @@ export const api = {
 
   // Get Config (Live)
   async getConfig(): Promise<TradingConfig> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/config`);
-    
     const res = await fetch(`${API_BASE_URL}/api/config`);
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Failed to fetch config');
     return await res.json();
@@ -70,16 +60,11 @@ export const api = {
 
   // Update Config (Live)
   async updateConfig(config: Partial<TradingConfig>): Promise<{ success: boolean; message: string }> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/config`);
-    console.log(`🌐 [API] Config data:`, config);
-    
     const res = await fetch(`${API_BASE_URL}/api/config`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
     });
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Failed to update config');
     return await res.json();
@@ -87,11 +72,7 @@ export const api = {
 
   // Get Balances (Live)
   async getBalances(): Promise<Balance[]> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/balances`);
-    
     const res = await fetch(`${API_BASE_URL}/api/balances`);
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Failed to fetch balances');
     return await res.json();
@@ -99,11 +80,7 @@ export const api = {
 
   // Get Active Trades (Live)
   async getActiveTrades(): Promise<Trade[]> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/positions`);
-    
     const res = await fetch(`${API_BASE_URL}/api/positions`);
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Failed to fetch trades');
     return await res.json();
@@ -111,60 +88,21 @@ export const api = {
 
   // Get Chart Data (Live Bitfinex)
   async getChartData(symbol: string, timeframe: string = '5m', limit: number = 100): Promise<OHLCVData[]> {
-    console.log(`📊 [API] Fetching live chart data for ${symbol} (${timeframe}, ${limit} candles)`);
+    const res = await fetch(`${API_BASE_URL}/api/market/ohlcv/${symbol}?timeframe=${timeframe}&limit=${limit}`);
     
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/market/ohlcv/${symbol}?timeframe=${timeframe}&limit=${limit}`);
-      
-      console.log(`📊 [API] Response status: ${res.status} ${res.statusText}`);
-      
-      if (!res.ok) {
-        console.warn(`📊 [API] Live data failed, falling back to mock data`);
-        return generateMockOHLCVData();
-      }
-      
-      const liveData = await res.json();
-      console.log(`✅ [API] Successfully fetched ${liveData.length} live candles`);
-      
-      return liveData;
-    } catch (error) {
-      console.error(`❌ [API] Error fetching live chart data:`, error);
-      console.warn(`📊 [API] Using mock data as fallback`);
+    if (!res.ok) {
       return generateMockOHLCVData();
     }
+    
+    const liveData = await res.json();
+    return liveData;
   },
 
   // Get Order Book (Live Bitfinex)
   async getOrderBook(symbol: string, limit: number = 20): Promise<OrderBook> {
-    console.log(`📋 [API] Fetching live order book for ${symbol}`);
+    const res = await fetch(`${API_BASE_URL}/api/market/orderbook/${symbol}?limit=${limit}`);
     
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/market/orderbook/${symbol}?limit=${limit}`);
-      
-      console.log(`📋 [API] Response status: ${res.status} ${res.statusText}`);
-      
-      if (!res.ok) {
-        console.warn(`📋 [API] Live orderbook failed, falling back to mock data`);
-        return {
-          bids: [
-            { price: 45000, amount: 1 },
-            { price: 44950, amount: 2 }
-          ],
-          asks: [
-            { price: 45100, amount: 1.5 },
-            { price: 45200, amount: 0.8 }
-          ],
-          symbol
-        };
-      }
-      
-      const liveOrderbook = await res.json();
-      console.log(`✅ [API] Successfully fetched live orderbook with ${liveOrderbook.bids.length} bids, ${liveOrderbook.asks.length} asks`);
-      
-      return liveOrderbook;
-    } catch (error) {
-      console.error(`❌ [API] Error fetching live orderbook:`, error);
-      console.warn(`📋 [API] Using mock orderbook as fallback`);
+    if (!res.ok) {
       return {
         bids: [
           { price: 45000, amount: 1 },
@@ -177,83 +115,52 @@ export const api = {
         symbol
       };
     }
+    
+    const liveOrderbook = await res.json();
+    return liveOrderbook;
   },
 
   // Get Market Ticker (Live Bitfinex)
   async getMarketTicker(symbol: string): Promise<any> {
-    console.log(`💰 [API] Fetching live ticker for ${symbol}`);
+    const res = await fetch(`${API_BASE_URL}/api/market/ticker/${symbol}`);
     
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/market/ticker/${symbol}`);
-      
-      console.log(`💰 [API] Response status: ${res.status} ${res.statusText}`);
-      
-      if (!res.ok) {
-        throw new Error('Failed to fetch ticker');
-      }
-      
-      const ticker = await res.json();
-      console.log(`✅ [API] Successfully fetched ticker: ${ticker.last}`);
-      
-      return ticker;
-    } catch (error) {
-      console.error(`❌ [API] Error fetching ticker:`, error);
-      throw error;
+    if (!res.ok) {
+      throw new Error('Failed to fetch ticker');
     }
+    
+    const ticker = await res.json();
+    return ticker;
   },
 
   // Get Available Markets (Live Bitfinex)
   async getAvailableMarkets(): Promise<any> {
-    console.log(`🏪 [API] Fetching available markets`);
+    const res = await fetch(`${API_BASE_URL}/api/market/markets`);
     
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/market/markets`);
-      
-      console.log(`🏪 [API] Response status: ${res.status} ${res.statusText}`);
-      
-      if (!res.ok) {
-        throw new Error('Failed to fetch markets');
-      }
-      
-      const markets = await res.json();
-      console.log(`✅ [API] Successfully fetched ${Object.keys(markets).length} markets`);
-      
-      return markets;
-    } catch (error) {
-      console.error(`❌ [API] Error fetching markets:`, error);
-      throw error;
+    if (!res.ok) {
+      throw new Error('Failed to fetch markets');
     }
+    
+    const markets = await res.json();
+    return markets;
   },
 
   // Bot control endpoints
   async startBot(): Promise<{ success: boolean; message: string }> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/start-bot`);
-    
     const res = await fetch(`${API_BASE_URL}/api/start-bot`, { method: 'POST' });
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Failed to start bot');
     return await res.json();
   },
 
   async stopBot(): Promise<{ success: boolean; message: string }> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/stop-bot`);
-    
     const res = await fetch(`${API_BASE_URL}/api/stop-bot`, { method: 'POST' });
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Failed to stop bot');
     return await res.json();
   },
 
   async getBotStatus(): Promise<BotStatus> {
-    console.log(`🌐 [API] Making request to: ${API_BASE_URL}/api/bot-status`);
-    
     const res = await fetch(`${API_BASE_URL}/api/bot-status`);
-    
-    console.log(`🌐 [API] Response status: ${res.status} ${res.statusText}`);
     
     if (!res.ok) throw new Error('Failed to fetch bot status');
     return await res.json();
@@ -263,10 +170,6 @@ export const api = {
     data: { timestamp: number[]; open: number[]; high: number[]; low: number[]; close: number[]; volume: number[] },
     parameters: any = {}
   ): Promise<EmaCrossoverBacktestResult> {
-    console.log('🚀 Starting EMA crossover backtest request...');
-    console.log('📊 Data points:', data.timestamp.length);
-    console.log('⚙️ Parameters:', parameters);
-    
     const res = await fetch(`${API_BASE_URL}/api/backtest/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -290,19 +193,13 @@ export const api = {
             errorDetails += ` [${errorBody.timestamp}]`;
           }
         }
-        console.error('❌ Detailed error from backend:', errorBody);
       } catch (e) {
-        console.error('❌ Could not parse error response:', e);
+        // Failed to parse error response - use default error
       }
       throw new Error(`Backtest failed: ${errorDetails}`);
     }
     
     const result = await res.json();
-    console.log('✅ EMA crossover backtest successful:', {
-      ema_fast: result.ema_fast,
-      ema_slow: result.ema_slow,
-      total_trades: result.total_trades
-    });
     return result;
   },
 
@@ -313,30 +210,20 @@ export const api = {
     return await res.json();
   },
 
-  // Get Logs (Smart Mock)
+  // Get Logs (From TradingLogger)
   async getLogs(): Promise<LogEntry[]> {
-    // Returnera realistiska system logs istället för förvirrande "Test error"
-    const now = new Date();
-    const oneMinuteAgo = new Date(now.getTime() - 60000);
-    const fiveMinutesAgo = new Date(now.getTime() - 300000);
+    // Import TradingLogger and return its logs with compatible types
+    const { logger } = await import('@/utils/logger');
+    const tradingLogs = logger.getLogs();
     
-    return [
-      { 
-        timestamp: fiveMinutesAgo.toISOString(), 
-        level: 'info', 
-        message: 'Trading Bot System Started - All services initialized' 
-      },
-      { 
-        timestamp: oneMinuteAgo.toISOString(), 
-        level: 'info', 
-        message: 'WebSocket Connected to Bitfinex - Live data active' 
-      },
-      { 
-        timestamp: now.toISOString(), 
-        level: 'info', 
-        message: 'System Health Check - All services operational' 
-      }
-    ];
+    // Map TradingLogger levels to compatible LogEntry levels
+    return tradingLogs.map(log => ({
+      timestamp: log.timestamp,
+      level: log.level === 'success' ? 'info' : 
+             log.level === 'status' ? 'info' : 
+             log.level as 'error', // error maps directly
+      message: log.message
+    }));
   },
 
   // Cancel Order (Live)
