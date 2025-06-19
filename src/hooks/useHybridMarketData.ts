@@ -82,9 +82,9 @@ export const useHybridMarketData = (
 
   // 🚀 INITIAL DATA LOAD (REST) - Omedelbar data när komponenten mountar
   const loadInitialData = useCallback(async () => {
+    if (initialLoadComplete.current) return; // Prevent multiple loads
+    
     try {
-      console.log('🔄 [Hybrid] Loading initial data via REST...');
-      
       // Parallella REST calls för snabb initial load
       const [tickerData, orderbookData, ohlcvData] = await Promise.all([
         api.getMarketTicker(symbol).catch(() => null),
@@ -94,33 +94,29 @@ export const useHybridMarketData = (
 
       if (tickerData) {
         setRestTicker(tickerData);
-        console.log(`✅ [Hybrid] Initial ticker loaded: $${tickerData.last}`);
       }
 
       if (orderbookData) {
         setRestOrderbook(orderbookData);
-        console.log(`✅ [Hybrid] Initial orderbook loaded: ${orderbookData.bids?.length} bids`);
       }
 
       if (ohlcvData && ohlcvData.length > 0) {
         setChartData(ohlcvData);
-        console.log(`✅ [Hybrid] Initial chart data loaded: ${ohlcvData.length} candles`);
       }
 
       initialLoadComplete.current = true;
       setError(null);
       
     } catch (err) {
-      console.error('❌ [Hybrid] Initial data load failed:', err);
+      console.error('Failed to load initial market data');
       setError('Failed to load initial market data');
     }
-  }, [symbol]);
+  }, [symbol]); // Only depend on symbol
 
   // 📡 REST POLLING FALLBACK - När WebSocket är disconnected
   const startRestPolling = useCallback(() => {
     if (restPollingInterval.current) return;
 
-    console.log('🔄 [Hybrid] Starting REST polling fallback...');
     setIsRestPolling(true);
     setDataSource('rest');
 
@@ -138,7 +134,6 @@ export const useHybridMarketData = (
 
         if (tickerData) {
           setRestTicker(tickerData);
-          console.log(`🔄 [Hybrid] REST ticker update: $${tickerData.last}`);
         }
 
         if (orderbookData) {
@@ -149,11 +144,10 @@ export const useHybridMarketData = (
         setError(null);
 
       } catch (err) {
-        console.error('❌ [Hybrid] REST polling error:', err);
         setError('REST polling failed');
       }
     }, 2000); // Poll every 2 seconds
-  }, [symbol]);
+  }, [symbol]); // Only depend on symbol
 
   // 🛑 STOP REST POLLING
   const stopRestPolling = useCallback(() => {
@@ -161,9 +155,8 @@ export const useHybridMarketData = (
       clearInterval(restPollingInterval.current);
       restPollingInterval.current = null;
       setIsRestPolling(false);
-      console.log('⏹️ [Hybrid] REST polling stopped');
     }
-  }, []);
+  }, []); // No dependencies needed
 
   // 🧠 SMART DATA SOURCE MANAGEMENT
   useEffect(() => {
@@ -171,12 +164,10 @@ export const useHybridMarketData = (
       // WebSocket is connected - use it as primary source
       stopRestPolling();
       setDataSource('websocket');
-      console.log('✅ [Hybrid] Switched to WebSocket mode');
       
     } else if (enableWebSocket && !wsConnecting) {
       // WebSocket failed or disabled - fallback to REST
       startRestPolling();
-      console.log('⚠️ [Hybrid] WebSocket unavailable, using REST fallback');
       
     } else if (!enableWebSocket) {
       // Pure REST mode
@@ -187,10 +178,12 @@ export const useHybridMarketData = (
     return () => stopRestPolling();
   }, [wsConnected, wsConnecting, enableWebSocket, startRestPolling, stopRestPolling]);
 
-  // 🔄 INITIAL LOAD EFFECT
+  // 🔄 INITIAL LOAD EFFECT - Fixed to prevent infinite loops
   useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData]);
+    if (!initialLoadComplete.current) {
+      loadInitialData();
+    }
+  }, [symbol]); // Only re-run when symbol changes
 
   // 🎯 SMART DATA SELECTION - Prioritera WebSocket när tillgängligt
   const finalTicker = wsConnected && wsTicker ? {
@@ -211,47 +204,48 @@ export const useHybridMarketData = (
 
   const finalOrderbook = wsConnected && wsOrderbook ? wsOrderbook : restOrderbook;
 
-  // 📊 LIVE CHART UPDATES - Merge WebSocket ticker updates into chart
+  // 📊 LIVE CHART UPDATES - Optimized with useMemo-like pattern
   useEffect(() => {
-    if (finalTicker && chartData.length > 0) {
+    if (!finalTicker || chartData.length === 0) return;
+    
+    const lastCandle = chartData[chartData.length - 1];
+    if (!lastCandle) return;
+    
+    const currentTime = Date.now();
+    const candleTime = lastCandle.timestamp;
+    const timeDiff = currentTime - candleTime;
+    
+    // Only update if within same 5-minute window and price actually changed
+    if (timeDiff < 5 * 60 * 1000 && lastCandle.close !== finalTicker.price) {
       setChartData(prevData => {
         const updatedData = [...prevData];
-        const lastCandle = updatedData[updatedData.length - 1];
+        const lastIdx = updatedData.length - 1;
         
-        if (lastCandle) {
-          // Update the latest candle with live price
-          const currentTime = Date.now();
-          const candleTime = lastCandle.timestamp;
-          const timeDiff = currentTime - candleTime;
-          
-          // If within same 5-minute window, update current candle
-          if (timeDiff < 5 * 60 * 1000) {
-            lastCandle.close = finalTicker.price;
-            lastCandle.high = Math.max(lastCandle.high, finalTicker.price);
-            lastCandle.low = Math.min(lastCandle.low, finalTicker.price);
-            lastCandle.volume += finalTicker.volume * 0.01; // Small volume increment
-          }
-        }
+        updatedData[lastIdx] = {
+          ...updatedData[lastIdx],
+          close: finalTicker.price,
+          high: Math.max(updatedData[lastIdx].high, finalTicker.price),
+          low: Math.min(updatedData[lastIdx].low, finalTicker.price),
+          volume: updatedData[lastIdx].volume + (finalTicker.volume * 0.01)
+        };
         
         return updatedData;
       });
     }
-  }, [finalTicker, chartData.length]);
+  }, [finalTicker?.price, chartData.length]); // Only depend on price and data length
 
-  // 🔧 UTILITY METHODS
+  // 🔧 UTILITY METHODS - Stabilized
   const refreshData = useCallback(async () => {
-    console.log('🔄 [Hybrid] Manual data refresh triggered');
+    initialLoadComplete.current = false; // Allow reload
     await loadInitialData();
   }, [loadInitialData]);
 
   const switchToRestMode = useCallback(() => {
-    console.log('🔄 [Hybrid] Manually switching to REST mode');
     stopRestPolling();
     startRestPolling();
   }, [startRestPolling, stopRestPolling]);
 
   const switchToWebSocketMode = useCallback(() => {
-    console.log('🔄 [Hybrid] Manually switching to WebSocket mode');
     stopRestPolling();
     setDataSource('websocket');
   }, [stopRestPolling]);

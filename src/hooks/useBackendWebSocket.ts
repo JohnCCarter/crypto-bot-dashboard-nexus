@@ -98,7 +98,10 @@ export const useBackendWebSocket = (symbol: string = 'BTCUSD'): BackendWebSocket
         const lastErrorLog = parseInt(sessionStorage.getItem(errorKey) || '0');
         
         if (now - lastErrorLog > 10000) {
-          console.error('❌ [Backend WS] Polling error:', err);
+          // Only log in development mode
+          if (process.env.NODE_ENV === 'development') {
+            console.error('❌ [Backend WS] Polling error:', err);
+          }
           sessionStorage.setItem(errorKey, now.toString());
         }
 
