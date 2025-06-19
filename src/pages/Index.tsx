@@ -1,4 +1,4 @@
-import { BalanceCard } from '@/components/BalanceCard';
+import { HybridBalanceCard } from '@/components/HybridBalanceCard';
 import { BotControl } from '@/components/BotControl';
 import { LogViewer } from '@/components/LogViewer';
 import { ManualTradePanel } from '@/components/ManualTradePanel';
@@ -8,7 +8,7 @@ import { HybridPriceChart } from '@/components/HybridPriceChart';
 import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { TradeTable } from '@/components/TradeTable';
+import { HybridTradeTable } from '@/components/HybridTradeTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -245,7 +245,10 @@ const Index: FC = () => {
             <div className="grid grid-cols-12 gap-6">
               {/* Top Row - Key Metrics */}
               <div className="col-span-12 lg:col-span-3">
-                <BalanceCard balances={balances} isLoading={isLoading} />
+                <HybridBalanceCard 
+                  symbol="BTCUSD" 
+                  showDetails={true}
+                />
               </div>
               
               <div className="col-span-12 lg:col-span-3">
@@ -257,7 +260,10 @@ const Index: FC = () => {
               </div>
               
               <div className="col-span-12 lg:col-span-3">
-                <TradeTable trades={activeTrades} isLoading={isLoading} />
+                <HybridTradeTable 
+                  symbol="BTCUSD" 
+                  maxTrades={5}
+                />
               </div>
 
               {/* Second Row - Chart and Order Book */}
