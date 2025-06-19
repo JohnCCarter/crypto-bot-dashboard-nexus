@@ -1,23 +1,24 @@
 /**
  * Production Logger - Minimize console spam
+ * Intelligent environment-based logging with optimal development experience
  */
 
-// Check if we're in production or development
-const isDevelopment = process.env.NODE_ENV === 'development';
+// Environment detection - more robust
+const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Logger configuration
+// Logger configuration - optimized for both dev and prod
 const LOG_CONFIG = {
   enableConsoleLogging: isDevelopment,
   enableErrorLogging: true, // Always log errors
-  enableWarningLogging: isDevelopment,
-  enableInfoLogging: false, // Disable info in production
-  enableDebugLogging: isDevelopment,
+  enableWarningLogging: true, // Keep warnings in both modes  
+  enableInfoLogging: isDevelopment, // Only info in development
+  enableDebugLogging: isDevelopment, // Only debug in development
 };
 
 // Rate limiting for error logs
 const ERROR_LOG_CACHE = new Map<string, number>();
-const ERROR_LOG_COOLDOWN = 30000; // 30 seconds
+const ERROR_LOG_COOLDOWN = isDevelopment ? 5000 : 30000; // Faster in dev
 
 class ProductionLogger {
   static log(...args: unknown[]) {
