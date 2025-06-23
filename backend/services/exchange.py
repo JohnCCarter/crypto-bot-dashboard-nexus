@@ -2,8 +2,23 @@
 
 from datetime import datetime
 from typing import Any, Dict, Optional
+import time
 
 import ccxt
+
+
+class CustomBitfinex(ccxt.bitfinex):
+    """Custom Bitfinex class with proper nonce handling."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_nonce = int(time.time() * 1000)
+
+    def nonce(self):
+        """Generate monotonically increasing nonce to prevent Bitfinex API errors."""
+        now = int(time.time() * 1000)
+        self._last_nonce = max(self._last_nonce + 1, now)
+        return self._last_nonce
 
 
 class ExchangeError(Exception):
@@ -25,7 +40,12 @@ class ExchangeService:
             api_secret: Exchange API secret
         """
         try:
-            exchange_class = getattr(ccxt, exchange_id)
+            # Use custom Bitfinex class for proper nonce handling
+            if exchange_id == "bitfinex":
+                exchange_class = CustomBitfinex
+            else:
+                exchange_class = getattr(ccxt, exchange_id)
+                
             self.exchange = exchange_class(
                 {"apiKey": api_key, "secret": api_secret, "enableRateLimit": True}
             )

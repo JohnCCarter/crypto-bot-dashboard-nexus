@@ -5,7 +5,6 @@ import time
 import logging
 from typing import List, Dict, Any, Optional
 
-import ccxt
 from dotenv import load_dotenv
 
 from backend.services.exchange import ExchangeService, ExchangeError
@@ -13,15 +12,7 @@ from backend.services.exchange import ExchangeService, ExchangeError
 load_dotenv()
 
 
-class MyBitfinex(ccxt.bitfinex):
-    """Custom Bitfinex class with nonce handling."""
-
-    _last_nonce = int(time.time() * 1000)
-
-    def nonce(self):
-        now = int(time.time() * 1000)
-        self._last_nonce = max(self._last_nonce + 1, now)
-        return self._last_nonce
+# Note: Custom Bitfinex nonce handling now centralized in ExchangeService
 
 
 def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
