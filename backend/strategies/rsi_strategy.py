@@ -73,15 +73,15 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
     Returns:
         TradeSignal: Signalobjekt med action, confidence, position_size och metadata.
     """
-    rsi_period = params.get('rsi_period', 14)
-    overbought = params.get('overbought', 70)
-    oversold = params.get('oversold', 30)
-    position_size = params.get('position_size', 1.0)
-    symbol = params.get('symbol', None)
-    timeframe = params.get('timeframe', None)
-    if 'close' not in data:
+    rsi_period = params.get("rsi_period", 14)
+    overbought = params.get("overbought", 70)
+    oversold = params.get("oversold", 30)
+    position_size = params.get("position_size", 1.0)
+    symbol = params.get("symbol", None)
+    timeframe = params.get("timeframe", None)
+    if "close" not in data:
         raise ValueError("Data måste innehålla kolumnen 'close'")
-    rsi_series = rsi(data['close'], length=rsi_period)
+    rsi_series = rsi(data["close"], length=rsi_period)
     rsi_value = float(rsi_series.iloc[-1])
     prob_buy, prob_sell, prob_hold = calculate_signal_probabilities(
         rsi_value, overbought, oversold
@@ -105,6 +105,6 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
             "probability_sell": prob_sell,
             "probability_hold": prob_hold,
             "symbol": symbol,
-            "timeframe": timeframe
-        }
+            "timeframe": timeframe,
+        },
     )

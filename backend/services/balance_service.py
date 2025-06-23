@@ -9,6 +9,7 @@ load_dotenv()
 
 class MyBitfinex(ccxt.bitfinex):
     _last_nonce = int(time.time() * 1000)
+
     def nonce(self):
         now = int(time.time() * 1000)
         self._last_nonce = max(self._last_nonce + 1, now)
@@ -26,9 +27,11 @@ def fetch_balances():
     api_secret = os.getenv("BITFINEX_API_SECRET")
     if not api_key or not api_secret:
         raise ValueError("API keys not configured properly")
-    exchange = MyBitfinex({
-        "apiKey": api_key,
-        "secret": api_secret,
-        "enableRateLimit": True,
-    })
+    exchange = MyBitfinex(
+        {
+            "apiKey": api_key,
+            "secret": api_secret,
+            "enableRateLimit": True,
+        }
+    )
     return exchange.fetch_balance()

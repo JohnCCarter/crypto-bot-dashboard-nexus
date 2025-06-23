@@ -11,7 +11,9 @@ from backend.services.monitor import AlertLevel, Monitor
 from backend.strategies.rsi_strategy import run_rsi_strategy
 from backend.strategies.sample_strategy import run_strategy
 from backend.strategies.fvg_strategy import run_strategy_with_params
-from backend.strategies.ema_crossover_strategy import run_strategy as run_ema_crossover_strategy
+from backend.strategies.ema_crossover_strategy import (
+    run_strategy as run_ema_crossover_strategy,
+)
 
 # Create blueprint
 backtest_bp = Blueprint("backtest", __name__)
@@ -20,24 +22,24 @@ backtest_bp = Blueprint("backtest", __name__)
 backtest_engine = BacktestEngine()
 monitor = Monitor()
 
+
 def run_ema_crossover_with_params(data, params):
     """Wrapper för EMA crossover strategi som accepterar parametrar."""
-    from backend.strategies.ema_crossover_strategy import run_strategy as run_ema_strategy
-    
+    from backend.strategies.ema_crossover_strategy import (
+        run_strategy as run_ema_strategy,
+    )
+
     # Handle both risk_params and strategy params
-    if 'fast_period' in params or 'slow_period' in params:
+    if "fast_period" in params or "slow_period" in params:
         # Direct strategy params
         return run_ema_strategy(data, params)
     else:
         # This is probably risk_params from BacktestEngine
         # We need to get strategy params from somewhere else
         # For now, use default EMA periods
-        strategy_params = {
-            'fast_period': 3,
-            'slow_period': 5,
-            'lookback': 5
-        }
+        strategy_params = {"fast_period": 3, "slow_period": 5, "lookback": 5}
         return run_ema_strategy(data, strategy_params)
+
 
 # Strategy mapping
 STRATEGIES = {
@@ -78,35 +80,52 @@ def run_backtest():
     """
     try:
         # Get request data
-        current_app.logger.info(f"🌐 DEBUG: Incoming request from {request.remote_addr}")
+        current_app.logger.info(
+            f"🌐 DEBUG: Incoming request from {request.remote_addr}"
+        )
         current_app.logger.info(f"🌐 DEBUG: Request headers: {dict(request.headers)}")
         current_app.logger.info(f"🌐 DEBUG: Content-Type: {request.content_type}")
-        
+
         if not request.is_json:
             current_app.logger.error("❌ DEBUG: Content-Type is not application/json")
             return jsonify({"error": "Content-Type must be application/json"}), 400
         try:
             data = request.get_json()
-            current_app.logger.info(f"🔍 DEBUG: Received data keys: {list(data.keys()) if data else 'None'}")
+            current_app.logger.info(
+                f"🔍 DEBUG: Received data keys: {list(data.keys()) if data else 'None'}"
+            )
             current_app.logger.info(f"🔍 DEBUG: Full request data structure:")
             current_app.logger.info(f"  - strategy: {data.get('strategy', 'MISSING')}")
-            current_app.logger.info(f"  - data keys: {list(data.get('data', {}).keys()) if data and 'data' in data else 'MISSING'}")
-            current_app.logger.info(f"  - parameters: {data.get('parameters', 'MISSING')}")
-            
-            if data and 'data' in data:
-                current_app.logger.info(f"🔍 DEBUG: Data sub-keys: {list(data['data'].keys()) if data['data'] else 'None'}")
-                if data['data'] and 'timestamp' in data['data']:
-                    current_app.logger.info(f"🔍 DEBUG: Timestamp count: {len(data['data']['timestamp'])}")
-                    current_app.logger.info(f"🔍 DEBUG: Sample timestamps: {data['data']['timestamp'][:3] if len(data['data']['timestamp']) >= 3 else data['data']['timestamp']}")
+            current_app.logger.info(
+                f"  - data keys: {list(data.get('data', {}).keys()) if data and 'data' in data else 'MISSING'}"
+            )
+            current_app.logger.info(
+                f"  - parameters: {data.get('parameters', 'MISSING')}"
+            )
+
+            if data and "data" in data:
+                current_app.logger.info(
+                    f"🔍 DEBUG: Data sub-keys: {list(data['data'].keys()) if data['data'] else 'None'}"
+                )
+                if data["data"] and "timestamp" in data["data"]:
+                    current_app.logger.info(
+                        f"🔍 DEBUG: Timestamp count: {len(data['data']['timestamp'])}"
+                    )
+                    current_app.logger.info(
+                        f"🔍 DEBUG: Sample timestamps: {data['data']['timestamp'][:3] if len(data['data']['timestamp']) >= 3 else data['data']['timestamp']}"
+                    )
         except Exception as e:
             current_app.logger.error(f"❌ DEBUG: JSON parsing error: {e}")
             import traceback
+
             traceback.print_exc()
             return jsonify({"error": "Invalid JSON"}), 400
 
         # Validate required fields
         if not all(k in data for k in ["strategy", "data"]):
-            current_app.logger.error(f"❌ DEBUG: Missing required fields. Has: {list(data.keys())}")
+            current_app.logger.error(
+                f"❌ DEBUG: Missing required fields. Has: {list(data.keys())}"
+            )
             return jsonify({"error": "Missing required fields"}), 400
 
         # Get strategy
@@ -120,12 +139,14 @@ def run_backtest():
         df = pd.DataFrame(data["data"])
         current_app.logger.info(f"🔢 DEBUG: DataFrame created with {len(df)} rows")
         current_app.logger.info(f"🔢 DEBUG: DataFrame columns: {list(df.columns)}")
-        
+
         # Convert timestamps first
         df["timestamp"] = pd.to_datetime(df["timestamp"])
-        current_app.logger.info(f"🔢 DEBUG: Timestamp conversion done. Sample: {df['timestamp'].head(3).tolist()}")
+        current_app.logger.info(
+            f"🔢 DEBUG: Timestamp conversion done. Sample: {df['timestamp'].head(3).tolist()}"
+        )
         df.set_index("timestamp", inplace=True)
-        
+
         # Check minimum data requirements and expand if needed
         if strategy_name == "ema_crossover":
             slow_period = data.get("parameters", {}).get("slow_period", 5)
@@ -133,49 +154,61 @@ def run_backtest():
                 error_msg = f"Insufficient data for EMA crossover: need at least {slow_period} data points, got {len(df)}"
                 current_app.logger.error(f"❌ {error_msg}")
                 return jsonify({"error": error_msg}), 400
-            
+
             # TEMPORARY FIX: If frontend sends too few data points, expand with synthetic data
-            if len(df) < 20:  # Less than 20 points is problematic for meaningful EMA crossover
-                current_app.logger.warning(f"⚠️ Only {len(df)} data points received. Expanding with synthetic data for better EMA calculation")
-                
+            if (
+                len(df) < 20
+            ):  # Less than 20 points is problematic for meaningful EMA crossover
+                current_app.logger.warning(
+                    f"⚠️ Only {len(df)} data points received. Expanding with synthetic data for better EMA calculation"
+                )
+
                 # Get the last price and generate more data points
                 last_row = df.iloc[-1]
                 last_timestamp = df.index[-1]
-                last_price = last_row['close']
-                
+                last_price = last_row["close"]
+
                 # Generate additional data points
                 additional_points = []
                 for i in range(1, 101 - len(df)):  # Expand to ~100 total points
                     volatility = 0.02
                     change = (np.random.random() - 0.5) * volatility
-                    
+
                     open_price = last_price
                     close_price = open_price * (1 + change)
-                    high_price = max(open_price, close_price) * (1 + np.random.random() * 0.01)
-                    low_price = min(open_price, close_price) * (1 - np.random.random() * 0.01)
+                    high_price = max(open_price, close_price) * (
+                        1 + np.random.random() * 0.01
+                    )
+                    low_price = min(open_price, close_price) * (
+                        1 - np.random.random() * 0.01
+                    )
                     volume = np.random.random() * 100
-                    
-                    additional_points.append({
-                        'open': open_price,
-                        'high': high_price,
-                        'low': low_price,
-                        'close': close_price,
-                        'volume': volume
-                    })
+
+                    additional_points.append(
+                        {
+                            "open": open_price,
+                            "high": high_price,
+                            "low": low_price,
+                            "close": close_price,
+                            "volume": volume,
+                        }
+                    )
                     last_price = close_price
-                
+
                 # Create DataFrame for additional points with proper timestamp index
                 additional_df = pd.DataFrame(additional_points)
                 additional_df.index = pd.date_range(
                     start=last_timestamp + pd.Timedelta(minutes=5),
                     periods=len(additional_df),
-                    freq='5min'
+                    freq="5min",
                 )
-                
+
                 # Combine original and additional data
                 df = pd.concat([df, additional_df])
-                current_app.logger.info(f"📈 Expanded to {len(df)} data points for better EMA calculation")
-        
+                current_app.logger.info(
+                    f"📈 Expanded to {len(df)} data points for better EMA calculation"
+                )
+
         # Get parameters
         parameters = data.get("parameters", {})
         initial_capital = parameters.get("initial_capital", 10000.0)
@@ -203,7 +236,11 @@ def run_backtest():
             try:
                 # Anropa strategin med både data och parameters
                 strat_result = run_ema_crossover_with_params(df, parameters)
-                metadata = strat_result.metadata if strat_result and strat_result.metadata else {}
+                metadata = (
+                    strat_result.metadata
+                    if strat_result and strat_result.metadata
+                    else {}
+                )
                 extra = {
                     "ema_fast": metadata.get("ema_fast", 0),
                     "ema_slow": metadata.get("ema_slow", 0),
@@ -211,18 +248,21 @@ def run_backtest():
                     "signal_result": {
                         "action": strat_result.action if strat_result else "hold",
                         "confidence": strat_result.confidence if strat_result else 0.0,
-                        "metadata": metadata
-                    }
+                        "metadata": metadata,
+                    },
                 }
             except Exception as e:
-                current_app.logger.warning(f"⚠️ Warning: Could not get extra EMA data: {e}")
+                current_app.logger.warning(
+                    f"⚠️ Warning: Could not get extra EMA data: {e}"
+                )
                 import traceback
+
                 traceback.print_exc()
                 extra = {
                     "ema_fast": 0,
-                    "ema_slow": 0, 
+                    "ema_slow": 0,
                     "signals": [],
-                    "signal_result": {"action": "hold", "confidence": 0.0}
+                    "signal_result": {"action": "hold", "confidence": 0.0},
                 }
 
         # Convert result to dict
@@ -241,7 +281,7 @@ def run_backtest():
             "sharpe_ratio": to_builtin(result.sharpe_ratio),
             "trade_history": result.trade_history,
             "equity_curve": {str(k): float(v) for k, v in result.equity_curve.items()},
-            **extra
+            **extra,
         }
 
         return jsonify(result_dict)
@@ -252,17 +292,30 @@ def run_backtest():
         current_app.logger.error(f"❌ Error type: {type(e).__name__}")
         current_app.logger.error(f"❌ Full traceback:")
         import traceback
+
         current_app.logger.error(traceback.format_exc())
-        
+
         # Log to trading.log with clear timestamp for frontend visibility
         import logging
-        trading_logger = logging.getLogger('trading_monitor')
+
+        trading_logger = logging.getLogger("trading_monitor")
         trading_logger.error(f"[{pd.Timestamp.now()}] CLEAR ERROR: {error_msg}")
         trading_logger.error(f"[{pd.Timestamp.now()}] ERROR TYPE: {type(e).__name__}")
-        trading_logger.error(f"[{pd.Timestamp.now()}] PARAMETERS RECEIVED: {data.get('parameters', 'None')}")
-        
+        trading_logger.error(
+            f"[{pd.Timestamp.now()}] PARAMETERS RECEIVED: {data.get('parameters', 'None')}"
+        )
+
         monitor.create_alert(AlertLevel.ERROR, error_msg)
-        return jsonify({"error": error_msg, "error_type": type(e).__name__, "timestamp": str(pd.Timestamp.now())}), 500
+        return (
+            jsonify(
+                {
+                    "error": error_msg,
+                    "error_type": type(e).__name__,
+                    "timestamp": str(pd.Timestamp.now()),
+                }
+            ),
+            500,
+        )
 
 
 @backtest_bp.route("/api/backtest/optimize", methods=["POST"])

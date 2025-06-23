@@ -90,18 +90,21 @@ def validate_trading_pair(symbol: str) -> Tuple[bool, str]:
         parts = symbol.split("/")
         if len(parts) != 2:
             return False, "Invalid trading pair format. Use 'BASE/QUOTE'"
-        
+
         base, quote = parts
         if not base or not quote:
             return False, "Base and quote currencies cannot be empty"
-        
+
         return True, ""
-    
+
     # Check if it's in BASEUSD or similar format (6 characters typically)
     elif len(symbol) >= 4 and symbol.isalpha():
         # Accept common formats like BTCUSD, ETHUSD, etc.
         # This is a simple validation - could be enhanced with specific currency lists
         return True, ""
-    
+
     else:
-        return False, "Invalid trading pair format. Use 'BASE/QUOTE' or 'BASEUSD' format"
+        return (
+            False,
+            "Invalid trading pair format. Use 'BASE/QUOTE' or 'BASEUSD' format",
+        )

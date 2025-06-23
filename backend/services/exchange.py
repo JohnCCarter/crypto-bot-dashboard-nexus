@@ -121,11 +121,7 @@ class ExchangeService:
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order: {str(e)}")
 
-    def cancel_order(
-        self, 
-        order_id: str, 
-        symbol: Optional[str] = None
-    ) -> bool:
+    def cancel_order(self, order_id: str, symbol: Optional[str] = None) -> bool:
         """
         Cancel an existing order.
 
@@ -191,7 +187,7 @@ class ExchangeService:
         except Exception as e:
             raise ExchangeError(f"Failed to fetch balance: {str(e)}")
 
-    def fetch_ohlcv(self, symbol: str, timeframe: str = '5m', limit: int = 100) -> list:
+    def fetch_ohlcv(self, symbol: str, timeframe: str = "5m", limit: int = 100) -> list:
         """
         Fetch OHLCV (candlestick) data from exchange.
 
@@ -212,10 +208,10 @@ class ExchangeService:
                 {
                     "timestamp": candle[0],
                     "open": float(candle[1]),
-                    "high": float(candle[2]), 
+                    "high": float(candle[2]),
                     "low": float(candle[3]),
                     "close": float(candle[4]),
-                    "volume": float(candle[5])
+                    "volume": float(candle[5]),
                 }
                 for candle in ohlcv
             ]
@@ -238,18 +234,18 @@ class ExchangeService:
         """
         try:
             # Special handling for Bitfinex orderbook
-            if hasattr(self.exchange, 'id') and self.exchange.id == 'bitfinex':
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
                 # Bitfinex requires different limit handling
                 # Try without limit first, then apply client-side limiting
                 orderbook = self.exchange.fetch_order_book(symbol)
             else:
                 # Standard CCXT implementation for other exchanges
                 orderbook = self.exchange.fetch_order_book(symbol, limit)
-            
+
             # Apply limit on client side to ensure consistency
             limited_bids = orderbook["bids"][:limit] if orderbook["bids"] else []
             limited_asks = orderbook["asks"][:limit] if orderbook["asks"] else []
-            
+
             return {
                 "symbol": symbol,
                 "bids": [
@@ -260,7 +256,9 @@ class ExchangeService:
                     {"price": float(ask[0]), "amount": float(ask[1])}
                     for ask in limited_asks
                 ],
-                "timestamp": orderbook.get("timestamp", int(datetime.utcnow().timestamp() * 1000))
+                "timestamp": orderbook.get(
+                    "timestamp", int(datetime.utcnow().timestamp() * 1000)
+                ),
             }
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order book: {str(e)}")
@@ -288,7 +286,7 @@ class ExchangeService:
                     "side": trade["side"],
                     "amount": float(trade["amount"]),
                     "price": float(trade["price"]),
-                    "timestamp": trade["timestamp"]
+                    "timestamp": trade["timestamp"],
                 }
                 for trade in trades
             ]
@@ -310,35 +308,36 @@ class ExchangeService:
         """
         try:
             positions = self.exchange.fetch_positions(symbols)
-            
+
             # Filter out positions with no size
             active_positions = []
             for position in positions:
-                if float(position.get('size', 0)) != 0:
-                    active_positions.append({
-                        "id": position.get("id", ""),
-                        "symbol": position["symbol"],
-                        "side": position["side"],  # 'long' or 'short'
-                        "amount": float(position["size"]),
-                        "entry_price": float(position.get("entryPrice", 0)),
-                        "mark_price": float(position.get("markPrice", 0)),
-                        "pnl": float(position.get("unrealizedPnl", 0)),
-                        "pnl_percentage": float(position.get("percentage", 0)),
-                        "timestamp": position.get(
-                            "timestamp", 
-                            int(datetime.utcnow().timestamp() * 1000)
-                        ),
-                        "contracts": float(position.get("contracts", 0)),
-                        "notional": float(position.get("notional", 0)),
-                        "collateral": float(position.get("collateral", 0)),
-                        "margin_mode": position.get("marginMode", "isolated"),
-                        "maintenance_margin": float(
-                            position.get("maintenanceMargin", 0)
-                        )
-                    })
-            
+                if float(position.get("size", 0)) != 0:
+                    active_positions.append(
+                        {
+                            "id": position.get("id", ""),
+                            "symbol": position["symbol"],
+                            "side": position["side"],  # 'long' or 'short'
+                            "amount": float(position["size"]),
+                            "entry_price": float(position.get("entryPrice", 0)),
+                            "mark_price": float(position.get("markPrice", 0)),
+                            "pnl": float(position.get("unrealizedPnl", 0)),
+                            "pnl_percentage": float(position.get("percentage", 0)),
+                            "timestamp": position.get(
+                                "timestamp", int(datetime.utcnow().timestamp() * 1000)
+                            ),
+                            "contracts": float(position.get("contracts", 0)),
+                            "notional": float(position.get("notional", 0)),
+                            "collateral": float(position.get("collateral", 0)),
+                            "margin_mode": position.get("marginMode", "isolated"),
+                            "maintenance_margin": float(
+                                position.get("maintenanceMargin", 0)
+                            ),
+                        }
+                    )
+
             return active_positions
-            
+
         except Exception as e:
             raise ExchangeError(f"Failed to fetch positions: {str(e)}")
 
@@ -364,7 +363,7 @@ class ExchangeService:
                     "margin": market.get("margin", False),
                     "future": market.get("future", False),
                     "option": market.get("option", False),
-                    "contract": market.get("contract", False)
+                    "contract": market.get("contract", False),
                 }
                 for symbol, market in markets.items()
                 if market["active"]
@@ -373,10 +372,10 @@ class ExchangeService:
             raise ExchangeError(f"Failed to fetch markets: {str(e)}")
 
     def fetch_order_history(
-        self, 
-        symbols: Optional[list] = None, 
-        since: Optional[int] = None, 
-        limit: int = 100
+        self,
+        symbols: Optional[list] = None,
+        since: Optional[int] = None,
+        limit: int = 100,
     ) -> list:
         """
         Fetch order history from exchange.
@@ -403,7 +402,7 @@ class ExchangeService:
             else:
                 # Fetch all order history (may require multiple calls)
                 all_orders = self.exchange.fetch_orders(None, since, limit)
-            
+
             # Transform to standardized format
             standardized_orders = []
             for order in all_orders:
@@ -421,18 +420,15 @@ class ExchangeService:
                     "filled": float(order["filled"]),
                     "remaining": float(order["remaining"]),
                     "cost": float(order["cost"] or 0),
-                    "trades": order.get("trades", [])
+                    "trades": order.get("trades", []),
                 }
                 standardized_orders.append(standardized_order)
-            
+
             # Sort by timestamp (newest first)
-            standardized_orders.sort(
-                key=lambda x: x["timestamp"] or 0, 
-                reverse=True
-            )
-            
+            standardized_orders.sort(key=lambda x: x["timestamp"] or 0, reverse=True)
+
             return standardized_orders
-            
+
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order history: {str(e)}")
 
@@ -452,7 +448,7 @@ class ExchangeService:
         try:
             # Fetch open orders from exchange
             open_orders = self.exchange.fetch_open_orders(symbol)
-            
+
             # Transform to standardized format
             standardized_orders = []
             for order in open_orders:
@@ -467,11 +463,11 @@ class ExchangeService:
                     "filled": float(order["filled"]),
                     "remaining": float(order["remaining"]),
                     "timestamp": order["timestamp"],
-                    "datetime": order["datetime"]
+                    "datetime": order["datetime"],
                 }
                 standardized_orders.append(standardized_order)
-            
+
             return standardized_orders
-            
+
         except Exception as e:
             raise ExchangeError(f"Failed to fetch open orders: {str(e)}")

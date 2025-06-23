@@ -32,24 +32,21 @@ class FVGStrategy:
         Kör FVG-strategin på indata och returnerar en TradeSignal.
         """
         fvg_zones = find_fvg_zones(
-            data,
-            min_gap_size=self.min_gap_size,
-            direction=self.direction
+            data, min_gap_size=self.min_gap_size, direction=self.direction
         )
         # Kontrollera om senaste priset återbesöker en FVG-zon
-        last_close = data['close'].iloc[-1]
+        last_close = data["close"].iloc[-1]
         recent_fvg = [
-            z for z in fvg_zones
-            if z['index'] >= len(data) - self.lookback - 1
+            z for z in fvg_zones if z["index"] >= len(data) - self.lookback - 1
         ]
         for zone in recent_fvg:
-            if zone['gap_low'] <= last_close <= zone['gap_high']:
-                action = "buy" if zone['direction'] == "bullish" else "sell"
+            if zone["gap_low"] <= last_close <= zone["gap_high"]:
+                action = "buy" if zone["direction"] == "bullish" else "sell"
                 return TradeSignal(
                     action=action,
                     confidence=1.0,
                     position_size=self.position_size,
-                    metadata={"fvg_zone": zone}
+                    metadata={"fvg_zone": zone},
                 )
         return TradeSignal(action="hold", confidence=0.0)
 
@@ -69,8 +66,8 @@ def run_strategy(data: pd.DataFrame, params: dict) -> TradeSignal:
     Returns:
         TradeSignal: Signalobjekt med action, confidence, position_size och metadata.
     """
-    lookback = params.get('lookback', 3)
-    position_size = params.get('position_size', 1.0)
+    lookback = params.get("lookback", 3)
+    position_size = params.get("position_size", 1.0)
     # Dummy FVG-logik: Om close[-1] > open[-lookback] => buy, annars sell, annars hold
     if len(data) < lookback:
         return TradeSignal(
@@ -80,15 +77,15 @@ def run_strategy(data: pd.DataFrame, params: dict) -> TradeSignal:
             metadata={
                 "probability_buy": 0.33,
                 "probability_sell": 0.33,
-                "probability_hold": 0.34
-            }
+                "probability_hold": 0.34,
+            },
         )
-    if data['close'].iloc[-1] > data['open'].iloc[-lookback]:
+    if data["close"].iloc[-1] > data["open"].iloc[-lookback]:
         action = "buy"
         prob_buy = 0.7
         prob_sell = 0.1
         prob_hold = 0.2
-    elif data['close'].iloc[-1] < data['open'].iloc[-lookback]:
+    elif data["close"].iloc[-1] < data["open"].iloc[-lookback]:
         action = "sell"
         prob_buy = 0.1
         prob_sell = 0.7
@@ -100,19 +97,17 @@ def run_strategy(data: pd.DataFrame, params: dict) -> TradeSignal:
         prob_hold = 0.6
     return TradeSignal(
         action=action,
-        confidence=max(
-            prob_buy, prob_sell
-        ),
+        confidence=max(prob_buy, prob_sell),
         position_size=position_size,
         metadata={
             "probability_buy": prob_buy,
             "probability_sell": prob_sell,
-            "probability_hold": prob_hold
-        }
+            "probability_hold": prob_hold,
+        },
     )
 
 
 def run_strategy_with_params(data: pd.DataFrame, params: dict) -> TradeSignal:
     """Wrapper för optimerings-API: kör FVG-strategi med parametrar."""
     strategy = FVGStrategy(params)
-    return strategy.run_strategy(data) 
+    return strategy.run_strategy(data)

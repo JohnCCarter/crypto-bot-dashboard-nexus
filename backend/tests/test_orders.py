@@ -129,4 +129,4 @@ def test_place_order_server_error(client):
         response = client.post("/api/orders", json=order_data)
         assert response.status_code == 500
         data = response.get_json()
-        assert "error" in data 
+        assert "error" in data

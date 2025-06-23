@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export const SupabaseTest = () => {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Array<{ id: string; symbol: string; amount: number }>>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
