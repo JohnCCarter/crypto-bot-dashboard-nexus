@@ -554,6 +554,25 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
     }
   }, []);
 
+  // Symbol change effect - Re-subscribe när symbol ändras
+  useEffect(() => {
+    if (connected && initialSymbol && initialSymbol !== currentSymbol.current) {
+      // Rensa gamla data för föregående symbol
+      setTicker(null);
+      setOrderbook(null);
+      setTrades([]);
+      setError(null);
+      
+      // Unsubscribe från gamla symbolen
+      if (currentSymbol.current) {
+        unsubscribeFromSymbol(currentSymbol.current);
+      }
+      
+      // Subscribe till nya symbolen
+      subscribeToSymbol(initialSymbol);
+    }
+  }, [initialSymbol, connected, subscribeToSymbol, unsubscribeFromSymbol]);
+
   // Auto-connect on mount med robust hantering
   useEffect(() => {
     // Clear WebSocket spam protection on fresh mount

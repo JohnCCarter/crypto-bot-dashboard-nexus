@@ -82,7 +82,7 @@ export const useHybridMarketData = (
 
   // 🚀 INITIAL DATA LOAD (REST) - Omedelbar data när komponenten mountar
   const loadInitialData = useCallback(async () => {
-    if (initialLoadComplete.current) return; // Prevent multiple loads
+    // Tillåt reload när symbol ändras (initialLoadComplete hanteras i useEffect)
     
     try {
       // Parallella REST calls för snabb initial load
@@ -178,12 +178,20 @@ export const useHybridMarketData = (
     return () => stopRestPolling();
   }, [wsConnected, wsConnecting, enableWebSocket, startRestPolling, stopRestPolling]);
 
-  // 🔄 INITIAL LOAD EFFECT - Fixed to prevent infinite loops
+  // 🔄 INITIAL LOAD EFFECT - Reset på symbol change för korrekt data
   useEffect(() => {
-    if (!initialLoadComplete.current) {
-      loadInitialData();
-    }
-  }, [symbol]); // Only re-run when symbol changes
+    // Reset initial load flag när symbol ändras
+    initialLoadComplete.current = false;
+    
+    // Rensa gamla data för att undvika förvirring
+    setRestTicker(null);
+    setRestOrderbook(null);
+    setChartData([]);
+    setError(null);
+    
+    // Ladda data för nya symbolen
+    loadInitialData();
+  }, [symbol, loadInitialData]); // Re-run when symbol changes
 
   // 🎯 SMART DATA SELECTION - Prioritera WebSocket när tillgängligt
   const finalTicker = wsConnected && wsTicker ? {
