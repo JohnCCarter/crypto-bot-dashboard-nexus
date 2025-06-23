@@ -21,7 +21,6 @@ from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
 from backend.routes.strategy_analysis import strategy_analysis_bp
 from backend.routes.live_portfolio import live_portfolio_bp
-from backend.routes.live_balances import live_balances_bp
 from backend.routes import market_data
 from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
@@ -195,7 +194,6 @@ def register_routes():
     app.register_blueprint(backtest_bp)
     app.register_blueprint(strategy_analysis_bp)
     app.register_blueprint(live_portfolio_bp)
-    app.register_blueprint(live_balances_bp)
 
 
 # Register routes
