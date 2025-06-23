@@ -34,20 +34,13 @@ def fetch_balances():
         )
     
     try:
-        # Use shared exchange service (thread-safe nonce handling)
-        balance_dict = exchange_service.fetch_balance()
+        # Use shared exchange service for thread-safe nonce handling
+        # But call raw ccxt method to get full balance structure
+        raw_balance = exchange_service.exchange.fetch_balance()
         
-        # Convert to expected format for API response
-        balance_list = []
-        for currency, amount in balance_dict.items():
-            if amount > 0:  # Only include non-zero balances
-                balance_list.append({
-                    "currency": currency,
-                    "available": amount,
-                    "total_balance": amount
-                })
-        
-        return balance_list
+        # Return raw ccxt format with ["total"] and ["free"] keys
+        # This is what balances.py route expects
+        return raw_balance
         
     except Exception as e:
         current_app.logger.error(f"Failed to fetch balances: {e}")
