@@ -3,7 +3,7 @@ import traceback
 import os
 import logging
 
-from backend.services.config_service import Config
+from backend.services.config_service import ConfigService
 from backend.strategies.ema_crossover_strategy import run_strategy as run_ema
 from backend.strategies.rsi_strategy import run_strategy as run_rsi
 from backend.strategies.fvg_strategy import run_strategy as run_fvg
@@ -28,16 +28,15 @@ def main():
     """
     logger.info("🚀 [TradingBot] Starting LIVE trading bot with real market data")
 
-    config = Config.load()
-    # Strategiparametrar
-    if not isinstance(config, dict):
-        raise ValueError("Config must be a dictionary")
-
-    ema_params = config.get("strategy", {}).copy()
-    rsi_params = config.get("strategy", {}).copy()
-    fvg_params = config.get("fvg_strategy", {}).copy()
-    symbol = config.get("strategy", {}).get("symbol", "BTC/USD")
-    timeframe = config.get("strategy", {}).get("timeframe", "5m")
+    config_service = ConfigService()
+    config = config_service.load_config()
+    # Strategiparametrar - using TradingConfig dataclass
+    
+    ema_params = config.strategy_config.copy()
+    rsi_params = config.strategy_config.copy()
+    fvg_params = config.strategy_config.copy()
+    symbol = config.strategy_config.get("symbol", "TESTBTC/TESTUSD")  # Paper trading
+    timeframe = config.strategy_config.get("timeframe", "5m")
 
     for params in (ema_params, rsi_params, fvg_params):
         params["symbol"] = symbol
@@ -55,9 +54,7 @@ def main():
     )
 
     # Riskparametrar
-    risk_conf = config.get("risk", {})
-    if not isinstance(risk_conf, dict):
-        raise ValueError("Risk configuration must be a dictionary")
+    risk_conf = config.risk_config
 
     risk_params = RiskParameters(
         max_position_size=risk_conf.get("risk_per_trade", 0.02),
@@ -70,12 +67,10 @@ def main():
     risk_manager = RiskManager(risk_params)
 
     # Trading window
-    trading_window = TradingWindow(config.get("trading_window", {}))
+    trading_window = TradingWindow(config.trading_window)
 
     # Notifications
-    notif_conf = config.get("notifications", {})
-    if not isinstance(notif_conf, dict):
-        raise ValueError("Notifications configuration must be a dictionary")
+    notif_conf = config.notifications
 
     notifier = Notifier(
         smtp_server=notif_conf.get("smtp_server", "smtp.example.com"),
