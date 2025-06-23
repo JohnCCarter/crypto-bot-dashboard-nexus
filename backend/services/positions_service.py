@@ -1,23 +1,34 @@
 """Positions service for fetching real positions from Bitfinex."""
 
-import os
 import time
 import logging
 from typing import List, Dict, Any, Optional
 
-from dotenv import load_dotenv
+from flask import current_app
 
-from backend.services.exchange import ExchangeService, ExchangeError
-
-load_dotenv()
+from backend.services.exchange import ExchangeError
 
 
-# Note: Custom Bitfinex nonce handling now centralized in ExchangeService
+def get_shared_exchange_service():
+    """Get shared exchange service from app context to avoid conflicts."""
+    try:
+        if hasattr(current_app, "_services") and current_app._services:
+            return current_app._services.get("exchange")
+        
+        current_app.logger.warning(
+            "Exchange service not available in app context"
+        )
+        return None
+    except Exception as e:
+        current_app.logger.error(
+            f"Failed to get shared exchange service: {e}"
+        )
+        return None
 
 
 def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """
-    Fetch live positions from Bitfinex.
+    Fetch live positions from Bitfinex using shared exchange service.
 
     Args:
         symbols: Optional list of symbols to filter by
@@ -26,21 +37,18 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
         List of position dictionaries with live data from Bitfinex
 
     Raises:
-        ValueError: If API keys not configured
+        ValueError: If exchange service not available
         ExchangeError: If Bitfinex API call fails
     """
-    api_key = os.getenv("BITFINEX_API_KEY")
-    api_secret = os.getenv("BITFINEX_API_SECRET")
-
-    if not api_key or not api_secret:
-        logging.warning("Bitfinex API keys not configured, using empty positions")
+    exchange_service = get_shared_exchange_service()
+    if not exchange_service:
+        logging.warning(
+            "Exchange service not available, returning empty positions"
+        )
         return []
 
     try:
-        # Create exchange service
-        exchange_service = ExchangeService("bitfinex", api_key, api_secret)
-
-        # Fetch live positions
+        # Fetch live positions using shared service
         positions = exchange_service.fetch_positions(symbols)
 
         # Convert to format expected by trading system
@@ -58,7 +66,8 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
                     "entry_price": position["entry_price"],
                     "pnl": position["pnl"],
                     "timestamp": time.strftime(
-                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime(position["timestamp"] / 1000)
+                        "%Y-%m-%dT%H:%M:%SZ", 
+                        time.gmtime(position["timestamp"] / 1000)
                     ),
                     "mark_price": position["mark_price"],
                     "pnl_percentage": position["pnl_percentage"],

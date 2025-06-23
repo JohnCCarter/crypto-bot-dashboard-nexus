@@ -98,7 +98,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   const [lastHeartbeat, setLastHeartbeat] = useState<number | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   
-  // WebSocket refs - SINGLE CONNECTION
+  // WebSocket refs - SINGLE CONNECTION with proper state management
   const ws = useRef<WebSocket | null>(null);
   const subscriptions = useRef<Map<number, ChannelSubscription>>(new Map());
   const subscribedSymbols = useRef<Set<string>>(new Set());
@@ -108,6 +108,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   const reconnectAttempts = useRef<number>(0);
   const maxReconnectAttempts = 3;
   const pingCounter = useRef<number>(0);
+  const connectionInitialized = useRef<boolean>(false); // Prevent multiple connections
 
   // Ping/Pong för latency measurement
   const sendPing = useCallback(() => {
@@ -229,12 +230,19 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     }));
   }, []);
 
-  // SINGLE WebSocket connection
+  // SINGLE WebSocket connection with development mode protection
   const connect = useCallback(() => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
+    // Prevent multiple connections (especially in React Strict Mode)
+    if (connectionInitialized.current || ws.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+    
+    // If connecting, don't create another connection
+    if (connecting) {
       return;
     }
 
+    connectionInitialized.current = true;
     setConnecting(true);
     setError(null);
 
@@ -368,6 +376,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
         setConnected(false);
         setConnecting(false);
         setPlatformStatus('unknown');
+        connectionInitialized.current = false; // Reset connection flag
 
         if (heartbeatTimeout.current) {
           clearTimeout(heartbeatTimeout.current);
@@ -376,6 +385,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
           clearInterval(pingInterval.current);
         }
 
+        // Only reconnect if it wasn't a clean close and we're under retry limit
         if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
           const delay = Math.min(5000 * Math.pow(2, reconnectAttempts.current), 60000);
           
@@ -392,6 +402,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
         // Silent error handling - no spam
         setError('WebSocket connection failed');
         setConnecting(false);
+        connectionInitialized.current = false; // Reset connection flag on error
       };
 
     } catch (error) {
@@ -480,22 +491,29 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     return trades[bitfinexSymbol] || trades[symbol] || [];
   }, [trades]);
 
-  // Auto-connect on mount
+  // Auto-connect on mount with proper cleanup
   useEffect(() => {
     connect();
 
     return () => {
+      // Clean shutdown
+      connectionInitialized.current = false;
+      
       if (reconnectTimeout.current) {
         clearTimeout(reconnectTimeout.current);
+        reconnectTimeout.current = null;
       }
       if (heartbeatTimeout.current) {
         clearTimeout(heartbeatTimeout.current);
+        heartbeatTimeout.current = null;
       }
       if (pingInterval.current) {
         clearInterval(pingInterval.current);
+        pingInterval.current = null;
       }
-      if (ws.current) {
+      if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
         ws.current.close(1000, 'Provider unmount');
+        ws.current = null;
       }
     };
   }, [connect]);
