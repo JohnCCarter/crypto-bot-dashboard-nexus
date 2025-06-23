@@ -26,6 +26,7 @@ import {
 } from '@/types/trading';
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
 import { Settings, RefreshCw, TrendingUp } from 'lucide-react';
 
 /**
@@ -33,67 +34,37 @@ import { Settings, RefreshCw, TrendingUp } from 'lucide-react';
  * Displays balances, active trades, order history, charts, and control panels.
  */
 const Index: FC = () => {
-  // State management
-  const [balances, setBalances] = useState<Balance[]>([]);
-  const [activeTrades, setActiveTrades] = useState<Trade[]>([]);
-  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
-  const [botStatus, setBotStatus] = useState<BotStatus>({
-    status: 'stopped',
-    uptime: 0,
-    last_update: new Date().toISOString()
-  });
-  const [orderBook, setOrderBook] = useState<OrderBookType | null>(null);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [chartData, setChartData] = useState<OHLCVData[]>([]);
+  // Global symbol selection state
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('BTCUSD');
+  
+  // Use optimized market data hook (replaces all individual state and polling)
+  const {
+    balances,
+    activeTrades,
+    orderHistory,
+    botStatus,
+    orderbook,
+    logs,
+    chartData,
+    ticker,
+    connected,
+    error,
+    refreshData
+  } = useOptimizedMarketData(selectedSymbol);
+  
+  // UI state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [emaFast, setEmaFast] = useState<number[] | undefined>(undefined);
   const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
   const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
-
-  // Global symbol selection state
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('BTCUSD');
 
   // Available trading symbols
   const SYMBOLS = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'ADAUSD'];
 
-  const loadAllData = useCallback(async () => {
-    try {
-      const [
-        balancesData,
-        tradesData,
-        ordersData,
-        statusData,
-        orderBookData,
-        logsData,
-        chartDataResponse
-      ] = await Promise.all([
-        api.getBalances(),
-        api.getActiveTrades(),
-        api.getOrderHistory(),
-        api.getBotStatus(),
-        api.getOrderBook(selectedSymbol),
-        api.getLogs(),
-        api.getChartData(selectedSymbol)
-      ]);
-
-      setBalances(balancesData);
-      setActiveTrades(tradesData);
-      setOrderHistory(ordersData);
-      setBotStatus(statusData);
-      setOrderBook(orderBookData);
-      setLogs(logsData);
-      setChartData(chartDataResponse);
-      setIsConnected(true); // Set connected to true when API calls succeed
-    } catch (error) {
-      setIsConnected(false); // Set connected to false when API calls fail
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedSymbol]);
+  // No longer needed - data loading handled by useOptimizedMarketData hook
 
   const loadEmaCrossover = useCallback(async () => {
     try {
@@ -128,17 +99,12 @@ const Index: FC = () => {
     }
   }, [chartData]);
 
-  // Load initial data
+  // Loading state management
   useEffect(() => {
-    loadAllData();
-    
-    // Set up periodic updates
-    const interval = setInterval(() => {
-      loadAllData();
-    }, 5000); // Update every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [selectedSymbol, loadAllData]); // Add loadAllData dependency
+    if (connected || error) {
+      setIsLoading(false);
+    }
+  }, [connected, error]);
 
   // Load EMA crossover data when chartData is available
   useEffect(() => {
@@ -147,36 +113,10 @@ const Index: FC = () => {
     }
   }, [chartData, loadEmaCrossover]);
 
-  const fetchBotStatus = useCallback(async () => {
-    try {
-      const status = await api.getBotStatus();
-      setBotStatus(status);
-    } catch (error) {
-      toast({
-        title: "Status Error",
-        description: "Failed to fetch bot status",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
-    fetchBotStatus();
+    refreshData(true); // Force refresh all data
   };
-
-  useEffect(() => {
-    fetchBotStatus();
-    
-    // Set up periodic status updates
-    const interval = setInterval(() => {
-      fetchBotStatus();
-    }, 30000); // Update every 30 seconds
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [fetchBotStatus]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
