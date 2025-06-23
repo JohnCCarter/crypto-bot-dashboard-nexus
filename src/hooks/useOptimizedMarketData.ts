@@ -38,6 +38,7 @@ interface OptimizedMarketData {
   connected: boolean;
   lastUpdate: number | null;
   error: string | null;
+  isLoading: boolean;
   
   // Control
   refreshData: (force?: boolean) => Promise<void>;
@@ -60,6 +61,7 @@ class MarketDataManager {
     connected: false,
     lastUpdate: null,
     error: null,
+    isLoading: false,
     refreshData: () => Promise.resolve(),
     refreshSymbolData: () => Promise.resolve()
   };
@@ -68,6 +70,8 @@ class MarketDataManager {
   private lastFetch: Record<string, number> = {};
   private isPolling: boolean = false;
   private pollInterval: NodeJS.Timeout | null = null;
+  private isLoading: boolean = false;
+  private symbolChangeTimeout: NodeJS.Timeout | null = null;
   
   public static getInstance(): MarketDataManager {
     if (!MarketDataManager.instance) {
@@ -111,7 +115,7 @@ class MarketDataManager {
   }
 
   public async refreshMarketData(symbol: string, force: boolean = false): Promise<void> {
-    const MARKET_INTERVAL = 3000; // 3 seconds for market data
+    const MARKET_INTERVAL = 1500; // 1.5 seconds for market data (faster updates)
     
     try {
       const promises: Promise<void>[] = [];
@@ -279,10 +283,10 @@ class MarketDataManager {
     // Initial load
     this.refreshAll(this.currentSymbol, true);
     
-    // Smart polling - staggered intervals
+    // Smart polling - faster intervals for better responsiveness
     this.pollInterval = setInterval(() => {
       this.refreshAll(this.currentSymbol);
-    }, 3000); // Base interval: 3 seconds
+    }, 1500); // Base interval: 1.5 seconds (faster for better UX)
   }
   
   private stopPolling(): void {
@@ -305,21 +309,44 @@ class MarketDataManager {
     if (symbol !== this.currentSymbol) {
       console.log(`🔄 [OptimizedMarketData] Switching symbol: ${this.currentSymbol} → ${symbol}`);
       
+      // Clear any pending symbol changes (debouncing)
+      if (this.symbolChangeTimeout) {
+        clearTimeout(this.symbolChangeTimeout);
+      }
+      
       const oldSymbol = this.currentSymbol;
       this.currentSymbol = symbol;
+      
+      // Set loading state IMMEDIATELY for instant UI feedback
+      this.data.isLoading = true;
+      this.notifySubscribers();
       
       // Clear symbol-specific cached data to prevent stale data mix
       this.clearSymbolCache(oldSymbol);
       
-      // Force refresh ALL data for new symbol - both market AND trading data
-      this.refreshAll(symbol, true).then(() => {
-        console.log(`✅ [OptimizedMarketData] Symbol switch complete: ${symbol}`);
-      });
+      // Debounced symbol switch to prevent multiple rapid calls
+      this.symbolChangeTimeout = setTimeout(async () => {
+        console.log(`⚡ [OptimizedMarketData] Executing symbol switch: ${symbol}`);
+        
+        try {
+          // Force refresh ALL data for new symbol - both market AND trading data
+          await this.refreshAll(symbol, true);
+          this.data.isLoading = false;
+          console.log(`✅ [OptimizedMarketData] Symbol switch complete: ${symbol}`);
+          
+        } catch (error) {
+          this.data.isLoading = false;
+          this.data.error = `Failed to switch to ${symbol}`;
+          console.error(`❌ [OptimizedMarketData] Symbol switch failed:`, error);
+        }
+        
+        this.notifySubscribers();
+      }, 100); // Short debounce - just enough to prevent race conditions
     }
   }
   
   private clearSymbolCache(oldSymbol: string): void {
-    // Clear market data that is symbol-specific
+    // Clear market data that is symbol-specific IMMEDIATELY
     this.data.ticker = null;
     this.data.orderbook = null;
     this.data.chartData = [];
@@ -329,8 +356,11 @@ class MarketDataManager {
     delete this.lastFetch['orderbook']; 
     delete this.lastFetch['chart'];
     
+    // Notify subscribers immediately to hide stale data
+    this.notifySubscribers();
+    
     // Note: Trading data (balances, orders, etc.) is kept as it's account-wide
-    console.log(`🧹 [OptimizedMarketData] Cleared cache for symbol: ${oldSymbol}`);
+    console.log(`🧹 [OptimizedMarketData] Cleared cache for symbol: ${oldSymbol}, UI updated immediately`);
   }
 }
 
@@ -351,6 +381,7 @@ export const useOptimizedMarketData = (symbol?: string): OptimizedMarketData => 
     connected: false,
     lastUpdate: null,
     error: null,
+    isLoading: false,
     refreshData: () => Promise.resolve(),
     refreshSymbolData: () => Promise.resolve()
   });
