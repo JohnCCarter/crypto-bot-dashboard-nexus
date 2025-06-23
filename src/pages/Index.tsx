@@ -60,6 +60,41 @@ const Index: FC = () => {
   // Available trading symbols
   const SYMBOLS = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'ADAUSD'];
 
+  const loadAllData = useCallback(async () => {
+    try {
+      const [
+        balancesData,
+        tradesData,
+        ordersData,
+        statusData,
+        orderBookData,
+        logsData,
+        chartDataResponse
+      ] = await Promise.all([
+        api.getBalances(),
+        api.getActiveTrades(),
+        api.getOrderHistory(),
+        api.getBotStatus(),
+        api.getOrderBook(selectedSymbol),
+        api.getLogs(),
+        api.getChartData(selectedSymbol)
+      ]);
+
+      setBalances(balancesData);
+      setActiveTrades(tradesData);
+      setOrderHistory(ordersData);
+      setBotStatus(statusData);
+      setOrderBook(orderBookData);
+      setLogs(logsData);
+      setChartData(chartDataResponse);
+      setIsConnected(true); // Set connected to true when API calls succeed
+    } catch (error) {
+      setIsConnected(false); // Set connected to false when API calls fail
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedSymbol]);
+
   const loadEmaCrossover = useCallback(async () => {
     try {
       // Säkerhetskontroll: Se till att vi har chartData
@@ -103,7 +138,7 @@ const Index: FC = () => {
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
-  }, [selectedSymbol]); // Add selectedSymbol as dependency
+  }, [selectedSymbol, loadAllData]); // Add loadAllData dependency
 
   // Load EMA crossover data when chartData is available
   useEffect(() => {
@@ -112,42 +147,7 @@ const Index: FC = () => {
     }
   }, [chartData, loadEmaCrossover]);
 
-  const loadAllData = async () => {
-    try {
-      const [
-        balancesData,
-        tradesData,
-        ordersData,
-        statusData,
-        orderBookData,
-        logsData,
-        chartDataResponse
-      ] = await Promise.all([
-        api.getBalances(),
-        api.getActiveTrades(),
-        api.getOrderHistory(),
-        api.getBotStatus(),
-        api.getOrderBook(selectedSymbol),
-        api.getLogs(),
-        api.getChartData(selectedSymbol)
-      ]);
-
-      setBalances(balancesData);
-      setActiveTrades(tradesData);
-      setOrderHistory(ordersData);
-      setBotStatus(statusData);
-      setOrderBook(orderBookData);
-      setLogs(logsData);
-      setChartData(chartDataResponse);
-      setIsConnected(true); // Set connected to true when API calls succeed
-    } catch (error) {
-      setIsConnected(false); // Set connected to false when API calls fail
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchBotStatus = async () => {
+  const fetchBotStatus = useCallback(async () => {
     try {
       const status = await api.getBotStatus();
       setBotStatus(status);
@@ -158,7 +158,7 @@ const Index: FC = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
@@ -176,7 +176,7 @@ const Index: FC = () => {
     return () => {
       clearInterval(interval);
     };
-  }, []);
+  }, [fetchBotStatus]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
