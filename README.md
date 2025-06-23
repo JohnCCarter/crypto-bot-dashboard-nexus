@@ -18,7 +18,7 @@ This document is a complete technical reference for integrating the Bitfinex RES
    ```bash
    ./scripts/setup-dev.sh
    ```
-   
+
    This automatically:
    - Creates Python virtual environment
    - Installs all backend dependencies
@@ -38,11 +38,11 @@ This document is a complete technical reference for integrating the Bitfinex RES
    ```bash
    ./scripts/start-dev.sh
    ```
-   
+
    This starts both:
-   - Backend (Flask): http://localhost:5000
-   - Frontend (Vite): http://localhost:8081
-   
+   - Backend (Flask): <http://localhost:5000>
+   - Frontend (Vite): <http://localhost:8081>
+
 5. **Health check**
 
    ```bash
@@ -148,16 +148,16 @@ Use separate keys per client to avoid nonce conflicts.
 
 #### REST API
 
-* 10–90 requests/minute depending on endpoint  
-* Error: `{"error":"ERR_RATE_LIMIT"}`  
-* IP is blocked for 60 seconds if exceeded
+- 10–90 requests/minute depending on endpoint  
+- Error: `{"error":"ERR_RATE_LIMIT"}`  
+- IP is blocked for 60 seconds if exceeded
 
 #### WebSocket API
 
-* Max 5 authenticated connections/15 s  
-* Max 20 public connections/min  
-* Up to 25 channels per connection  
-* Rate-limited for 15 s (auth) or 60 s (pub)
+- Max 5 authenticated connections/15 s  
+- Max 20 public connections/min  
+- Up to 25 channels per connection  
+- Rate-limited for 15 s (auth) or 60 s (pub)
 
 ---
 
@@ -167,11 +167,11 @@ Domain: `https://api-pub.bitfinex.com/v2/`
 
 ### Common endpoints
 
-* GET /tickers  
-* GET /ticker/:symbol  
-* GET /book/:symbol  
-* GET /trades/:symbol  
-* GET /candles/trade:{timeframe}:symbol/hist
+- GET /tickers  
+- GET /ticker/:symbol  
+- GET /book/:symbol  
+- GET /trades/:symbol  
+- GET /candles/trade:{timeframe}:symbol/hist
 
 ### Example (curl)
 
@@ -189,10 +189,10 @@ Domain: `https://api.bitfinex.com/v2/`
 
 ### Features
 
-* 📊 Balances and wallets  
-* 📈 Order placement, cancellation, history  
-* 📉 Positions (futures/margin)  
-* 🧾 Billing and settings
+- 📊 Balances and wallets  
+- 📈 Order placement, cancellation, history  
+- 📉 Positions (futures/margin)  
+- 🧾 Billing and settings
 
 Full docs: <https://docs.bitfinex.com/docs/rest-auth>
 
@@ -202,8 +202,8 @@ Full docs: <https://docs.bitfinex.com/docs/rest-auth>
 
 ### Endpoints
 
-* Public: `wss://api-pub.bitfinex.com/ws/2`  
-* Authenticated: `wss://api.bitfinex.com/ws/2`
+- Public: `wss://api-pub.bitfinex.com/ws/2`  
+- Authenticated: `wss://api.bitfinex.com/ws/2`
 
 ### Subscription example
 
@@ -378,57 +378,57 @@ curl -X POST http://127.0.0.1:5000/api/stop-bot
 
 ### Backend
 
-* **Run all tests:**
+- **Run all tests:**
 
   ```bash
   pytest backend/tests
   ```
 
-* **Tools:**
-  * [pytest](https://docs.pytest.org/)
-  * [pytest-cov] for coverage
-  * [flake8], [black], [mypy], [isort] for code style and type checking
+- **Tools:**
+  - [pytest](https://docs.pytest.org/)
+  - [pytest-cov] for coverage
+  - [flake8], [black], [mypy], [isort] for code style and type checking
 
-* **Interpreting results:**
-  * All tests should pass ("passed").
-  * Error messages are shown directly in the terminal.
+- **Interpreting results:**
+  - All tests should pass ("passed").
+  - Error messages are shown directly in the terminal.
 
 ### Frontend
 
-* **Run linter:**
+- **Run linter:**
 
   ```bash
   npm run lint
   ```
 
-* **Run tests:**
+- **Run tests:**
 
   ```bash
   npm run test
   ```
 
-* **Tools:**
-  * [Vitest](https://vitest.dev/) (test runner)
-  * [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
-  * [@testing-library/jest-dom] for DOM matchers
-  * [jsdom] for simulated DOM environment
-  * [MSW (Mock Service Worker)](https://mswjs.io/) for mocked API responses and integration tests
+- **Tools:**
+  - [Vitest](https://vitest.dev/) (test runner)
+  - [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
+  - [@testing-library/jest-dom] for DOM matchers
+  - [jsdom] for simulated DOM environment
+  - [MSW (Mock Service Worker)](https://mswjs.io/) for mocked API responses and integration tests
 
-* **Interpreting results:**
-  * All tests should pass ("passed").
-  * Error messages and code lines are shown directly in the terminal.
+- **Interpreting results:**
+  - All tests should pass ("passed").
+  - Error messages and code lines are shown directly in the terminal.
 
 #### Integration tests with MSW
 
-* **Purpose:**
+- **Purpose:**
   Integration tests ensure that frontend components handle API responses, errors, and edge cases correctly without needing to run a real backend.
 
-* **Setup:**
-  * MSW is started automatically via `src/__tests__/setup-msw.ts` (see `vitest.config.ts`).
-  * Place integration tests in `src/__tests__/`.
-  * Mocked endpoints are defined with `rest.get/post/put...` from MSW.
+- **Setup:**
+  - MSW is started automatically via `src/__tests__/setup-msw.ts` (see `vitest.config.ts`).
+  - Place integration tests in `src/__tests__/`.
+  - Mocked endpoints are defined with `rest.get/post/put...` from MSW.
 
-* **Example:**
+- **Example:**
 
   ```ts
   // src/__tests__/balance-card.integration.test.tsx
@@ -458,14 +458,14 @@ curl -X POST http://127.0.0.1:5000/api/stop-bot
   });
   ```
 
-* **Tips:**
-  * Mock more endpoints by adding more handlers in the test files.
-  * For components that fetch data themselves, mock fetch/axios calls in the test or expand the integration test.
-  * E2E tests are recommended for full user flows.
+- **Tips:**
+  - Mock more endpoints by adding more handlers in the test files.
+  - For components that fetch data themselves, mock fetch/axios calls in the test or expand the integration test.
+  - E2E tests are recommended for full user flows.
 
 #### Example component tests
 
-* See `src/components/ui/button.test.tsx`, `src/components/ui/input.test.tsx`, `src/components/ui/textarea.test.tsx`, `src/components/ui/toggle.test.tsx`, `src/components/ui/tabs.test.tsx`, `src/components/ui/dialog.test.tsx` for example component tests.
+- See `src/components/ui/button.test.tsx`, `src/components/ui/input.test.tsx`, `src/components/ui/textarea.test.tsx`, `src/components/ui/toggle.test.tsx`, `src/components/ui/tabs.test.tsx`, `src/components/ui/dialog.test.tsx` for example component tests.
 
 > **Note:**
 > Some advanced UI components (e.g. Select, Dialog, Tabs, and other Radix UI components) use interactions and events that are not always fully supported by jsdom/Vitest. To test these components and full user flows in a real browser, E2E tools like [Cypress](https://www.cypress.io/) or [Playwright](https://playwright.dev/) are recommended.
@@ -476,11 +476,11 @@ Projektet använder en konfigurationsfil (`backend/config.json`) för att styra 
 
 ### Viktiga parametrar
 
-* **strategy**: Inställningar för symbol, timeframe och indikatorer.
+- **strategy**: Inställningar för symbol, timeframe och indikatorer.
 
-* **trading_window**: Handelsfönster och max trades per dag.
-* **risk**: Riskparametrar, stop loss, take profit, max daglig förlust.
-* **notifications**: E-postnotifieringar och SMTP-inställningar.
+- **trading_window**: Handelsfönster och max trades per dag.
+- **risk**: Riskparametrar, stop loss, take profit, max daglig förlust.
+- **notifications**: E-postnotifieringar och SMTP-inställningar.
 
 Se `backend/config.schema.json` för fullständig beskrivning av alla fält, typer och krav.
 
@@ -534,10 +534,10 @@ FVG-strategin identifierar obalanser i priset (gaps) och genererar tradesignaler
 
 **Parametrar:**
 
-* `min_gap_size`: Minsta gap-storlek (absolut, i pris) för att inkluderas.
-* `direction`: "bullish", "bearish" eller "both" – vilken typ av gap som ska handlas.
-* `position_size`: Andel av portfölj att använda per trade (0-1).
-* `lookback`: Hur många candles bakåt som FVG-zoner är giltiga.
+- `min_gap_size`: Minsta gap-storlek (absolut, i pris) för att inkluderas.
+- `direction`: "bullish", "bearish" eller "both" – vilken typ av gap som ska handlas.
+- `position_size`: Andel av portfölj att använda per trade (0-1).
+- `lookback`: Hur många candles bakåt som FVG-zoner är giltiga.
 
 **Exempel på config.json:**
 
