@@ -35,8 +35,9 @@ def main():
     ema_params = config.strategy_config.copy()
     rsi_params = config.strategy_config.copy()
     fvg_params = config.strategy_config.copy()
-    symbol = config.strategy_config.get("symbol", "TESTBTC/TESTUSD")  # Paper trading
-    timeframe = config.strategy_config.get("timeframe", "5m")
+    # Force paper trading symbol for automation testing
+    symbol = "TESTBTC/TESTUSD"  # Paper trading symbol
+    timeframe = "5m"  # Short timeframe for testing
 
     for params in (ema_params, rsi_params, fvg_params):
         params["symbol"] = symbol
