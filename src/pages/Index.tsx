@@ -127,7 +127,7 @@ const Index: FC = () => {
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold">Crypto Trading Dashboard</h1>
               <Badge variant="outline" className="text-xs">
-                {isConnected ? '🟢 Connected' : '🔴 Offline'}
+                {connected ? '🟢 Connected' : '🔴 Offline'}
               </Badge>
               {/* Global Symbol Selector */}
               <div className="flex items-center space-x-2">
@@ -188,7 +188,7 @@ const Index: FC = () => {
               </div>
               
               <div className="col-span-12 lg:col-span-3">
-                <BotControl status={botStatus} onStatusChange={fetchBotStatus} />
+                <BotControl status={botStatus} onStatusChange={() => refreshData(true)} />
               </div>
               
               <div className="col-span-12 lg:col-span-3">
