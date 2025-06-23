@@ -526,7 +526,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## 📜 **License**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+None
 
 ---
 
@@ -534,8 +534,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you find this project helpful, please consider giving it a star! ⭐
 
-For support, email support@your-domain.com or join our [Discord community](https://discord.gg/your-invite).
-
----
 
 **Built with ❤️ by the Crypto Trading Community**
