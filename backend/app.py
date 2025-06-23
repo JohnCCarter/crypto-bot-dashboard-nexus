@@ -45,14 +45,6 @@ if os.getenv("ENVIRONMENT") == "production":
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"])
 
-# Registrera routes som inte använder blueprint
-register_balances(app)
-register_bot_control(app)
-register_orders(app)
-register_positions(app)
-register_config(app)
-market_data.register(app)
-
 
 def load_config() -> Dict[str, Any]:
     """
@@ -179,10 +171,19 @@ app._services = services
 
 def register_routes():
     """Register all API routes."""
+    # Register Blueprint-based routes
     app.register_blueprint(status_bp)
     app.register_blueprint(backtest_bp)
     app.register_blueprint(strategy_analysis_bp)
     app.register_blueprint(live_portfolio_bp)
+    
+    # Register function-based routes (legacy style)
+    register_balances(app)
+    register_bot_control(app)
+    register_orders(app)
+    register_positions(app)
+    register_config(app)
+    market_data.register(app)
 
 
 # Register routes
