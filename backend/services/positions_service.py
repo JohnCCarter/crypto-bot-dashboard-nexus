@@ -14,15 +14,11 @@ def get_shared_exchange_service():
     try:
         if hasattr(current_app, "_services") and current_app._services:
             return current_app._services.get("exchange")
-        
-        current_app.logger.warning(
-            "Exchange service not available in app context"
-        )
+
+        current_app.logger.warning("Exchange service not available in app context")
         return None
     except Exception as e:
-        current_app.logger.error(
-            f"Failed to get shared exchange service: {e}"
-        )
+        current_app.logger.error(f"Failed to get shared exchange service: {e}")
         return None
 
 
@@ -42,9 +38,7 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
     """
     exchange_service = get_shared_exchange_service()
     if not exchange_service:
-        logging.warning(
-            "Exchange service not available, returning empty positions"
-        )
+        logging.warning("Exchange service not available, returning empty positions")
         return []
 
     try:
@@ -66,8 +60,7 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
                     "entry_price": position["entry_price"],
                     "pnl": position["pnl"],
                     "timestamp": time.strftime(
-                        "%Y-%m-%dT%H:%M:%SZ", 
-                        time.gmtime(position["timestamp"] / 1000)
+                        "%Y-%m-%dT%H:%M:%SZ", time.gmtime(position["timestamp"] / 1000)
                     ),
                     "mark_price": position["mark_price"],
                     "pnl_percentage": position["pnl_percentage"],
