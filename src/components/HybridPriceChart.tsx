@@ -16,13 +16,13 @@ import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
 import { RefreshCw, Wifi, Activity } from 'lucide-react';
 
 interface HybridPriceChartProps {
-  symbol?: string;
+  symbol: string; // Make symbol required to prevent hardcoding
   height?: number;
   showControls?: boolean;
 }
 
 export const HybridPriceChart: React.FC<HybridPriceChartProps> = ({ 
-  symbol = 'BTCUSD', 
+  symbol, 
   height = 400,
   showControls = true 
 }) => {

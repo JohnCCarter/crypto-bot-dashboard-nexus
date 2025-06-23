@@ -17,12 +17,12 @@ import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
 import { TrendingUp, TrendingDown, Wallet, RefreshCw, Wifi, Activity } from 'lucide-react';
 
 interface HybridBalanceCardProps {
-  symbol?: string;
+  symbol: string; // Make symbol required to prevent hardcoding
   showDetails?: boolean;
 }
 
 export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({ 
-  symbol = 'BTCUSD',
+  symbol,
   showDetails = true 
 }) => {
   // Use centralized optimized data

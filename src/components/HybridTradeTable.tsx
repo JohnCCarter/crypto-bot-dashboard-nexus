@@ -16,13 +16,13 @@ import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
 import { TrendingUp, TrendingDown, Volume2, RefreshCw, Wifi, Activity } from 'lucide-react';
 
 interface HybridTradeTableProps {
-  symbol?: string;
+  symbol: string; // Make symbol required to prevent hardcoding
   maxTrades?: number;
   showVolume?: boolean;
 }
 
 export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({ 
-  symbol = 'BTCUSD',
+  symbol,
   maxTrades = 20,
   showVolume = true 
 }) => {

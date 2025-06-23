@@ -243,14 +243,28 @@ class MarketDataManager {
   }
 
   public async refreshAll(symbol?: string, force: boolean = false): Promise<void> {
-    if (symbol) {
-      this.currentSymbol = symbol;
+    // Handle symbol change if provided
+    if (symbol && symbol !== this.currentSymbol) {
+      console.log(`🔄 [OptimizedMarketData] Symbol change detected in refreshAll: ${this.currentSymbol} → ${symbol}`);
+      this.setSymbol(symbol);
+      return; // setSymbol will call refreshAll again
     }
     
-    await Promise.all([
-      this.refreshMarketData(this.currentSymbol, force),
-      this.refreshTradingData(force)
-    ]);
+    try {
+      // Refresh both market data (symbol-specific) and trading data (account-wide)
+      await Promise.all([
+        this.refreshMarketData(this.currentSymbol, force),
+        this.refreshTradingData(force)
+      ]);
+      
+      this.data.connected = true;
+      this.data.error = null;
+      
+    } catch (error) {
+      this.data.connected = false;
+      this.data.error = error instanceof Error ? error.message : 'Data refresh failed';
+      console.error(`❌ [OptimizedMarketData] Refresh failed:`, error);
+    }
     
     this.data.lastUpdate = Date.now();
     this.notifySubscribers();
@@ -283,14 +297,40 @@ class MarketDataManager {
     console.log('⏹️ [OptimizedMarketData] Stopped polling');
   }
   
+  public getCurrentSymbol(): string {
+    return this.currentSymbol;
+  }
+  
   public setSymbol(symbol: string): void {
     if (symbol !== this.currentSymbol) {
+      console.log(`🔄 [OptimizedMarketData] Switching symbol: ${this.currentSymbol} → ${symbol}`);
+      
+      const oldSymbol = this.currentSymbol;
       this.currentSymbol = symbol;
-      // Force refresh market data for new symbol
-      this.refreshMarketData(symbol, true).then(() => {
-        this.notifySubscribers();
+      
+      // Clear symbol-specific cached data to prevent stale data mix
+      this.clearSymbolCache(oldSymbol);
+      
+      // Force refresh ALL data for new symbol - both market AND trading data
+      this.refreshAll(symbol, true).then(() => {
+        console.log(`✅ [OptimizedMarketData] Symbol switch complete: ${symbol}`);
       });
     }
+  }
+  
+  private clearSymbolCache(oldSymbol: string): void {
+    // Clear market data that is symbol-specific
+    this.data.ticker = null;
+    this.data.orderbook = null;
+    this.data.chartData = [];
+    
+    // Clear symbol-specific cache timestamps to force fresh fetches
+    delete this.lastFetch['ticker'];
+    delete this.lastFetch['orderbook']; 
+    delete this.lastFetch['chart'];
+    
+    // Note: Trading data (balances, orders, etc.) is kept as it's account-wide
+    console.log(`🧹 [OptimizedMarketData] Cleared cache for symbol: ${oldSymbol}`);
   }
 }
 
@@ -317,9 +357,10 @@ export const useOptimizedMarketData = (symbol?: string): OptimizedMarketData => 
   
   const manager = MarketDataManager.getInstance();
   
-  // Update symbol if provided
+  // Update symbol if provided - immediate effect for responsiveness
   useEffect(() => {
     if (symbol) {
+      console.log(`🎯 [useOptimizedMarketData] Hook received symbol change: ${symbol}`);
       manager.setSymbol(symbol);
     }
   }, [symbol, manager]);
@@ -336,7 +377,14 @@ export const useOptimizedMarketData = (symbol?: string): OptimizedMarketData => 
   }, [manager, symbol]);
   
   const refreshSymbolData = useCallback(async (targetSymbol: string) => {
-    await manager.refreshMarketData(targetSymbol, true);
+    console.log(`🔄 [useOptimizedMarketData] Refreshing data for specific symbol: ${targetSymbol}`);
+    if (targetSymbol !== manager.getCurrentSymbol()) {
+      // Switch to new symbol and refresh all data
+      manager.setSymbol(targetSymbol);
+    } else {
+      // Refresh current symbol's market data
+      await manager.refreshMarketData(targetSymbol, true);
+    }
   }, [manager]);
   
   return {

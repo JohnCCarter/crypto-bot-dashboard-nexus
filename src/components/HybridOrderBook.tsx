@@ -16,13 +16,13 @@ import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
 import { RefreshCw, TrendingUp, TrendingDown, Wifi, Activity } from 'lucide-react';
 
 interface HybridOrderBookProps {
-  symbol?: string;
+  symbol: string; // Make symbol required to prevent hardcoding
   maxLevels?: number;
   showSpread?: boolean;
 }
 
 export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({ 
-  symbol = 'BTCUSD',
+  symbol,
   maxLevels = 10,
   showSpread = true 
 }) => {

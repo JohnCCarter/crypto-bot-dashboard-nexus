@@ -36,12 +36,12 @@ type OrderType = 'market' | 'limit';
 type OrderSide = 'buy' | 'sell';
 
 interface ManualTradePanelProps {
-  symbol?: string;
+  symbol: string; // Make symbol required to prevent hardcoding
   onOrderPlaced?: () => void;
 }
 
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
-  symbol = 'BTCUSD',
+  symbol,
   onOrderPlaced
 }) => {
   const [orderType, setOrderType] = useState<OrderType>('market');
