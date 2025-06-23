@@ -479,7 +479,7 @@ class WebSocketMarketService:
                 elif channel == "trades":
                     self.subscribe_trades(symbol)
                     
-                 logger.info(f"✅ Resubscribed to {len(current_subs)} channels")
+        logger.info(f"✅ Resubscribed to {len(current_subs)} channels")
     
     def _retry_book_subscription_with_defaults(self):
         """Retry book subscription with default parameters"""
