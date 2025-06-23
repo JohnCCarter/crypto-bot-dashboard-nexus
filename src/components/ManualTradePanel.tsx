@@ -9,7 +9,7 @@
  * - Enhanced order validation med live spread checks
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,9 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
   const [side, setSide] = useState<OrderSide>('buy');
   const [amount, setAmount] = useState('');
   const [price, setPrice] = useState('');
+  
+  // Anti-spam protection for insufficient balance logging
+  const lastInsufficientBalanceLog = useRef<Record<string, number>>({});
 
   const queryClient = useQueryClient();
 
@@ -394,8 +397,19 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
         )}
 
         {!tradingCapacity.hasCapacity && (() => {
-          // Log insufficient balance incident for debugging
-          console.warn(`⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted ${side} order for ${amount || '0'} ${symbol} but lacks sufficient balance. Available: ${side === 'buy' ? `$${tradingCapacity.maxBuyUSD.toFixed(2)} USD` : `${tradingCapacity.maxSellBTC.toFixed(6)} BTC`}`);
+          // Anti-spam protection: Only log if amount > 0 and not logged recently
+          const currentTime = Date.now();
+          const logKey = `${side}-${symbol}-${tradingCapacity.maxBuyUSD.toFixed(2)}`;
+          const lastLogTime = lastInsufficientBalanceLog.current[logKey] || 0;
+          const timeSinceLastLog = currentTime - lastLogTime;
+          
+          // Only log if: 1) amount > 0, 2) not logged same scenario in last 10 seconds
+          if (parseFloat(amount || '0') > 0 && timeSinceLastLog > 10000) {
+            console.warn(`⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted ${side} order for ${amount} ${symbol} but lacks sufficient balance. Available: ${side === 'buy' ? `$${tradingCapacity.maxBuyUSD.toFixed(2)} USD` : `${tradingCapacity.maxSellBTC.toFixed(6)} BTC`}`);
+            
+            // Track this log to prevent spam
+            lastInsufficientBalanceLog.current[logKey] = currentTime;
+          }
           
           return (
             <Alert>
@@ -443,13 +457,24 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
         {submitOrderMutation.isError && (() => {
           const errorMessage = submitOrderMutation.error?.message || 'Unknown error';
           
-          // Log order submission failures, especially insufficient balance errors
-          if (errorMessage.toLowerCase().includes('insufficient balance') || 
-              errorMessage.toLowerCase().includes('insufficient position') ||
-              errorMessage.toLowerCase().includes('balance')) {
-            console.error(`🚨 [ManualTradePanel] ORDER REJECTED - INSUFFICIENT BALANCE: ${side} ${amount} ${symbol} failed. Server error: "${errorMessage}". User balances should be checked.`);
-          } else {
-            console.error(`❌ [ManualTradePanel] ORDER SUBMISSION FAILED: ${side} ${amount} ${symbol}. Error: "${errorMessage}"`);
+          // Anti-spam protection for order submission errors
+          const currentTime = Date.now();
+          const errorLogKey = `error-${side}-${symbol}-${errorMessage.substring(0, 20)}`;
+          const lastErrorLogTime = lastInsufficientBalanceLog.current[errorLogKey] || 0;
+          const timeSinceLastErrorLog = currentTime - lastErrorLogTime;
+          
+          // Only log if not logged same error in last 5 seconds (shorter for errors)
+          if (timeSinceLastErrorLog > 5000) {
+            if (errorMessage.toLowerCase().includes('insufficient balance') || 
+                errorMessage.toLowerCase().includes('insufficient position') ||
+                errorMessage.toLowerCase().includes('balance')) {
+              console.error(`🚨 [ManualTradePanel] ORDER REJECTED - INSUFFICIENT BALANCE: ${side} ${amount} ${symbol} failed. Server error: "${errorMessage}". User balances should be checked.`);
+            } else {
+              console.error(`❌ [ManualTradePanel] ORDER SUBMISSION FAILED: ${side} ${amount} ${symbol}. Error: "${errorMessage}"`);
+            }
+            
+            // Track this error log to prevent spam
+            lastInsufficientBalanceLog.current[errorLogKey] = currentTime;
           }
           
           return (
