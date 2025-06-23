@@ -124,16 +124,22 @@ class ExchangeService:
         """
         try:
             order = self.exchange.fetch_order(order_id, symbol)
+            # Safe float conversion with None checks
+            amount = float(order["amount"]) if order.get("amount") else 0.0
+            price = float(order["price"]) if order.get("price") else 0.0
+            filled = float(order["filled"]) if order.get("filled") else 0.0
+            remaining = float(order["remaining"]) if order.get("remaining") else 0.0
+            
             return {
                 "id": order["id"],
                 "symbol": order["symbol"],
                 "type": order["type"],
                 "side": order["side"],
-                "amount": float(order["amount"]),
-                "price": float(order.get("price", 0)),
+                "amount": amount,
+                "price": price,
                 "status": order["status"],
-                "filled": float(order.get("filled", 0)),
-                "remaining": float(order.get("remaining", 0)),
+                "filled": filled,
+                "remaining": remaining,
                 "timestamp": order.get(
                     "timestamp", int(datetime.utcnow().timestamp() * 1000)
                 ),
