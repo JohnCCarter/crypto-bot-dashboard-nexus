@@ -26,6 +26,7 @@ from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
 from backend.services.risk_manager import RiskManager, RiskParameters
+from backend.services.websocket_market_service import WebSocketMarketService
 
 # Configure logging for better performance - DEFAULT TO WARNING
 # Set to WARNING by default to reduce log spam, ERROR for critical issues only
@@ -302,168 +303,179 @@ def get_alerts():
         return jsonify({"error": str(e)}), 500
 
 
-# Add WebSocket proxy endpoints for frontend
+# Add WebSocket proxy endpoints for frontend - Enhanced Version
 import websocket
 import threading
 import time
+import json
 
-# WebSocket proxy globals
-bitfinex_ws = None
-latest_ticker_data = None
+# Enhanced WebSocket Management
+ws_market_service = None
 ws_connection_status = {
     'connected': False,
     'error': None,
-    'last_heartbeat': None
+    'last_heartbeat': None,
+    'latency_ms': None,
+    'platform_status': 'unknown',
+    'subscriptions': {}
 }
 
-# Rate limiting för logging
-last_ticker_log = 0
-last_error_log = 0
-ticker_update_count = 0
-
-def on_bitfinex_message(ws, message):
-    """Hantera meddelanden från Bitfinex WebSocket - Performance Optimized"""
-    global latest_ticker_data, ws_connection_status, last_ticker_log, ticker_update_count
-    try:
-        data = json.loads(message)
-        
-        # Uppdatera heartbeat utan logging
-        if isinstance(data, list) and len(data) >= 2 and data[1] == 'hb':
-            ws_connection_status['last_heartbeat'] = time.time()
-            return
-            
-        # Hantera ticker data 
-        if (isinstance(data, list) and len(data) >= 2 and 
-                isinstance(data[1], list) and len(data[1]) >= 10):
-            ticker_data = data[1]
-            latest_ticker_data = {
-                'symbol': 'BTCUSD',
-                'bid': float(ticker_data[0]),
-                'ask': float(ticker_data[2]), 
-                'price': float(ticker_data[6]),
-                'volume': float(ticker_data[7]),
-                'timestamp': time.time()
-            }
-            
-            # Rate limited logging - endast var 30:e sekund
-            ticker_update_count += 1
-            now = time.time()
-            if now - last_ticker_log > 30:
-                logger.info(f"📊 WebSocket updates: {ticker_update_count} tickers, price: ${latest_ticker_data['price']:,.0f}")
-                last_ticker_log = now
-                ticker_update_count = 0
-            
-    except Exception as e:
-        # Rate limited error logging - max 1 error per 60 sekunder
-        global last_error_log
-        now = time.time()
-        if now - last_error_log > 60:
-            logger.error(f"Error processing Bitfinex WebSocket message: {e}")
-            last_error_log = now
-
-def on_bitfinex_error(ws, error):
-    """Hantera WebSocket errors - Rate Limited"""
-    global ws_connection_status, last_error_log
-    now = time.time()
-    if now - last_error_log > 60:  # Max 1 error log per minute
-        logger.error(f"Bitfinex WebSocket error: {error}")
-        last_error_log = now
-    ws_connection_status['connected'] = False
-    ws_connection_status['error'] = str(error)
-
-def on_bitfinex_close(ws, close_status_code, close_msg):
-    """Hantera WebSocket disconnect"""
-    global ws_connection_status
-    logger.warning(f"Bitfinex WebSocket closed: {close_status_code}")  # Changed to warning
-    ws_connection_status['connected'] = False
-
-def on_bitfinex_open(ws):
-    """Hantera WebSocket connection"""
-    global ws_connection_status, ticker_update_count
-    logger.warning("✅ Backend WebSocket connected to Bitfinex - Live data active")  # Keep important connection message
-    ws_connection_status['connected'] = True
-    ws_connection_status['error'] = None
-    ticker_update_count = 0  # Reset counter
-    
-    # Subscribe till BTCUSD ticker
-    ticker_msg = {
-        'event': 'subscribe',
-        'channel': 'ticker',
-        'symbol': 'tBTCUSD'
-    }
-    ws.send(json.dumps(ticker_msg))
-    logger.info("📡 Backend: Subscribed to BTCUSD live data feed")
-
-def init_bitfinex_websocket():
-    """Initiera WebSocket anslutning till Bitfinex"""
-    global bitfinex_ws
+def init_enhanced_websocket():
+    """Initialize Improved Bitfinex WebSocket service"""
+    global ws_market_service, ws_connection_status
     
     try:
-        logger.info("🚀 Starting Backend WebSocket connection to Bitfinex...")
-        bitfinex_ws = websocket.WebSocketApp(
-            "wss://api-pub.bitfinex.com/ws/2",
-            on_open=on_bitfinex_open,
-            on_message=on_bitfinex_message,
-            on_error=on_bitfinex_error,
-            on_close=on_bitfinex_close
-        )
+        logger.info("🚀 Initializing Improved WebSocket service...")
         
-        # Kör WebSocket i daemon thread
-        def run_websocket():
-            bitfinex_ws.run_forever()
+        # Create WebSocket service
+        ws_market_service = WebSocketMarketService()
         
-        ws_thread = threading.Thread(target=run_websocket, daemon=True)
-        ws_thread.start()
-        
-        logger.info("🚀 Backend WebSocket thread started successfully")
-        return True
-        
+        # Connect to WebSocket
+        if ws_market_service.connect():
+            logger.info("✅ Improved WebSocket connected successfully")
+            
+            # Subscribe to essential channels
+            symbols_to_subscribe = ['tBTCUSD', 'tETHUSD', 'tLTCUSD']
+            for symbol in symbols_to_subscribe:
+                ws_market_service.subscribe_ticker(symbol)
+                ws_market_service.subscribe_orderbook(symbol, precision="P0", length="25")
+                ws_market_service.subscribe_trades(symbol)
+                logger.info(f"📡 Subscribed to all channels for {symbol}")
+            
+            # Start status update thread
+            def status_updater():
+                while True:
+                    time.sleep(5)
+                    try:
+                        if ws_market_service:
+                            metrics = ws_market_service.get_metrics()
+                            ws_connection_status.update({
+                                'connected': metrics['connected'],
+                                'error': None if metrics['connected'] else "Disconnected",
+                                'last_heartbeat': time.time(),
+                                'latency_ms': metrics.get('latency_ms'),
+                                'platform_status': metrics.get('platform_status', 'unknown'),
+                                'subscriptions': metrics.get('subscriptions', [])
+                            })
+                    except Exception as e:
+                        logger.error(f"Status update error: {e}")
+            
+            status_thread = threading.Thread(target=status_updater, daemon=True)
+            status_thread.start()
+            
+            return True
+        else:
+            logger.error("❌ Failed to connect Improved WebSocket")
+            return False
+            
     except Exception as e:
-        logger.error(f"Failed to initialize Backend WebSocket: {e}")
+        logger.error(f"Failed to initialize Improved WebSocket: {e}")
         ws_connection_status['error'] = str(e)
         return False
 
 @app.route("/api/ws-proxy/status", methods=["GET"])
-def get_websocket_status():
-    """Get WebSocket proxy status"""
-    return jsonify({
-        'connected': ws_connection_status['connected'],
-        'error': ws_connection_status['error'],
-        'last_heartbeat': ws_connection_status['last_heartbeat'],
-        'has_ticker_data': latest_ticker_data is not None
-    })
+def get_enhanced_websocket_status():
+    """Get Improved WebSocket status with detailed metrics"""
+    if ws_market_service:
+        metrics = ws_market_service.get_metrics()
+        return jsonify({
+            'connected': metrics['connected'],
+            'error': ws_connection_status.get('error'),
+            'last_heartbeat': ws_connection_status.get('last_heartbeat'),
+            'latency_ms': metrics.get('latency_ms'),
+            'platform_status': metrics.get('platform_status', 'unknown'),
+            'message_count': metrics.get('message_count', 0),
+            'error_count': metrics.get('error_count', 0),
+            'reconnect_count': metrics.get('reconnect_count', 0),
+            'subscriptions': metrics.get('subscriptions', []),
+            'available_data': {
+                'ticker_symbols': list(ws_market_service.get_all_ticker_data().keys()),
+                'status': 'improved_websocket_active'
+            }
+        })
+    else:
+        return jsonify({
+            'connected': False,
+            'error': 'Improved WebSocket service not initialized',
+            'platform_status': 'unknown'
+        }), 503
+
+@app.route("/api/ws-proxy/ticker/<symbol>", methods=["GET"])  
+def get_enhanced_websocket_ticker(symbol):
+    """Get real-time ticker data for specific symbol"""
+    if not ws_market_service:
+        return jsonify({'error': 'Improved WebSocket service not available'}), 503
+    
+    # Ensure symbol has correct prefix
+    if not symbol.startswith('t'):
+        symbol = f't{symbol}'
+        
+    ticker_data = ws_market_service.get_ticker(symbol)
+    if ticker_data:
+        return jsonify({
+            'symbol': symbol,
+            'price': ticker_data.get('last_price'),
+            'bid': ticker_data.get('bid'),
+            'ask': ticker_data.get('ask'),
+            'volume': ticker_data.get('volume'),
+            'high': ticker_data.get('high'),
+            'low': ticker_data.get('low'),
+            'daily_change': ticker_data.get('daily_change'),
+            'daily_change_pct': ticker_data.get('daily_change_pct'),
+            'timestamp': ticker_data.get('timestamp')
+        })
+    else:
+        return jsonify({'error': f'No ticker data available for {symbol}'}), 404
 
 @app.route("/api/ws-proxy/ticker", methods=["GET"])  
-def get_websocket_ticker():
-    """Get latest ticker data från WebSocket"""
-    if latest_ticker_data:
-        return jsonify(latest_ticker_data)
-    else:
-        return jsonify({'error': 'No WebSocket ticker data available'}), 503
+def get_enhanced_websocket_ticker_default():
+    """Get real-time ticker data for default symbol (BTCUSD)"""
+    return get_enhanced_websocket_ticker('BTCUSD')
 
-# Initialize WebSocket connection on startup
-init_bitfinex_websocket()
+# Additional WebSocket endpoints can be added here as needed
 
-# System Health Check - Periodic status updates
-def system_health_check():
-    """Periodic system health reporting"""
+# Initialize Enhanced WebSocket on startup instead of old implementation
+init_enhanced_websocket()
+
+# Improved System Health Check with WebSocket metrics
+def improved_system_health_check():
+    """Improved system health reporting including WebSocket metrics"""
     def health_check():
         while True:
             try:
                 time.sleep(300)  # 5 minutes
-                if ws_connection_status['connected']:
-                    logger.info("💚 System Health: All services operational - WebSocket active, API responsive")
+                if ws_market_service:
+                    metrics = ws_market_service.get_metrics()
+                    if metrics.get('connected'):
+                        latency = metrics.get('latency_ms', 0)
+                        msg_count = metrics.get('message_count', 0)
+                        platform_status = metrics.get('platform_status', 'unknown')
+                        logger.info(
+                            f"💚 System Health: All services operational - "
+                            f"WebSocket active (latency: {latency:.1f}ms, "
+                            f"messages: {msg_count}, "
+                            f"platform: {platform_status})"
+                        )
+                    else:
+                        error_count = metrics.get('error_count', 0)
+                        reconnect_count = metrics.get('reconnect_count', 0)
+                        logger.warning(
+                            f"💛 System Health: WebSocket disconnected "
+                            f"(errors: {error_count}, "
+                            f"reconnects: {reconnect_count}), "
+                            f"API running on REST fallback"
+                        )
                 else:
-                    logger.warning("💛 System Health: WebSocket disconnected, API running on REST fallback")
+                    logger.warning("💛 System Health: Improved WebSocket not initialized")
             except Exception as e:
-                logger.error(f"Health check error: {e}")
+                logger.error(f"Improved health check error: {e}")
     
     health_thread = threading.Thread(target=health_check, daemon=True)
     health_thread.start()
-    logger.info("🔍 System health monitoring started")
+    logger.info("🔍 Improved system health monitoring started")
 
-# Start system monitoring
-system_health_check()
+# Start improved monitoring
+improved_system_health_check()
 
 # Log system startup completion
 logger.warning("🚀 Trading Bot Backend System Started - All services initialized")  # Keep important startup message
