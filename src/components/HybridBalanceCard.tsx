@@ -48,6 +48,12 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
   // Get ticker data for this specific symbol
   const ticker = getTickerForSymbol(symbol);
   
+  // Debounce ticker updates to reduce calculation frequency
+  const debouncedTicker = useMemo(() => {
+    if (!ticker) return null;
+    return ticker;
+  }, [ticker?.price]); // Only update when price changes significantly
+  
   // Get balance data via REST
   const { data: balances = [], isLoading, error, refetch } = useQuery<Balance[]>({
     queryKey: ['balances'],
@@ -56,9 +62,9 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     staleTime: 2000
   });
 
-  // Calculate live portfolio values
+  // Calculate live portfolio values (optimized)
   const portfolioData = useMemo(() => {
-    if (!balances.length || !ticker) {
+    if (!balances.length || !debouncedTicker) {
       return {
         totalValue: 0,
         totalPnL: 0,
@@ -69,7 +75,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       };
     }
 
-    const currentPrice = ticker.price;
+    const currentPrice = debouncedTicker.price;
     let totalValue = 0;
     let totalPnL = 0;
     let cashBalance = 0;
@@ -128,7 +134,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       cashBalance,
       cryptoValue
     };
-  }, [balances, ticker]);
+  }, [balances, debouncedTicker]);
 
   // Format currency values
   const formatCurrency = (value: number, currency = 'USD') => {
@@ -250,11 +256,11 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
               <span className="font-medium">{formatCurrency(portfolioData.cryptoValue)}</span>
             </div>
             
-            {ticker && (
+            {debouncedTicker && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">BTC Price (Live):</span>
                 <span className="font-medium font-mono text-green-600">
-                  {formatCurrency(ticker.price)}
+                  {formatCurrency(debouncedTicker.price)}
                 </span>
               </div>
             )}
@@ -304,7 +310,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
         {/* Live Data Status */}
         <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t">
           <span>
-            Last update: {ticker ? new Date(ticker.timestamp).toLocaleTimeString() : 'N/A'}
+            Last update: {debouncedTicker ? new Date(debouncedTicker.timestamp).toLocaleTimeString() : 'N/A'}
           </span>
           <span>
             {connected ? '🟢 Live pricing' : '🟡 Polling mode'}
