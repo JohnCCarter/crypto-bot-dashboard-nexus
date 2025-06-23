@@ -146,7 +146,28 @@ def register(app):
             }), 201
             
         except ExchangeError as e:
-            current_app.logger.error(f"❌ [Orders] Exchange error: {e}")
+            error_message = str(e).lower()
+            
+            # Enhanced logging for insufficient balance errors
+            if 'insufficient' in error_message and 'balance' in error_message:
+                current_app.logger.warning(
+                    f"⚠️ [Orders] INSUFFICIENT BALANCE REJECTED: "
+                    f"User attempted {data.get('side', 'unknown')} "
+                    f"{data.get('amount', 'unknown')} {data.get('symbol', 'unknown')} "
+                    f"but Bitfinex rejected. Error: {e}"
+                )
+            elif 'insufficient' in error_message and (
+                'position' in error_message or 'funds' in error_message
+            ):
+                current_app.logger.warning(
+                    f"⚠️ [Orders] INSUFFICIENT FUNDS REJECTED: "
+                    f"User attempted {data.get('side', 'unknown')} "
+                    f"{data.get('amount', 'unknown')} {data.get('symbol', 'unknown')} "
+                    f"but Bitfinex rejected due to insufficient position. Error: {e}"
+                )
+            else:
+                current_app.logger.error(f"❌ [Orders] Exchange error: {e}")
+            
             return jsonify({
                 "error": "Failed to place order",
                 "details": str(e)

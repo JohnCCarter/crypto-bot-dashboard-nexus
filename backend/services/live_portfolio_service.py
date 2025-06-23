@@ -273,8 +273,10 @@ class LivePortfolioService:
                 if snapshot.available_balance >= trade_value:
                     validation_result['valid'] = True
                     validation_result['reason'] = 'Sufficient balance for purchase'
+                    logger.info(f"✅ [LivePortfolio] Buy order validation passed: ${trade_value:.2f} required, ${snapshot.available_balance:.2f} available")
                 else:
                     validation_result['reason'] = f'Insufficient balance: need ${trade_value:.2f}, have ${snapshot.available_balance:.2f}'
+                    logger.warning(f"⚠️ [LivePortfolio] INSUFFICIENT BALANCE for {symbol} buy order: User attempted ${trade_amount:.6f} @ ${current_price:.2f} (${trade_value:.2f} total) but only has ${snapshot.available_balance:.2f} USD available. Shortfall: ${trade_value - snapshot.available_balance:.2f}")
                     
             elif trade_type.lower() == 'sell':
                 # Check if we have enough of the asset
@@ -289,8 +291,10 @@ class LivePortfolioService:
                 if current_position >= trade_amount:
                     validation_result['valid'] = True
                     validation_result['reason'] = 'Sufficient position for sale'
+                    logger.info(f"✅ [LivePortfolio] Sell order validation passed: {trade_amount:.6f} {base_currency} required, {current_position:.6f} available")
                 else:
                     validation_result['reason'] = f'Insufficient position: need {trade_amount:.6f}, have {current_position:.6f}'
+                    logger.warning(f"⚠️ [LivePortfolio] INSUFFICIENT POSITION for {symbol} sell order: User attempted {trade_amount:.6f} {base_currency} but only has {current_position:.6f} available. Shortfall: {trade_amount - current_position:.6f}")
                     
             logger.info(f"✅ [LivePortfolio] Validation result: {validation_result['valid']} - {validation_result['reason']}")
             

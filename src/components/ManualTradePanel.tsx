@@ -393,14 +393,19 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
           </Alert>
         )}
 
-        {!tradingCapacity.hasCapacity && (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Insufficient balance for {side} order. Please check your account balance.
-            </AlertDescription>
-          </Alert>
-        )}
+        {!tradingCapacity.hasCapacity && (() => {
+          // Log insufficient balance incident for debugging
+          console.warn(`⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted ${side} order for ${amount || '0'} ${symbol} but lacks sufficient balance. Available: ${side === 'buy' ? `$${tradingCapacity.maxBuyUSD.toFixed(2)} USD` : `${tradingCapacity.maxSellBTC.toFixed(6)} BTC`}`);
+          
+          return (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Insufficient balance for {side} order. Please check your account balance.
+              </AlertDescription>
+            </Alert>
+          );
+        })()}
 
         {/* Submit Button */}
         <Button
@@ -435,14 +440,27 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
           </Alert>
         )}
 
-        {submitOrderMutation.isError && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Failed to submit order: {submitOrderMutation.error?.message || 'Unknown error'}
-            </AlertDescription>
-          </Alert>
-        )}
+        {submitOrderMutation.isError && (() => {
+          const errorMessage = submitOrderMutation.error?.message || 'Unknown error';
+          
+          // Log order submission failures, especially insufficient balance errors
+          if (errorMessage.toLowerCase().includes('insufficient balance') || 
+              errorMessage.toLowerCase().includes('insufficient position') ||
+              errorMessage.toLowerCase().includes('balance')) {
+            console.error(`🚨 [ManualTradePanel] ORDER REJECTED - INSUFFICIENT BALANCE: ${side} ${amount} ${symbol} failed. Server error: "${errorMessage}". User balances should be checked.`);
+          } else {
+            console.error(`❌ [ManualTradePanel] ORDER SUBMISSION FAILED: ${side} ${amount} ${symbol}. Error: "${errorMessage}"`);
+          }
+          
+          return (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Failed to submit order: {errorMessage}
+              </AlertDescription>
+            </Alert>
+          );
+        })()}
 
         {/* Live Data Status */}
         <div className="text-xs text-muted-foreground text-center pt-2 border-t">
