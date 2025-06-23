@@ -63,13 +63,32 @@ class LivePortfolioService:
         """Get balance using the existing balance service function"""
         try:
             balance_data = fetch_balances()
-            # Extract 'free' balances which are available for trading
+            
+            # Handle ccxt format from fetch_balances() (same as /api/balances endpoint)
             result = {}
-            for currency, data in balance_data.get('info', {}).items():
-                free_amount = data.get('free', 0)
-                if free_amount > 0:
-                    result[currency] = free_amount
+            
+            if isinstance(balance_data, dict) and 'free' in balance_data:
+                # ccxt format: balance_data has 'free', 'total', etc.
+                for currency, available in balance_data['free'].items():
+                    if available is None or available <= 0:
+                        continue
+                        
+                    # Map Bitfinex TEST currencies to normal currencies
+                    clean_currency = currency
+                    if currency.startswith('TEST'):
+                        clean_currency = currency.replace('TEST', '')
+                    
+                    result[clean_currency] = float(available)
+                    
+            else:
+                logger.warning(
+                    f"⚠️ [LivePortfolio] Unexpected balance data format: {type(balance_data)}. "
+                    f"Expected ccxt format with 'free' key."
+                )
+                        
+            logger.info(f"💰 [LivePortfolio] Available balances: {result}")
             return result
+            
         except Exception as e:
             logger.error(
                 f"❌ [LivePortfolio] CRITICAL: Failed to fetch live balances: {e}. "
