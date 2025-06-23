@@ -1,0 +1,722 @@
+[
+  {
+    "timestamp": "2025-06-23T13:18:22.611Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:22.608Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:21.730Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:21.727Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:21.584Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:21.580Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:20.726Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:20.723Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:20.129Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:20.126Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:18.736Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:18.732Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:18.540Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:18.537Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:18.441Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:18.438Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ADAUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:17.578Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:17.575Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:17.274Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:17.272Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:16.702Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:16.698Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:16.419Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:16.416Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:16.218Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:16.212Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:13.268Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:13.266Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:13.100Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:13.097Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:13.008Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:13.005Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 XRPUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:12.934Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:12.931Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:12.711Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:12.707Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:12.076Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:12.072Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:10.402Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:10.397Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:08.968Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:08.965Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:04.970Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:04.963Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:04.806Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:04.798Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 LTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:03.908Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:03.904Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:02.276Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:02.271Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:00.719Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:18:00.716Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:59.281Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:59.274Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:59.148Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:59.141Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:57.604Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:57.601Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:55.719Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:55.716Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:55.407Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:55.402Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:54.844Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:54.839Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:54.714Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:54.711Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:53.717Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:53.714Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:51.716Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:51.713Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:51.508Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:51.502Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:51.402Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:51.398Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 ETHUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:50.732Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:50.726Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:49.364Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:49.361Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:47.709Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:47.707Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:47.521Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:47.518Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:47.412Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:47.408Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:45.675Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:45.672Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:45.419Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:45.415Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:44.708Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:44.705Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:44.406Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:44.403Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:42.625Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:42.622Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:42.356Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:42.353Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:41.996Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:41.990Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:41.127Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:41.122Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:40.641Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:40.637Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:39.608Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:39.604Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:38.291Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:38.286Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:38.204Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:38.199Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:37.210Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:37.206Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:36.211Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:36.208Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:35.720Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:35.715Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:35.295Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:35.290Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:35.194Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:35.185Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:31.485Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  },
+  {
+    "timestamp": "2025-06-23T13:17:31.477Z",
+    "level": "warning",
+    "source": "Frontend",
+    "message": "⚠️ [ManualTradePanel] INSUFFICIENT BALANCE WARNING: User attempted buy order for 0 BTCUSD but lacks sufficient balance. Available: $0.00 USD"
+  }
+]
