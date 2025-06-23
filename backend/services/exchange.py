@@ -199,11 +199,40 @@ class ExchangeService:
         """
         try:
             balance = self.exchange.fetch_balance()
-            return {
-                currency: float(data["free"])
-                for currency, data in balance["total"].items()
-                if float(data["free"]) > 0
-            }
+            result = {}
+            
+            # Handle different balance structure formats
+            if 'total' in balance and isinstance(balance['total'], dict):
+                # Standard CCXT format with nested structure
+                for currency, amount in balance['total'].items():
+                    if isinstance(amount, dict) and 'free' in amount:
+                        free_amount = float(amount['free'])
+                    else:
+                        free_amount = float(amount)
+                    
+                    if free_amount > 0:
+                        result[currency] = free_amount
+            else:
+                # Direct format or other structures
+                for currency, data in balance.items():
+                    if currency in ['info', 'datetime', 'timestamp']:
+                        continue
+                        
+                    if isinstance(data, dict):
+                        if 'free' in data:
+                            free_amount = float(data['free'])
+                        elif 'total' in data:
+                            free_amount = float(data['total'])
+                        else:
+                            free_amount = float(data.get('available', 0))
+                    else:
+                        free_amount = float(data)
+                    
+                    if free_amount > 0:
+                        result[currency] = free_amount
+            
+            return result
+            
         except Exception as e:
             raise ExchangeError(f"Failed to fetch balance: {str(e)}")
 
