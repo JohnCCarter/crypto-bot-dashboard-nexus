@@ -39,7 +39,7 @@ interface ManualTradePanelProps {
 }
 
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
-  defaultSymbol = 'BTCUSD' 
+  defaultSymbol = 'TESTBTC/TESTUSD' 
 }) => {
   const [orderType, setOrderType] = useState<OrderType>('market');
   const [side, setSide] = useState<OrderSide>('buy');
@@ -150,8 +150,8 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
 
   // Trading capacity calculation
   const tradingCapacity = useMemo(() => {
-    const usdBalance = balances.find(b => b.currency === 'USD')?.available || 0;
-    const btcBalance = balances.find(b => b.currency === 'BTC')?.available || 0;
+    const usdBalance = balances.find(b => b.currency === 'TESTUSD')?.available || 0;
+    const btcBalance = balances.find(b => b.currency === 'TESTBTC')?.available || 0;
     
     const maxBuyUSD = usdBalance;
     const maxSellBTC = btcBalance;
