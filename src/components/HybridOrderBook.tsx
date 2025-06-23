@@ -1,22 +1,19 @@
 /**
- * Hybrid Order Book - Real-time orderbook med WebSocket + REST fallback
+ * Hybrid Order Book - Optimerad version utan excessive polling
  * 
  * Features:
- * - Live orderbook via WebSocket (real-time updates)
- * - Smart fallback till REST data vid anslutningsproblem
+ * - Centraliserad data via useOptimizedMarketData
+ * - Eliminerade redundanta API-anrop
  * - Depth visualization med spread indikator
  * - Optimistic UI med skelett-loading
  */
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { OrderBook } from '@/types/trading';
-import { Activity, Wifi, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
+import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
+import { RefreshCw, TrendingUp, TrendingDown, Wifi, Activity } from 'lucide-react';
 
 interface HybridOrderBookProps {
   symbol?: string;
@@ -29,38 +26,13 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
   maxLevels = 10,
   showSpread = true 
 }) => {
-  // Get global WebSocket data (shared single connection)
+  // Use centralized optimized data
   const { 
-    connected, 
-    getOrderbookForSymbol, 
-    subscribeToSymbol,
-    platformStatus
-  } = useGlobalWebSocketMarket();
-  
-  // Subscribe to symbol on mount
-  useEffect(() => {
-    subscribeToSymbol(symbol);
-    
-    return () => {
-      // Note: Don't unsubscribe automatically as other components might use the same symbol
-      // unsubscribeFromSymbol(symbol);
-    };
-  }, [symbol, subscribeToSymbol]);
-  
-  // Get orderbook data for this specific symbol
-  const wsOrderbook = getOrderbookForSymbol(symbol);
-  
-  // REST fallback data
-  const { data: restOrderbook, isLoading, error, refetch } = useQuery<OrderBook>({
-    queryKey: ['orderbook', symbol],
-    queryFn: () => api.getOrderBook(symbol),
-    refetchInterval: connected ? 10000 : 2000, // Slower polling if WS connected
-    staleTime: 1000,
-    enabled: !connected || !wsOrderbook // Only fetch if no WS data
-  });
-
-  // Use WebSocket data if available, otherwise fallback to REST
-  const orderbook = wsOrderbook || restOrderbook;
+    orderbook,
+    connected,
+    error,
+    refreshData
+  } = useOptimizedMarketData(symbol);
 
   // Process orderbook data for display
   const processedData = useMemo(() => {
@@ -136,7 +108,7 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
     return amount.toFixed(6);
   };
 
-  if (isLoading && !orderbook) {
+  if (!orderbook && !error) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
@@ -164,8 +136,8 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
         </CardHeader>
         <CardContent>
           <div className="text-center py-4">
-            <p className="text-red-500">Failed to load orderbook</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
+            <p className="text-red-500">Failed to load orderbook: {error}</p>
+            <Button variant="outline" size="sm" onClick={() => refreshData(true)} className="mt-2">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -185,20 +157,16 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
             {connected ? (
               <Badge variant="default" className="bg-green-500">
                 <Wifi className="w-3 h-3 mr-1" />
-                Live
+                Connected
               </Badge>
             ) : (
               <Badge variant="secondary">
                 <Activity className="w-3 h-3 mr-1" />
-                REST
+                Offline
               </Badge>
             )}
             
-            {platformStatus === 'maintenance' && (
-              <Badge variant="destructive">Maintenance</Badge>
-            )}
-            
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button variant="outline" size="sm" onClick={() => refreshData(true)}>
               <RefreshCw className="w-3 h-3" />
             </Button>
           </div>
@@ -287,7 +255,7 @@ export const HybridOrderBook: React.FC<HybridOrderBookProps> = ({
 
         {/* Data Source Status */}
         <div className="text-xs text-muted-foreground text-center">
-          {connected && wsOrderbook ? '🟢 Real-time WebSocket data' : '🟡 REST API data'}
+          {connected ? '🟢 Optimized centralized data' : '🟡 Offline mode'}
         </div>
       </CardContent>
     </Card>

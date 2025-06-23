@@ -1,10 +1,9 @@
 /**
- * Hybrid Price Chart - Använder smart kombination av WebSocket + REST
+ * Hybrid Price Chart - Optimerad version utan excessive polling
  * 
  * Funktioner:
- * - Omedelbar initial load via REST
- * - Real-time updates via WebSocket  
- * - Graceful fallback när WebSocket fails
+ * - Centraliserad data via useOptimizedMarketData  
+ * - Reducerade API-anrop
  * - Live price updates på senaste candlestick
  */
 
@@ -13,8 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useHybridMarketData } from '@/hooks/useHybridMarketData';
-import { RefreshCw, Wifi, WifiOff, Activity } from 'lucide-react';
+import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
+import { RefreshCw, Wifi, Activity } from 'lucide-react';
 
 interface HybridPriceChartProps {
   symbol?: string;
@@ -31,13 +30,9 @@ export const HybridPriceChart: React.FC<HybridPriceChartProps> = ({
     ticker, 
     chartData, 
     connected, 
-    connecting, 
-    dataSource, 
     error,
-    refreshData,
-    switchToRestMode,
-    switchToWebSocketMode 
-  } = useHybridMarketData(symbol);
+    refreshData
+  } = useOptimizedMarketData(symbol);
 
   // Format chart data för Recharts
   const formattedChartData = useMemo(() => {
@@ -48,35 +43,27 @@ export const HybridPriceChart: React.FC<HybridPriceChartProps> = ({
       high: candle.high,
       low: candle.low,
       volume: candle.volume,
-      // Highlighta senaste punkt om den är live-uppdaterad
-      isLive: index === chartData.length - 1 && connected
+      // Highlighta senaste punkt 
+      isLive: index === chartData.length - 1
     }));
-  }, [chartData, connected]);
+  }, [chartData]);
 
-  // Connection status styling
+  // Connection status styling - simplified
   const getConnectionBadge = () => {
-    switch (dataSource) {
-      case 'websocket':
-        return (
-          <Badge variant="default" className="bg-green-500">
-            <Wifi className="w-3 h-3 mr-1" />
-            WebSocket Live
-          </Badge>
-        );
-      case 'rest':
-        return (
-          <Badge variant="secondary" className="bg-yellow-500">
-            <Activity className="w-3 h-3 mr-1" />
-            REST Polling
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline">
-            <WifiOff className="w-3 h-3 mr-1" />
-            Connecting...
-          </Badge>
-        );
+    if (connected) {
+      return (
+        <Badge variant="default" className="bg-green-500">
+          <Wifi className="w-3 h-3 mr-1" />
+          Connected
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline">
+          <Activity className="w-3 h-3 mr-1" />
+          Offline
+        </Badge>
+      );
     }
   };
 
@@ -121,11 +108,6 @@ export const HybridPriceChart: React.FC<HybridPriceChartProps> = ({
           <p className="text-gray-600">
             Volume: {data.volume.toFixed(2)}
           </p>
-          {data.isLive && (
-            <Badge variant="default" className="mt-1 bg-green-500">
-              Live Data
-            </Badge>
-          )}
         </div>
       );
     }
@@ -156,40 +138,15 @@ export const HybridPriceChart: React.FC<HybridPriceChartProps> = ({
             </div>
           )}
           
-          {/* Control Buttons */}
+          {/* Control Buttons - simplified */}
           {showControls && (
-            <div className="flex space-x-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={refreshData}
-                disabled={connecting}
-              >
-                <RefreshCw className={`w-4 h-4 ${connecting ? 'animate-spin' : ''}`} />
-              </Button>
-              
-              {dataSource !== 'websocket' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={switchToWebSocketMode}
-                  className="text-green-600"
-                >
-                  <Wifi className="w-4 h-4" />
-                </Button>
-              )}
-              
-              {dataSource !== 'rest' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={switchToRestMode}
-                  className="text-yellow-600"
-                >
-                  <Activity className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refreshData(true)}
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
           )}
         </div>
       </CardHeader>
@@ -235,32 +192,24 @@ export const HybridPriceChart: React.FC<HybridPriceChartProps> = ({
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="mt-2 text-gray-600">
-                {connecting ? 'Loading chart data...' : 'No chart data available'}
+                Loading chart data...
               </p>
             </div>
           </div>
         )}
 
-        {/* Data Source Info */}
+        {/* Data Source Info - simplified */}
         <div className="mt-4 flex justify-between items-center text-sm text-gray-500">
           <div>
             Data points: {chartData.length} | 
-            Source: {dataSource} | 
             Last update: {ticker ? new Date(ticker.timestamp).toLocaleTimeString() : 'N/A'}
           </div>
           
           <div className="flex items-center space-x-2">
-            {connected && dataSource === 'websocket' && (
+            {connected && (
               <div className="flex items-center text-green-600">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-                Live Updates
-              </div>
-            )}
-            
-            {!connected && dataSource === 'rest' && (
-              <div className="flex items-center text-yellow-600">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
-                Polling Mode
+                Optimized Updates
               </div>
             )}
           </div>

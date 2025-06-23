@@ -1,14 +1,15 @@
 /**
- * Manual Trade Panel - Live WebSocket-enhanced trading interface
+ * Manual Trade Panel - Optimerad version utan excessive polling
  * 
  * Features:
- * - Live market data via WebSocket för immediate price feedback
+ * - Centraliserad data via useOptimizedMarketData
+ * - Eliminerade redundanta API-anrop
  * - Smart price auto-fill from live ticker
  * - Real-time market capacity och risk warnings
  * - Enhanced order validation med live spread checks
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { 
   TrendingUp, 
@@ -35,49 +36,30 @@ type OrderType = 'market' | 'limit';
 type OrderSide = 'buy' | 'sell';
 
 interface ManualTradePanelProps {
-  defaultSymbol?: string;
+  symbol?: string;
+  onOrderPlaced?: () => void;
 }
 
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
-  defaultSymbol = 'BTCUSD' 
+  symbol = 'BTCUSD',
+  onOrderPlaced
 }) => {
   const [orderType, setOrderType] = useState<OrderType>('market');
   const [side, setSide] = useState<OrderSide>('buy');
   const [amount, setAmount] = useState('');
   const [price, setPrice] = useState('');
-  const [currentSymbol] = useState(defaultSymbol);
 
   const queryClient = useQueryClient();
 
-  // Get global WebSocket data (shared single connection)
+  // Use centralized optimized data
   const { 
-    connected, 
-    getTickerForSymbol, 
-    getOrderbookForSymbol,
-    subscribeToSymbol,
-    platformStatus
-  } = useGlobalWebSocketMarket();
-  
-  // Subscribe to symbol on mount
-  useEffect(() => {
-    subscribeToSymbol(currentSymbol);
-    
-    return () => {
-      // Note: Don't unsubscribe automatically as other components might use the same symbol
-      // unsubscribeFromSymbol(currentSymbol);
-    };
-  }, [currentSymbol, subscribeToSymbol]);
-  
-  // Get live market data for this symbol
-  const ticker = getTickerForSymbol(currentSymbol);
-  const orderbook = getOrderbookForSymbol(currentSymbol);
-
-  // Get balance data for trading capacity
-  const { data: balances = [] } = useQuery({
-    queryKey: ['balances'],
-    queryFn: api.getBalances,
-    refetchInterval: 5000
-  });
+    balances,
+    ticker,
+    orderbook,
+    connected,
+    error,
+    refreshData
+  } = useOptimizedMarketData(symbol);
 
   // Order submission mutation
   const submitOrderMutation = useMutation({
@@ -99,9 +81,15 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['positions'] });
       
+      // Refresh centralized data
+      refreshData(true);
+      
       // Reset form
       setAmount('');
       setPrice('');
+      
+      // Notify parent component
+      onOrderPlaced?.();
     }
   });
 
@@ -202,7 +190,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     if (!canSubmit) return;
 
     const orderData = {
-      symbol: currentSymbol,
+      symbol: symbol,
       type: orderType,
       side,
       amount: parseFloat(amount),
@@ -231,24 +219,20 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
             <DollarSign className="w-4 h-4" />
-            Manual Trading ({currentSymbol})
+            Manual Trading ({symbol})
           </CardTitle>
           
           <div className="flex items-center gap-2">
             {connected ? (
               <Badge variant="default" className="bg-green-500">
                 <Wifi className="w-3 h-3 mr-1" />
-                Live
+                Connected
               </Badge>
             ) : (
               <Badge variant="secondary">
                 <Activity className="w-3 h-3 mr-1" />
-                REST
+                Offline
               </Badge>
-            )}
-            
-            {platformStatus === 'maintenance' && (
-              <Badge variant="destructive">Maintenance</Badge>
             )}
           </div>
         </div>
@@ -279,6 +263,16 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
               Spread: {formatCurrency(marketInfo.spread)} ({marketInfo.spreadPct.toFixed(3)}%)
             </div>
           </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Data error: {error}
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Order Configuration */}
@@ -408,15 +402,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
           </Alert>
         )}
 
-        {platformStatus === 'maintenance' && (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Platform is in maintenance mode. Trading may be limited.
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Submit Button */}
         <Button
           onClick={handleSubmit}
@@ -461,7 +446,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
 
         {/* Live Data Status */}
         <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-          {connected && ticker ? '🟢 Live market data active' : '🟡 Using REST API data'}
+          {connected && ticker ? '🟢 Optimized live data' : '🟡 Offline mode'}
         </div>
       </CardContent>
     </Card>

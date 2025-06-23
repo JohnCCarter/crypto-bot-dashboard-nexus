@@ -1,22 +1,19 @@
 /**
- * Hybrid Trade Table - Live active positions med WebSocket + REST fallback
+ * Hybrid Trade Table - Optimerad version utan excessive polling
  * 
  * Features:
- * - Live active position data via WebSocket + REST
- * - Smart fallback till REST data vid anslutningsproblem
+ * - Centraliserad data via useOptimizedMarketData
+ * - Eliminerade redundanta API-anrop
  * - Position P&L visualization med buy/sell indicators
  * - Volume analysis och position tracking
  */
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { Trade } from '@/types/trading';
-import { Activity, Wifi, RefreshCw, TrendingUp, TrendingDown, Volume2 } from 'lucide-react';
+import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
+import { TrendingUp, TrendingDown, Volume2, RefreshCw, Wifi, Activity } from 'lucide-react';
 
 interface HybridTradeTableProps {
   symbol?: string;
@@ -29,38 +26,18 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
   maxTrades = 20,
   showVolume = true 
 }) => {
-  // Get global WebSocket data (shared single connection)
+  // Use centralized optimized data
   const { 
-    connected, 
-    getTickerForSymbol,
-    subscribeToSymbol,
-    platformStatus
-  } = useGlobalWebSocketMarket();
-  
-  // Subscribe to symbol on mount for live pricing data
-  useEffect(() => {
-    subscribeToSymbol(symbol);
-    
-    return () => {
-      // Note: Don't unsubscribe automatically as other components might use the same symbol
-      // unsubscribeFromSymbol(symbol);
-    };
-  }, [symbol, subscribeToSymbol]);
-  
-  // Get current price for P&L calculation
-  const ticker = getTickerForSymbol(symbol);
-  
-  // Get active trades/positions data
-  const { data: trades = [], isLoading, error, refetch } = useQuery<Trade[]>({
-    queryKey: ['active-trades'],
-    queryFn: () => api.getActiveTrades(),
-    refetchInterval: connected ? 10000 : 3000, // Slower polling if WS connected
-    staleTime: 2000
-  });
+    activeTrades,
+    ticker,
+    connected,
+    error,
+    refreshData
+  } = useOptimizedMarketData(symbol);
 
   // Process trades for display with live P&L
   const processedTrades = useMemo(() => {
-    if (!trades || trades.length === 0) {
+    if (!activeTrades || activeTrades.length === 0) {
       return {
         recentTrades: [],
         totalVolume: 0,
@@ -73,7 +50,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
     const currentPrice = ticker?.price || 0;
     
     // Limit and sort trades by timestamp (newest first)
-    const recentTrades = [...trades]
+    const recentTrades = [...activeTrades]
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, maxTrades)
       .map(trade => {
@@ -105,7 +82,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
       avgPrice,
       activePositions
     };
-  }, [trades, maxTrades, ticker]);
+  }, [activeTrades, maxTrades, ticker]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -129,7 +106,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
     }
   };
 
-  if (isLoading && trades.length === 0) {
+  if (!activeTrades && !error) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
@@ -150,7 +127,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
     );
   }
 
-  if (error && trades.length === 0) {
+  if (error && (!activeTrades || activeTrades.length === 0)) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
@@ -158,8 +135,8 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
         </CardHeader>
         <CardContent>
           <div className="text-center py-4">
-            <p className="text-red-500">Failed to load position data</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
+            <p className="text-red-500">Failed to load position data: {error}</p>
+            <Button variant="outline" size="sm" onClick={() => refreshData(true)} className="mt-2">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -188,11 +165,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
               </Badge>
             )}
             
-            {platformStatus === 'maintenance' && (
-              <Badge variant="destructive">Maintenance</Badge>
-            )}
-            
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button variant="outline" size="sm" onClick={() => refreshData(true)}>
               <RefreshCw className="w-3 h-3" />
             </Button>
           </div>
@@ -304,7 +277,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
             Showing {processedTrades.recentTrades.length} active positions
           </span>
           <span>
-            {connected && ticker ? '🟢 Live P&L updates' : '🟡 Static P&L data'}
+            {connected && ticker ? '🟢 Optimized live updates' : '🟡 Offline mode'}
           </span>
         </div>
       </CardContent>

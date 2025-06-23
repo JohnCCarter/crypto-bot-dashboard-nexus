@@ -1,21 +1,19 @@
 /**
- * Hybrid Balance Card - Live Portfolio Valuation med WebSocket + REST
+ * Hybrid Balance Card - Optimerad version utan excessive polling
  * 
  * Features:
+ * - Centraliserad data via useOptimizedMarketData
+ * - Eliminerade redundanta API-anrop
  * - Live portfolio value med real-time pricing
  * - Real-time profit/loss tracking  
- * - Smart fallback till REST data
  * - Live asset allocation display
  */
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { Balance } from '@/types/trading';
+import { useOptimizedMarketData } from '@/hooks/useOptimizedMarketData';
 import { TrendingUp, TrendingDown, Wallet, RefreshCw, Wifi, Activity } from 'lucide-react';
 
 interface HybridBalanceCardProps {
@@ -27,34 +25,14 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
   symbol = 'BTCUSD',
   showDetails = true 
 }) => {
-  // Get global WebSocket data (shared single connection)
+  // Use centralized optimized data
   const { 
-    connected, 
-    getTickerForSymbol, 
-    subscribeToSymbol, 
-    unsubscribeFromSymbol 
-  } = useGlobalWebSocketMarket();
-  
-  // Subscribe to symbol on mount
-  useEffect(() => {
-    subscribeToSymbol(symbol);
-    
-    return () => {
-      // Note: Don't unsubscribe automatically as other components might use the same symbol
-      // unsubscribeFromSymbol(symbol);
-    };
-  }, [symbol, subscribeToSymbol]);
-  
-  // Get ticker data for this specific symbol
-  const ticker = getTickerForSymbol(symbol);
-  
-  // Get balance data via REST
-  const { data: balances = [], isLoading, error, refetch } = useQuery<Balance[]>({
-    queryKey: ['balances'],
-    queryFn: api.getBalances,
-    refetchInterval: 5000, // Fallback polling
-    staleTime: 2000
-  });
+    balances,
+    ticker,
+    connected,
+    error,
+    refreshData
+  } = useOptimizedMarketData(symbol);
 
   // Calculate live portfolio values
   const portfolioData = useMemo(() => {
@@ -144,7 +122,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     return value.toFixed(decimals);
   };
 
-  if (isLoading) {
+  if (!balances.length && !error) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
@@ -164,7 +142,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     );
   }
 
-  if (error) {
+  if (error && !balances.length) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
@@ -172,8 +150,8 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
         </CardHeader>
         <CardContent>
           <div className="text-center py-4">
-            <p className="text-red-500">Failed to load balance data</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
+            <p className="text-red-500">Failed to load balance data: {error}</p>
+            <Button variant="outline" size="sm" onClick={() => refreshData(true)} className="mt-2">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -196,16 +174,16 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
             {connected ? (
               <Badge variant="default" className="bg-green-500">
                 <Wifi className="w-3 h-3 mr-1" />
-                Live
+                Connected
               </Badge>
             ) : (
               <Badge variant="secondary">
                 <Activity className="w-3 h-3 mr-1" />
-                REST
+                Offline
               </Badge>
             )}
             
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button variant="outline" size="sm" onClick={() => refreshData(true)}>
               <RefreshCw className="w-3 h-3" />
             </Button>
           </div>
@@ -307,7 +285,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
             Last update: {ticker ? new Date(ticker.timestamp).toLocaleTimeString() : 'N/A'}
           </span>
           <span>
-            {connected ? '🟢 Live pricing' : '🟡 Polling mode'}
+            {connected ? '🟢 Optimized updates' : '🟡 Offline mode'}
           </span>
         </div>
       </CardContent>
