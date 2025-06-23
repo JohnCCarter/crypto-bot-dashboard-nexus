@@ -4,65 +4,76 @@ This document is a complete technical reference for integrating the Bitfinex RES
 
 ## Getting Started
 
-1. Clone the project  
+### 🚀 Quick Start (Recommended)
 
-  ```bash
-  git clone git@github.com:<user>/crypto-bot-dashboard-nexus.git
-  cd crypto-bot-dashboard-nexus
-  ```
-
-2. Create and activate a virtual environment  
-
-  ```bash
-  python3 -m venv venv
-  source venv/bin/activate     # Windows: venv\Scripts\activate
-  ```
-
-3. Install dependencies
-
-  ```bash
-  # Run from the project root
-  pip install -r backend/requirements.txt
-  ```
-
-  Or change directory first:
-
-  ```bash
-  cd backend
-  pip install -r requirements.txt
-  cd ..
-  ```
-
-4. Create `.env` in the project root  
-
-  ```dotenv
-  BITFINEX_API_KEY=YOUR_API_KEY
-  BITFINEX_API_SECRET=YOUR_API_SECRET
-  ```
-
-5. Start the Flask server
-
-  ```bash
-  # From the backend directory
-  cd backend
-  flask run --host=0.0.0.0 --port=5000
-  ```
-
-  Open <http://localhost:5000> in your browser.
-6. Run the tests
-
-  ```bash
-  pytest backend/tests
-  ```
-
-7. Start the frontend
+1. **Clone the project**
 
    ```bash
-   npm install
-   npm run dev
+   git clone git@github.com:<user>/crypto-bot-dashboard-nexus.git
+   cd crypto-bot-dashboard-nexus
    ```
 
-   Open <http://localhost:8080> in your browser.
+2. **One-time setup**
+
+   ```bash
+   ./scripts/setup-dev.sh
+   ```
+   
+   This automatically:
+   - Creates Python virtual environment
+   - Installs all backend dependencies
+   - Installs all frontend dependencies  
+   - Verifies Python package structure
+   - Tests backend imports
+
+3. **Create environment variables**
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API credentials
+   ```
+
+4. **Start development servers**
+
+   ```bash
+   ./scripts/start-dev.sh
+   ```
+   
+   This starts both:
+   - Backend (Flask): http://localhost:5000
+   - Frontend (Vite): http://localhost:8081
+   
+5. **Health check**
+
+   ```bash
+   ./scripts/health-check.sh
+   ```
+
+6. **Stop servers**
+
+   ```bash
+   ./scripts/stop-dev.sh
+   ```
+
+### 🛠️ Development Commands
+
+| Command | Description |
+|---------|-------------|
+| `./scripts/setup-dev.sh` | One-time environment setup |
+| `./scripts/start-dev.sh` | Start both servers |
+| `./scripts/stop-dev.sh` | Stop all servers |
+| `./scripts/health-check.sh` | Check server status |
+
+### 🧪 Run Tests
+
+   ```bash
+   # Backend tests
+   source venv/bin/activate
+   pytest backend/tests
+   
+   # Frontend tests  
+   npm run test
+   ```
 
 8. Trading strategies and indicators
    All strategy and indicator files are placed in `backend/strategies/`.
@@ -301,22 +312,30 @@ This repository provides a full-stack trading dashboard integrating Bitfinex's R
 
 ## Local Development (no Docker)
 
+### 🚀 Recommended Method
+
+Use the standardized scripts (see "Getting Started" section above):
+
+```bash
+./scripts/setup-dev.sh    # One-time setup
+./scripts/start-dev.sh    # Start both servers
+```
+
+### 🔧 Manual Method (if needed)
+
 1. Backend:
 
    ```bash
-   cd backend
-   python3 -m venv .venv
-   source .venv/bin/activate   # Windows: .venv\Scripts\activate
-   pip install -r requirements.txt
-   export FLASK_APP=app.py
-   flask run --host=0.0.0.0 --port=5000
+   source venv/bin/activate
+   export PYTHONPATH=/workspace
+   export FLASK_APP=backend.app
+   python -m flask run --host=0.0.0.0 --port=5000
    ```
 
 2. Frontend:
 
    ```bash
-   npm install
-   npm run dev                # Vite dev server on http://localhost:8080
+   npm run dev                # Vite dev server on http://localhost:8081
    ```
 
 ## Docker Setup
