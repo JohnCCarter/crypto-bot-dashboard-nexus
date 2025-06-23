@@ -3,22 +3,25 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
 import time
+import threading
 
 import ccxt
 
 
 class CustomBitfinex(ccxt.bitfinex):
-    """Custom Bitfinex class with proper nonce handling."""
+    """Custom Bitfinex class with thread-safe nonce handling."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._last_nonce = int(time.time() * 1000)
+        self._nonce_lock = threading.Lock()
 
     def nonce(self):
-        """Generate monotonically increasing nonce to prevent Bitfinex API errors."""
-        now = int(time.time() * 1000)
-        self._last_nonce = max(self._last_nonce + 1, now)
-        return self._last_nonce
+        """Generate thread-safe monotonically increasing nonce for Bitfinex API."""
+        with self._nonce_lock:
+            now = int(time.time() * 1000)
+            self._last_nonce = max(self._last_nonce + 1, now)
+            return self._last_nonce
 
 
 class ExchangeError(Exception):

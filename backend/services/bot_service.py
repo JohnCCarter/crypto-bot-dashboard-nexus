@@ -1,5 +1,7 @@
 import time
 import threading
+import sys
+import os
 from datetime import UTC, datetime
 from typing import Optional
 
@@ -19,12 +21,20 @@ def start_bot():
         return {"success": False, "message": "Bot is already running", "status": "running"}
     
     try:
-        # Import here to avoid circular imports
-        from backend.services.main_bot import main
-        
         def bot_worker():
-            """Worker function that runs the main bot logic."""
+            """Worker function that runs the main bot logic with correct PYTHONPATH."""
             try:
+                # Fix PYTHONPATH for threading context
+                current_file = os.path.abspath(__file__)
+                parent_dir = os.path.dirname(current_file)
+                backend_dir = os.path.dirname(parent_dir)
+                workspace_root = os.path.dirname(backend_dir)
+                if workspace_root not in sys.path:
+                    sys.path.insert(0, workspace_root)
+                
+                # Import here to avoid circular imports and ensure correct path
+                from backend.services.main_bot import main
+                
                 while bot_status["running"]:
                     main()  # Run one trading cycle
                     if bot_status["running"]:  # Check if still should run

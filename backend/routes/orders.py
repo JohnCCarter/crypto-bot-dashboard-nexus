@@ -1,6 +1,5 @@
 """Order management API endpoints with real Bitfinex integration."""
 
-import os
 import time
 import logging
 from typing import Optional
@@ -8,7 +7,7 @@ from typing import Optional
 from flask import current_app, jsonify, request
 
 from backend.services.validation import validate_order_data
-from backend.services.exchange import ExchangeService, ExchangeError
+from backend.services.exchange import ExchangeError
 
 try:
     from dotenv import load_dotenv
@@ -19,23 +18,20 @@ except ImportError:
     pass
 
 
-def get_live_order_service():
-    """Get live order service from Bitfinex API."""
-    api_key = os.getenv("BITFINEX_API_KEY")
-    api_secret = os.getenv("BITFINEX_API_SECRET")
-
-    if not api_key or not api_secret:
-        current_app.logger.warning("Bitfinex API keys not configured for order service")
-        return None
-
+def get_shared_exchange_service():
+    """Get shared exchange service from app context to avoid nonce conflicts."""
     try:
-        # Create ExchangeService for Bitfinex
-        exchange_service = ExchangeService(
-            exchange_id="bitfinex", api_key=api_key, api_secret=api_secret
+        if hasattr(current_app, "_services") and current_app._services:
+            return current_app._services.get("exchange")
+        
+        current_app.logger.warning(
+            "Exchange service not available in app context"
         )
-        return exchange_service
+        return None
     except Exception as e:
-        current_app.logger.error(f"Failed to create order service: {e}")
+        current_app.logger.error(
+            f"Failed to get shared exchange service: {e}"
+        )
         return None
 
 
@@ -54,9 +50,11 @@ def register(app):
         current_app.logger.info("📋 [Orders] GET open orders request")
 
         try:
-            exchange_service = get_live_order_service()
+            exchange_service = get_shared_exchange_service()
             if not exchange_service:
-                current_app.logger.warning("⚠️ [Orders] No exchange service available")
+                current_app.logger.warning(
+                    "⚠️ [Orders] No exchange service available"
+                )
                 return jsonify({"orders": []}), 200
 
             # Fetch open orders from Bitfinex
@@ -117,7 +115,7 @@ def register(app):
                     400,
                 )
 
-            exchange_service = get_live_order_service()
+            exchange_service = get_shared_exchange_service()
             if not exchange_service:
                 current_app.logger.error(
                     "❌ [Orders] Cannot place order - no exchange service"
@@ -126,13 +124,13 @@ def register(app):
                     jsonify(
                         {
                             "error": "Order service not available",
-                            "details": "Bitfinex API keys not configured",
+                            "details": "Exchange service not configured",
                         }
                     ),
                     503,
                 )
 
-            # Place order on Bitfinex
+            # Place order on Bitfinex using shared service (thread-safe nonce)
             order = exchange_service.create_order(
                 symbol=data["symbol"],
                 order_type=data["order_type"],
@@ -171,11 +169,11 @@ def register(app):
         current_app.logger.info(f"📋 [Orders] DELETE order: {order_id}")
 
         try:
-            exchange_service = get_live_order_service()
+            exchange_service = get_shared_exchange_service()
             if not exchange_service:
                 return jsonify({"error": "Order service not available"}), 503
 
-            # Cancel order on Bitfinex
+            # Cancel order on Bitfinex using shared service
             result = exchange_service.cancel_order(order_id)
 
             current_app.logger.info(f"✅ [Orders] Order cancelled: {order_id}")
@@ -215,7 +213,7 @@ def register(app):
         current_app.logger.info("📋 [Orders] GET order history request")
 
         try:
-            exchange_service = get_live_order_service()
+            exchange_service = get_shared_exchange_service()
             if not exchange_service:
                 current_app.logger.warning("⚠️ [Orders] No exchange service for history")
                 return jsonify([]), 200
@@ -224,7 +222,7 @@ def register(app):
             symbol = request.args.get("symbol")
             limit = int(request.args.get("limit", 50))
 
-            # Fetch order history from Bitfinex
+            # Fetch order history from Bitfinex using shared service
             symbols = [symbol] if symbol else None
             order_history = exchange_service.fetch_order_history(
                 symbols=symbols, limit=limit
@@ -260,11 +258,11 @@ def register(app):
         current_app.logger.info(f"📋 [Orders] GET order status: {order_id}")
 
         try:
-            exchange_service = get_live_order_service()
+            exchange_service = get_shared_exchange_service()
             if not exchange_service:
                 return jsonify({"error": "Order service not available"}), 503
 
-            # Fetch order status from Bitfinex
+            # Fetch order status from Bitfinex using shared service
             order = exchange_service.fetch_order(order_id)
 
             current_app.logger.info(f"✅ [Orders] Order status retrieved: {order_id}")
