@@ -8,7 +8,7 @@
  * 4. Shared state mellan komponenter
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 import { OrderBook, OHLCVData, Balance, BotStatus, OrderHistoryItem, Trade, LogEntry } from '@/types/trading';
 
@@ -73,6 +73,11 @@ class MarketDataManager {
   private isLoading: boolean = false;
   private symbolChangeTimeout: NodeJS.Timeout | null = null;
   
+  // Anti-race condition protection
+  private activeSymbolChange: string | null = null;
+  private symbolChangeRequests: Set<string> = new Set();
+  private activePromises: Map<string, AbortController> = new Map();
+  
   public static getInstance(): MarketDataManager {
     if (!MarketDataManager.instance) {
       MarketDataManager.instance = new MarketDataManager();
@@ -101,7 +106,9 @@ class MarketDataManager {
   }
   
   private notifySubscribers(): void {
-    this.subscribers.forEach(callback => callback(this.data));
+    // Optimize notifications to prevent unnecessary re-renders
+    const dataSnapshot = { ...this.data };
+    this.subscribers.forEach(callback => callback(dataSnapshot));
   }
   
   private shouldFetch(endpoint: string, minInterval: number): boolean {
@@ -306,43 +313,77 @@ class MarketDataManager {
   }
   
   public setSymbol(symbol: string): void {
-    if (symbol !== this.currentSymbol) {
-      console.log(`🔄 [OptimizedMarketData] Switching symbol: ${this.currentSymbol} → ${symbol}`);
+    // 🔒 RACE CONDITION PROTECTION
+    if (symbol === this.currentSymbol) {
+      console.log(`🔄 [OptimizedMarketData] Symbol ${symbol} already active, ignoring duplicate request`);
+      return; // Already at this symbol
+    }
+    
+    // Check if this symbol change is already in progress
+    if (this.activeSymbolChange === symbol) {
+      console.log(`⏳ [OptimizedMarketData] Symbol change to ${symbol} already in progress, ignoring duplicate`);
+      return;
+    }
+    
+    // Track this symbol change request
+    this.symbolChangeRequests.add(symbol);
+    console.log(`🎯 [OptimizedMarketData] Symbol change requested: ${this.currentSymbol} → ${symbol} (pending: ${Array.from(this.symbolChangeRequests).join(', ')})`);
+    
+    // Clear any pending symbol changes
+    if (this.symbolChangeTimeout) {
+      clearTimeout(this.symbolChangeTimeout);
+    }
+    
+    // Cancel all active API requests to prevent data mixing
+    this.cancelActiveRequests();
+    
+    const oldSymbol = this.currentSymbol;
+    this.activeSymbolChange = symbol;
+    this.currentSymbol = symbol;
+    
+    // IMMEDIATE UI feedback - no delays
+    this.data.isLoading = true;
+    this.data.error = null;
+    this.notifySubscribers();
+    
+    // Clear cache and notify IMMEDIATELY to hide stale data
+    this.clearSymbolCache(oldSymbol);
+    
+    // Execute symbol switch with minimal delay but deduplication
+    this.symbolChangeTimeout = setTimeout(async () => {
+      console.log(`⚡ [OptimizedMarketData] Executing symbol switch: ${symbol}`);
       
-      // Clear any pending symbol changes (debouncing)
-      if (this.symbolChangeTimeout) {
-        clearTimeout(this.symbolChangeTimeout);
-      }
-      
-      const oldSymbol = this.currentSymbol;
-      this.currentSymbol = symbol;
-      
-      // Set loading state IMMEDIATELY for instant UI feedback
-      this.data.isLoading = true;
-      this.notifySubscribers();
-      
-      // Clear symbol-specific cached data to prevent stale data mix
-      this.clearSymbolCache(oldSymbol);
-      
-      // Debounced symbol switch to prevent multiple rapid calls
-      this.symbolChangeTimeout = setTimeout(async () => {
-        console.log(`⚡ [OptimizedMarketData] Executing symbol switch: ${symbol}`);
-        
-        try {
-          // Force refresh ALL data for new symbol - both market AND trading data
+      try {
+        // Only proceed if this symbol is still the latest request
+        if (this.activeSymbolChange === symbol && this.symbolChangeRequests.has(symbol)) {
           await this.refreshAll(symbol, true);
           this.data.isLoading = false;
+          this.data.error = null;
           console.log(`✅ [OptimizedMarketData] Symbol switch complete: ${symbol}`);
-          
-        } catch (error) {
-          this.data.isLoading = false;
-          this.data.error = `Failed to switch to ${symbol}`;
-          console.error(`❌ [OptimizedMarketData] Symbol switch failed:`, error);
+        } else {
+          console.log(`🚫 [OptimizedMarketData] Symbol switch cancelled: ${symbol} is no longer the active request`);
         }
         
+      } catch (error) {
+        this.data.isLoading = false;
+        this.data.error = `Failed to switch to ${symbol}`;
+        console.error(`❌ [OptimizedMarketData] Symbol switch failed:`, error);
+      } finally {
+        // Clean up tracking
+        this.activeSymbolChange = null;
+        this.symbolChangeRequests.delete(symbol);
         this.notifySubscribers();
-      }, 100); // Short debounce - just enough to prevent race conditions
+      }
+    }, 50); // Minimal delay for deduplication
+  }
+  
+  private cancelActiveRequests(): void {
+    // Cancel all active API requests to prevent data mixing
+    for (const [requestType, controller] of this.activePromises) {
+      console.log(`🚫 [OptimizedMarketData] Cancelling active request: ${requestType}`);
+      controller.abort();
     }
+    this.activePromises.clear();
   }
   
   private clearSymbolCache(oldSymbol: string): void {
@@ -418,9 +459,10 @@ export const useOptimizedMarketData = (symbol?: string): OptimizedMarketData => 
     }
   }, [manager]);
   
-  return {
+  // Memoize return object to prevent unnecessary re-renders in components
+  return useMemo(() => ({
     ...data,
     refreshData,
     refreshSymbolData
-  };
+  }), [data, refreshData, refreshSymbolData]);
 };
