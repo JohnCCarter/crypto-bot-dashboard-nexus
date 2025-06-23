@@ -27,23 +27,32 @@ from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
 from backend.services.risk_manager import RiskManager, RiskParameters
 
-# Configure logging for production performance
-log_level = logging.WARNING if os.getenv("ENVIRONMENT") == "production" else logging.INFO
+# Configure logging for better performance - DEFAULT TO WARNING
+# Set to WARNING by default to reduce log spam, ERROR for critical issues only
+log_level = logging.WARNING  # Changed: Always use WARNING as default
 logging.basicConfig(
     level=log_level, 
     format="[%(asctime)s] %(levelname)s: %(message)s"  # Shorter format
 )
 logger = logging.getLogger(__name__)
 
-# Silence verbose libraries in production
-if os.getenv("ENVIRONMENT") == "production":
-    logging.getLogger("werkzeug").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("requests").setLevel(logging.WARNING)
+# Silence verbose libraries
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING) 
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("ccxt").setLevel(logging.WARNING)  # Added: Silence ccxt library
+
+# To enable debug logging: set environment variable ENABLE_DEBUG=true
+if os.getenv("ENABLE_DEBUG", "false").lower() == "true":
+    logging.getLogger().setLevel(logging.DEBUG)
+    logger.info("🐛 Debug logging enabled via ENABLE_DEBUG environment variable")
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"])
+
+# Configure Flask app logging
+app.logger.setLevel(logging.WARNING)  # Reduce Flask internal logging spam
 
 
 def load_config() -> Dict[str, Any]:
@@ -371,7 +380,7 @@ def on_bitfinex_close(ws, close_status_code, close_msg):
 def on_bitfinex_open(ws):
     """Hantera WebSocket connection"""
     global ws_connection_status, ticker_update_count
-    logger.info("✅ Backend WebSocket connected to Bitfinex - Live data active")
+    logger.warning("✅ Backend WebSocket connected to Bitfinex - Live data active")  # Keep important connection message
     ws_connection_status['connected'] = True
     ws_connection_status['error'] = None
     ticker_update_count = 0  # Reset counter
@@ -457,7 +466,7 @@ def system_health_check():
 system_health_check()
 
 # Log system startup completion
-logger.info("🚀 Trading Bot Backend System Started - All services initialized")
+logger.warning("🚀 Trading Bot Backend System Started - All services initialized")  # Keep important startup message
 
 if __name__ == "__main__":
     app.run(debug=False, port=5000)

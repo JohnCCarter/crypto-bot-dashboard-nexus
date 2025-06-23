@@ -35,7 +35,7 @@ def register(app):
             503: Exchange service not available (NO MOCK DATA)
             500: Server error
         """
-        current_app.logger.info(f"📊 [Market] Live OHLCV request for {symbol}")
+        current_app.logger.debug(f"📊 [Market] Live OHLCV request for {symbol}")
         
         try:
             exchange = get_exchange_service()
@@ -53,7 +53,7 @@ def register(app):
             timeframe = request.args.get('timeframe', '5m')
             limit = min(int(request.args.get('limit', 100)), 1000)
             
-            current_app.logger.info(
+            current_app.logger.debug(
                 f"📊 [Market] Fetching {limit} {timeframe} "
                 f"candles for {symbol}"
             )
