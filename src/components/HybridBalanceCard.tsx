@@ -82,14 +82,14 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     let cryptoValue = 0;
 
     const assets = balances.map(balance => {
-      const isCrypto = ['BTC', 'ETH', 'LTC'].includes(balance.currency);
-      const isFiat = ['USD', 'EUR', 'USDT'].includes(balance.currency);
+      const isCrypto = balance.currency.includes('BTC') || balance.currency.includes('ETH') || balance.currency.includes('LTC');
+      const isFiat = balance.currency.includes('USD') || balance.currency.includes('EUR');
       
       let currentValue = balance.total_balance;
       let pnl = 0;
       let pnlPct = 0;
 
-      if (isCrypto && balance.currency === 'BTC') {
+      if (isCrypto && balance.currency.includes('BTC')) {
         // Live BTC valuation
         currentValue = balance.total_balance * currentPrice;
         
@@ -99,6 +99,9 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
         pnl = currentValue - costBasis;
         pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
         
+        cryptoValue += currentValue;
+      } else if (isCrypto) {
+        // For other cryptos, use current balance as value (could be enhanced with live pricing)
         cryptoValue += currentValue;
       } else if (isFiat) {
         cashBalance += currentValue;
