@@ -78,8 +78,11 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
       if (!res.ok) throw new Error('Failed to fetch positions');
       return await res.json();
     },
-    refetchInterval: connected ? 10000 : 5000, // More frequent updates
-    staleTime: 2000
+    refetchInterval: connected ? 5000 : 10000, // Faster when connected
+    staleTime: 1000, // Shorter stale time for faster updates
+    refetchOnMount: true, // Always fetch on mount
+    refetchOnWindowFocus: true, // Fetch when window gets focus
+    retry: 1 // Only retry once to avoid delays
   });
 
   // Process positions med live pricing
@@ -220,21 +223,22 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
             Active Positions {symbol && `(${symbol})`}
           </CardTitle>
           
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-              {processedPositions.totalPositions} total
+          <div className="flex items-center gap-1 flex-wrap">
+            <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+              {processedPositions.totalPositions}
             </Badge>
             
             {connected ? (
-              <Badge variant="default" className="bg-green-600">
-                <Activity className="w-3 h-3 mr-1" />
-                Live P&L
+              <Badge variant="default" className="bg-green-600 text-xs px-1.5 py-0.5">
+                <Activity className="w-3 h-3" />
               </Badge>
             ) : (
-              <Badge variant="secondary">Static P&L</Badge>
+              <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                Static
+              </Badge>
             )}
             
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="px-2 py-1">
               <RefreshCw className="w-3 h-3" />
             </Button>
           </div>
@@ -244,26 +248,26 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
       <CardContent className="space-y-4">
         {/* Portfolio Summary */}
         {processedPositions.totalPositions > 0 && (
-          <div className="grid grid-cols-2 gap-4 p-3 bg-muted rounded-lg">
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground">Margin P&L</div>
-              <div className={`font-bold text-sm ${
+          <div className="grid grid-cols-2 gap-2 p-2 bg-muted rounded-lg text-center">
+            <div className="min-w-0">
+              <div className="text-xs text-muted-foreground truncate">Margin P&L</div>
+              <div className={`font-bold text-sm truncate ${
                 processedPositions.totalMarginPnL >= 0 ? 'text-green-600' : 'text-red-600'
               }`}>
                 {formatPrice(processedPositions.totalMarginPnL)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {processedPositions.marginPositions.length} positions
+                {processedPositions.marginPositions.length} pos
               </div>
             </div>
             
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground">Spot Value</div>
-              <div className="font-bold text-sm">
+            <div className="min-w-0">
+              <div className="text-xs text-muted-foreground truncate">Spot Value</div>
+              <div className="font-bold text-sm truncate">
                 {formatPrice(processedPositions.totalSpotValue)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {processedPositions.spotPositions.length} holdings
+                {processedPositions.spotPositions.length} hold
               </div>
             </div>
           </div>
@@ -287,16 +291,16 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={position.side === 'buy' ? 'default' : 'destructive'} className="text-xs">
-                      {position.side.toUpperCase()}
+                  <div className="flex items-center gap-1 min-w-0 flex-1">
+                    <Badge variant={position.side === 'buy' ? 'default' : 'destructive'} className="text-xs px-1">
+                      {position.side === 'buy' ? 'L' : 'S'}
                     </Badge>
-                    <span className="font-semibold text-sm">{position.symbol}</span>
-                    <Badge variant="outline" className="text-xs">MARGIN</Badge>
+                    <span className="font-semibold text-sm truncate">{position.symbol}</span>
+                    <Badge variant="outline" className="text-xs px-1">M</Badge>
                   </div>
                   
-                  <div className="text-right">
-                    <div className={`font-bold text-sm ${
+                  <div className="text-right min-w-0 flex-shrink-0">
+                    <div className={`font-bold text-sm truncate ${
                       (position.livePnL || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {(position.livePnL || 0) >= 0 ? '+' : ''}{formatPrice(position.livePnL || 0)}
@@ -347,19 +351,19 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
                 className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 transition-colors"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={position.side === 'buy' ? 'default' : 'destructive'} className="text-xs">
-                      {position.side.toUpperCase()}
+                  <div className="flex items-center gap-1 min-w-0 flex-1">
+                    <Badge variant={position.side === 'buy' ? 'default' : 'destructive'} className="text-xs px-1">
+                      {position.side === 'buy' ? 'B' : 'S'}
                     </Badge>
-                    <span className="font-semibold text-sm">{position.symbol}</span>
-                                         <Badge variant="outline" className="text-xs">SPOT</Badge>
+                    <span className="font-semibold text-sm truncate">{position.symbol}</span>
+                    <Badge variant="outline" className="text-xs px-1">S</Badge>
                   </div>
                   
-                  <div className="text-right">
-                    <div className="font-bold text-sm">
+                  <div className="text-right min-w-0 flex-shrink-0">
+                    <div className="font-bold text-sm truncate">
                       {formatPrice((position.currentPrice || position.mark_price) * position.amount)}
                     </div>
-                    <div className="text-xs text-blue-600">Market Value</div>
+                    <div className="text-xs text-blue-600">Value</div>
                   </div>
                 </div>
                 
