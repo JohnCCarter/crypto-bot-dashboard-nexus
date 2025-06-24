@@ -21,9 +21,11 @@ export interface OrderHistoryItem {
   side: 'buy' | 'sell';
   amount: number;
   price: number;
-  fee: number;
-  timestamp: string;
-  status: 'filled' | 'cancelled' | 'pending';
+  fee?: number; // Optional for open orders
+  timestamp: string | number; // Can be string or number timestamp
+  status: 'filled' | 'cancelled' | 'pending' | 'open';
+  filled?: number; // Optional filled amount
+  remaining?: number; // Optional remaining amount
 }
 
 export interface BotStatus {
