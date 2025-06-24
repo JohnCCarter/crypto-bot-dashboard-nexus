@@ -188,6 +188,16 @@ interface FundingInfo {
   lastUpdated: number;
 }
 
+// Bitfinex WebSocket constants från General dokumentation
+const MAX_CONNECTIONS = 5; // Max 5 connections per 15 seconds
+const CONF_FLAGS = {
+  TIMESTAMP: 32768,     // Enable timestamps
+  CHECKSUM: 131072,     // Enable checksums  
+  SEQ_ALL: 65536,       // Enable sequence numbers
+  DMS: 4,               // Dead-Man-Switch flag
+  ORDER_BOOK_CHECKSUM: 524288 // Order book checksum
+};
+
 // WS Input Interfaces baserat på Bitfinex WS Inputs dokumentation
 interface NewOrderInput {
   type: string;        // Order type (MARKET, LIMIT, STOP, etc.)
@@ -318,42 +328,68 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
   const apiCredentials = useRef<{ key: string; secret: string } | null>(null);
 
   /**
-   * Error message mapping baserat på Bitfinex dokumentation
+   * Enhanced error message mapping baserat på Bitfinex WS General dokumentation
+   * https://docs.bitfinex.com/docs/ws-general#error-codes
    */
   const getBitfinexErrorMessage = useCallback((code: number, msg: string) => {
     const errorCodes: { [key: number]: string } = {
+      // General errors
       10000: 'Okänt fel',
       10001: 'Generellt fel', 
-      10008: 'Concurrency fel',
+      10008: 'Underhållsläge - systemet är otillgängligt',
       10020: 'Request parameter fel',
       10050: 'Konfigurationsfel',
-      10100: 'Autentisering misslyckades',
+      
+      // Authentication errors (förbättrat från WS General dokumentation)
+      10100: 'Autentisering misslyckades - kontrollera API-nycklar',
+      10101: 'Redan autentiserad',
+      10102: 'Autentisering krävs för denna kanal',
       10111: 'Fel i autentiserings-payload',
       10112: 'Fel i autentiserings-signatur',
       10113: 'Fel i autentiserings-kryptering',
       10114: 'Fel i autentiserings-nonce',
       10200: 'Fel vid utloggning',
-      10300: 'Prenumeration misslyckades',
-      10301: 'Prenumeration misslyckades: redan prenumererad',
-      10302: 'Prenumeration misslyckades: okänd kanal',
-      10305: 'Prenumeration misslyckades: nått gräns för öppna kanaler',
-      10400: 'Avprenumeration misslyckades: kanal hittades inte',
-      10401: 'Avprenumeration misslyckades: inte prenumererad',
+      
+      // Subscription errors (utökat från WS General)
+      10300: 'Prenumeration misslyckades - ogiltig begäran',
+      10301: 'Redan prenumererad på denna kanal',
+      10302: 'Okänd kanal - kontrollera kanalnamn',
+      10305: `Max antal anslutningar uppnått (${MAX_CONNECTIONS} per 15s)`,
+      10400: 'Avprenumeration misslyckades',
+      10401: 'Inte prenumererad på denna kanal',
+      
+      // Connection status (från WS General dokumentation)
       11000: 'Inte redo, försök igen senare',
-      20051: 'WebSocket server stoppar... återanslut senare',
-      20060: 'WebSocket server synkroniserar... återanslut senare',
-      20061: 'WebSocket server synkronisering klar. återanslut',
-      5000: 'Info meddelande'
+      20051: 'Återanslut - fortsätt att lyssna på meddelanden',
+      20052: 'Tystnad återkallad - resumera meddelanden', 
+      20060: 'Plattform i underhållsläge - tjänster pausade',
+      20061: 'Plattform operativ - tjänster återupptagna',
+      
+      // Info messages
+      5000: 'Info meddelande',
+      
+      // Trading specific errors
+      30001: 'Order misslyckades - otillräckligt saldo',
+      30002: 'Order misslyckades - ogiltig mängd',
+      30003: 'Order misslyckades - ogiltigt pris',
+      30004: 'Order misslyckades - marknad stängd',
+      30005: 'Order misslyckades - position redan stängd',
+      
+      // Funding specific errors  
+      40001: 'Funding offer misslyckades - ogiltig ränta',
+      40002: 'Funding offer misslyckades - ogiltig period',
+      40003: 'Funding offer misslyckades - otillräckligt saldo'
     };
     
-    const swedishError = errorCodes[code] || 'Okänt fel';
-    return `${swedishError}: ${msg} (Kod: ${code})`;
+    const swedishError = errorCodes[code] || `Okänt fel (kod: ${code})`;
+    return `${swedishError}${msg ? ` - ${msg}` : ''}`;
   }, []);
 
   /**
-   * Crypto utility functions för Bitfinex authentication
+   * Enhanced crypto utility functions för Bitfinex authentication med DMS stöd
+   * Baserat på WS General dokumentation
    */
-  const generateAuthPayload = useCallback((apiKey: string, apiSecret: string) => {
+  const generateAuthPayload = useCallback((apiKey: string, apiSecret: string, enableDMS: boolean = true) => {
     const nonce = Date.now() * 1000; // Microsecond timestamp
     const authPayload = `AUTH${nonce}`;
     
@@ -361,11 +397,19 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     // För nu simulerar vi signature generation
     const signature = btoa(`${apiSecret}:${authPayload}`); // Simplified for demo
     
+    // Konfigurera flags enligt WS General dokumentation
+    let flags = CONF_FLAGS.TIMESTAMP + CONF_FLAGS.CHECKSUM + CONF_FLAGS.SEQ_ALL;
+    if (enableDMS) {
+      flags += CONF_FLAGS.DMS; // Enable Dead-Man-Switch för säkerhet
+    }
+    
     return {
       apiKey,
       authSig: signature,
       authPayload,
-      authNonce: nonce
+      authNonce: nonce,
+      dms: enableDMS ? 4 : 0, // DMS flag value
+      flags
     };
   }, []);
 
@@ -957,7 +1001,7 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     apiCredentials.current = { key: apiKey, secret: apiSecret };
 
     try {
-      const authData = generateAuthPayload(apiKey, apiSecret);
+      const authData = generateAuthPayload(apiKey, apiSecret, true); // Enable DMS by default
       
       const authMessage = {
         event: 'auth',
@@ -965,6 +1009,7 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
         authSig: authData.authSig,
         authPayload: authData.authPayload,
         authNonce: authData.authNonce,
+        dms: authData.dms, // Dead-Man-Switch för extra säkerhet
         filter: [
           'trading',  // orders, positions, trades
           'funding',  // offers, credits, loans, funding trades  
@@ -974,7 +1019,7 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
         ]
       };
 
-      console.log('[WebSocketAccount] 🔐 Sending authentication request...');
+      console.log('[WebSocketAccount] 🔐 Sending authentication request with DMS...');
       ws.current.send(JSON.stringify(authMessage));
       
     } catch (error) {

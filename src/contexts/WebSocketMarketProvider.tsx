@@ -50,6 +50,14 @@ interface ChannelSubscription {
   symbol: string;
 }
 
+// Bitfinex WebSocket constants från General dokumentation
+const MAX_SUBSCRIPTIONS = 30; // Max subscriptions per WebSocket connection
+const CONF_FLAGS = {
+  TIMESTAMP: 32768,     // Enable timestamps
+  CHECKSUM: 131072,     // Enable checksums  
+  SEQ_ALL: 65536        // Enable sequence numbers
+};
+
 interface WebSocketMarketState {
   // Data for all symbols
   tickers: Record<string, MarketData>;
@@ -138,14 +146,46 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     }, 20000);
   }, []);
 
-  // Advanced features activation
+  // Enhanced error handling från WebSocket General dokumentation
+  const getWebSocketError = useCallback((code: number): string => {
+    switch(code) {
+      // Info codes
+      case 20051: return 'Återanslut - fortsätt att lyssna på meddelanden';
+      case 20052: return 'Tystnad återkallad - resumera meddelanden';
+      case 20060: return 'Plattform i underhållsläge - tjänster pausade';
+      case 20061: return 'Plattform operativ - tjänster återupptagna';
+      
+      // Subscription error codes
+      case 10300: return 'Prenumeration misslyckades - ogiltig begäran';
+      case 10301: return 'Redan prenumererad på denna kanal';
+      case 10302: return 'Okänd kanal - kontrollera kanalnamn';
+      case 10305: return `Max antal prenumerationer uppnått (${MAX_SUBSCRIPTIONS})`;
+      case 10400: return 'Avprenumeration misslyckades';
+      case 10401: return 'Inte prenumererad på denna kanal';
+      
+      // Authentication errors (för private channels)
+      case 10100: return 'Autentisering misslyckades - kontrollera API-nycklar';
+      case 10101: return 'Redan autentiserad';
+      case 10102: return 'Autentisering krävs för denna kanal';
+      
+      // General errors
+      case 10000: return 'Okänt fel';
+      case 10001: return 'Allmänt fel';
+      case 10008: return 'Underhållsläge - systemet är otillgängligt';
+      
+      default: return `WebSocket fel (kod: ${code})`;
+    }
+  }, []);
+
+  // Advanced features activation med enhanced flags
   const enableAdvancedFeatures = useCallback(() => {
     if (ws.current?.readyState === WebSocket.OPEN) {
       const confMessage = {
         event: 'conf',
-        flags: 32768 + 131072
+        flags: CONF_FLAGS.TIMESTAMP + CONF_FLAGS.CHECKSUM + CONF_FLAGS.SEQ_ALL
       };
       
+      console.log('[WebSocketMarket] 🔧 Enabling advanced features:', confMessage);
       ws.current.send(JSON.stringify(confMessage));
     }
   }, []);
@@ -307,7 +347,9 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
           }
           
           if (data.event === 'error') {
-            setError(`${data.msg} (Code: ${data.code})`);
+            const errorMessage = getWebSocketError(data.code);
+            setError(`${errorMessage} - ${data.msg || 'Ingen ytterligare information'}`);
+            console.error('[WebSocketMarket] ❌ Error received:', data);
             return;
           }
           
@@ -413,9 +455,27 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     }
   }, [handleTickerUpdate, handleOrderbookUpdate, enableAdvancedFeatures, sendPing, resetHeartbeatTimeout]);
 
-  // Subscribe to symbol
+  // Subscribe to symbol med subscription limit checking
   const subscribeToSymbol = useCallback((symbol: string) => {
     if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+      console.warn('[WebSocketMarket] ⚠️ Cannot subscribe: WebSocket not connected');
+      return;
+    }
+
+    // Check subscription limits (max 30 per Bitfinex documentation)
+    if (subscriptions.current.size >= MAX_SUBSCRIPTIONS) {
+      const errorMsg = `Max prenumerationer uppnått (${MAX_SUBSCRIPTIONS}). Avsluta några prenumerationer först.`;
+      setError(errorMsg);
+      console.error('[WebSocketMarket] ❌', errorMsg);
+      return;
+    }
+
+    // Check if already subscribed to avoid duplicates
+    const isAlreadySubscribed = Array.from(subscriptions.current.values())
+      .some(sub => sub.symbol === symbol || sub.symbol === `t${symbol}`);
+    
+    if (isAlreadySubscribed) {
+      console.log('[WebSocketMarket] ℹ️ Already subscribed to:', symbol);
       return;
     }
 
@@ -440,10 +500,13 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     };
 
     try {
+      console.log('[WebSocketMarket] 📡 Subscribing to symbol:', bitfinexSymbol, `(${subscriptions.current.size + 2}/${MAX_SUBSCRIPTIONS} subscriptions)`);
       ws.current.send(JSON.stringify(tickerMsg));
       ws.current.send(JSON.stringify(bookMsg));
     } catch (error) {
-      setError('Failed to subscribe to symbol');
+      const errorMsg = 'Misslyckades att prenumerera på symbol';
+      setError(errorMsg);
+      console.error('[WebSocketMarket] ❌', errorMsg, error);
     }
   }, []);
 
