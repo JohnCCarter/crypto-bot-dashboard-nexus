@@ -5,7 +5,8 @@ Models that correspond to Supabase database schema.
 Replaces in-memory state with persistent storage.
 """
 
-from datetime import datetime, date
+from datetime import datetime
+from datetime import date as Date
 from decimal import Decimal
 from typing import Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
@@ -102,7 +103,7 @@ class OrderModel(BaseModel):
 class RiskMetricsModel(BaseModel):
     """Daily risk metrics (CRITICAL for trading limits)"""
     id: Optional[int] = None
-    date: date = Field(default_factory=date.today)
+    date: Date = Field(default_factory=lambda: Date.today())
     daily_pnl: Decimal = Field(default=Decimal('0'), decimal_places=8)
     daily_loss: Decimal = Field(default=Decimal('0'), decimal_places=8)
     max_drawdown: Decimal = Field(default=Decimal('0'), decimal_places=8)
@@ -123,7 +124,7 @@ class RiskMetricsModel(BaseModel):
         json_encoders = {
             Decimal: lambda v: str(v),
             datetime: lambda v: v.isoformat(),
-            date: lambda v: v.isoformat()
+            Date: lambda v: v.isoformat()
         }
 
 
@@ -168,7 +169,7 @@ class StrategyPerformanceModel(BaseModel):
     """Strategy performance metrics"""
     id: Optional[int] = None
     strategy_name: str = Field(..., max_length=50)
-    date: date = Field(default_factory=date.today)
+    date: Date = Field(default_factory=lambda: Date.today())
     total_trades: int = 0
     winning_trades: int = 0
     total_pnl: Decimal = Field(default=Decimal('0'), decimal_places=8)
@@ -185,7 +186,7 @@ class StrategyPerformanceModel(BaseModel):
         json_encoders = {
             Decimal: lambda v: str(v),
             datetime: lambda v: v.isoformat(),
-            date: lambda v: v.isoformat()
+            Date: lambda v: v.isoformat()
         }
 
 
