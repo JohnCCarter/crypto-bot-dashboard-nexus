@@ -1,0 +1,98 @@
+[
+    {
+      "timestamp": "2025-06-24T19:21:21.648Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "[API] ❌ Failed to fetch balances: 500 INTERNAL SERVER ERROR"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:18.614Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Configuration loading completed"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:18.614Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [Settings] Config keys: config_file, config_valid, enabled_strategies, probability_framework, risk_management, total_strategy_count, validation_errors"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:18.614Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ [Settings] Configuration loaded successfully: {\n  \"config_file\": \"backend/config.json\",\n  \"config_valid\": true,\n  \"enabled_strategies\": [\n    \"ema_crossover\",\n    \"rsi\",\n    \"fvg\"\n  ],\n  \"probability_framework\": {\n    \"combination_method\": \"weighted_average\",\n    \"dynamic_weights_enabled\": true,\n    \"risk_threshold\": 0.8\n  },\n  \"risk_management\": {\n    \"max_position_size\": 0.1,\n    \"min_signal_confidence\": 0.6,\n    \"probability_weight\": 0.5\n  },\n  \"total_strategy_count\": 4,\n  \"validation_errors\": []\n}"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:18.127Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "[API] ❌ Failed to fetch balances: 500 INTERNAL SERVER ERROR"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:17.797Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Calling api.getConfig()..."
+    },
+    {
+      "timestamp": "2025-06-24T19:21:17.797Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Timestamp: 2025-06-24T19:21:17.795Z"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:17.795Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Loading configuration..."
+    },
+    {
+      "timestamp": "2025-06-24T19:21:17.794Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Settings panel opened, loading config"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:03.777Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "[ManualTrade] ❌ Order failed: {\n  \"error\": \"❌ Order failed: 400 BAD REQUEST\",\n  \"symbol\": \"TESTBTC/TESTUSD\",\n  \"side\": \"sell\",\n  \"amount\": 0.001,\n  \"type\": \"market\"\n}"
+    },
+    {
+      "timestamp": "2025-06-24T19:21:03.777Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "[API] ❌ Order failed: 400 BAD REQUEST {\n  \"order\": {\n    \"symbol\": \"TESTBTC/TESTUSD\",\n    \"order_type\": \"market\",\n    \"side\": \"sell\",\n    \"amount\": 0.001,\n    \"position_type\": \"spot\"\n  },\n  \"status\": 400\n}"
+    },
+    {
+      "timestamp": "2025-06-24T19:20:53.603Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "[ManualTrade] ❌ Order failed: {\n  \"error\": \"❌ Order failed: 400 BAD REQUEST\",\n  \"symbol\": \"TESTBTC/TESTUSD\",\n  \"side\": \"buy\",\n  \"amount\": 0.001,\n  \"type\": \"market\"\n}"
+    },
+    {
+      "timestamp": "2025-06-24T19:20:53.603Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "[API] ❌ Order failed: 400 BAD REQUEST {\n  \"order\": {\n    \"symbol\": \"TESTBTC/TESTUSD\",\n    \"order_type\": \"market\",\n    \"side\": \"buy\",\n    \"amount\": 0.001,\n    \"position_type\": \"spot\"\n  },\n  \"status\": 400\n}"
+    },
+    {
+      "timestamp": "2025-06-24T19:20:32.040Z",
+      "level": "info",
+      "source": "Backend",
+      "message": "✅ Bot aktiverad"
+    },
+    {
+      "timestamp": "2025-06-24T19:20:32.040Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "✅ Bot aktiverad"
+    },
+    {
+      "timestamp": "2025-06-24T19:20:16.270Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "[API] ❌ Failed to fetch balances: 500 INTERNAL SERVER ERROR"
+    }
+  ]
