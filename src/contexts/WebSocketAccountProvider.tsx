@@ -109,6 +109,85 @@ interface MarginInfo {
   lastUpdated: number;
 }
 
+// Funding interfaces enligt Bitfinex Account Info Events
+interface BitfinexFundingOffer {
+  id: number;
+  symbol: string;
+  mtsCreate: number;
+  mtsUpdate: number;
+  amount: number;
+  amountOrig: number;
+  type: string;
+  flags: number;
+  status: string;
+  rate: number;
+  period: number;
+  notify: boolean;
+  hidden: boolean;
+  renew: boolean;
+  rateReal: number;
+}
+
+interface BitfinexFundingCredit {
+  id: number;
+  symbol: string;
+  side: number;
+  mtsCreate: number;
+  mtsUpdate: number;
+  amount: number;
+  flags: number;
+  status: string;
+  rate: number;
+  period: number;
+  mtsOpening: number;
+  mtsLastPayout: number;
+  notify: boolean;
+  hidden: boolean;
+  renew: boolean;
+  rateReal: number;
+  noClose: boolean;
+}
+
+interface BitfinexFundingLoan {
+  id: number;
+  symbol: string;
+  side: number;
+  mtsCreate: number;
+  mtsUpdate: number;
+  amount: number;
+  flags: number;
+  status: string;
+  rate: number;
+  period: number;
+  mtsOpening: number;
+  mtsLastPayout: number;
+  notify: boolean;
+  hidden: boolean;
+  renew: boolean;
+  rateReal: number;
+  noClose: boolean;
+}
+
+interface BitfinexFundingTrade {
+  id: number;
+  symbol: string;
+  mtsCreate: number;
+  offerId: number;
+  amount: number;
+  rate: number;
+  period: number;
+  maker: boolean;
+}
+
+// Application funding info interface
+interface FundingInfo {
+  offers: BitfinexFundingOffer[];
+  credits: BitfinexFundingCredit[];
+  loans: BitfinexFundingLoan[];
+  trades: BitfinexFundingTrade[];
+  lastUpdated: number;
+}
+
 // State interface för Account WebSocket
 interface WebSocketAccountState {
   // Real-time account data
@@ -117,6 +196,7 @@ interface WebSocketAccountState {
   positions: Trade[];
   trades: Trade[];
   marginInfo: MarginInfo;
+  fundingInfo: FundingInfo;
   
   // Connection status
   connected: boolean;
@@ -137,6 +217,9 @@ interface WebSocketAccountState {
   getTotalBalance: () => number;
   getMarginRequirement: () => number;
   getTradableBalance: (symbol?: string) => number;
+  getActiveFundingOffers: () => BitfinexFundingOffer[];
+  getFundingCredits: () => BitfinexFundingCredit[];
+  getFundingLoans: () => BitfinexFundingLoan[];
 }
 
 const WebSocketAccountContext = createContext<WebSocketAccountState | null>(null);
@@ -158,6 +241,13 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
   const [marginInfo, setMarginInfo] = useState<MarginInfo>({
     base: null,
     symbols: {},
+    lastUpdated: 0
+  });
+  const [fundingInfo, setFundingInfo] = useState<FundingInfo>({
+    offers: [],
+    credits: [],
+    loans: [],
+    trades: [],
     lastUpdated: 0
   });
   
@@ -430,6 +520,97 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
   }, []);
 
   /**
+   * Funding Event Handlers baserat på Account Info Events dokumentation
+   * https://docs.bitfinex.com/docs/ws-auth
+   */
+  const handleFundingOfferSnapshot = useCallback((offersData: BitfinexFundingOffer[]) => {
+    console.log('[WebSocketAccount] 💰 Funding offers snapshot:', offersData.length, 'offers');
+    setFundingInfo(prev => ({
+      ...prev,
+      offers: offersData,
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingOfferNew = useCallback((offerData: BitfinexFundingOffer) => {
+    console.log('[WebSocketAccount] 🆕 New funding offer:', offerData.id);
+    setFundingInfo(prev => ({
+      ...prev,
+      offers: [offerData, ...prev.offers],
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingOfferUpdate = useCallback((offerData: BitfinexFundingOffer) => {
+    console.log('[WebSocketAccount] 🔄 Funding offer update:', offerData.id);
+    setFundingInfo(prev => ({
+      ...prev,
+      offers: prev.offers.map(offer => 
+        offer.id === offerData.id ? offerData : offer
+      ),
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingOfferCancel = useCallback((offerData: BitfinexFundingOffer) => {
+    console.log('[WebSocketAccount] ❌ Funding offer cancelled:', offerData.id);
+    setFundingInfo(prev => ({
+      ...prev,
+      offers: prev.offers.filter(offer => offer.id !== offerData.id),
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingCreditSnapshot = useCallback((creditsData: BitfinexFundingCredit[]) => {
+    console.log('[WebSocketAccount] 💳 Funding credits snapshot:', creditsData.length, 'credits');
+    setFundingInfo(prev => ({
+      ...prev,
+      credits: creditsData,
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingCreditUpdate = useCallback((creditData: BitfinexFundingCredit) => {
+    console.log('[WebSocketAccount] 🔄 Funding credit update:', creditData.id);
+    setFundingInfo(prev => ({
+      ...prev,
+      credits: prev.credits.map(credit => 
+        credit.id === creditData.id ? creditData : credit
+      ),
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingLoanSnapshot = useCallback((loansData: BitfinexFundingLoan[]) => {
+    console.log('[WebSocketAccount] 🏦 Funding loans snapshot:', loansData.length, 'loans');
+    setFundingInfo(prev => ({
+      ...prev,
+      loans: loansData,
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingLoanUpdate = useCallback((loanData: BitfinexFundingLoan) => {
+    console.log('[WebSocketAccount] 🔄 Funding loan update:', loanData.id);
+    setFundingInfo(prev => ({
+      ...prev,
+      loans: prev.loans.map(loan => 
+        loan.id === loanData.id ? loanData : loan
+      ),
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  const handleFundingTradeExecution = useCallback((tradeData: BitfinexFundingTrade) => {
+    console.log('[WebSocketAccount] ⚡ Funding trade execution:', tradeData.id);
+    setFundingInfo(prev => ({
+      ...prev,
+      trades: [tradeData, ...prev.trades.slice(0, 99)], // Keep latest 100 funding trades
+      lastUpdated: Date.now()
+    }));
+  }, []);
+
+  /**
    * WebSocket connection management
    */
   const connect = useCallback(() => {
@@ -589,6 +770,60 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
                 }
                 break;
                 
+              case 'fos': // Funding offer snapshot
+                if (Array.isArray(messageData)) {
+                  handleFundingOfferSnapshot(messageData);
+                }
+                break;
+                
+              case 'fon': // Funding offer new
+                if (Array.isArray(messageData)) {
+                  handleFundingOfferNew(messageData);
+                }
+                break;
+                
+              case 'fou': // Funding offer update
+                if (Array.isArray(messageData)) {
+                  handleFundingOfferUpdate(messageData);
+                }
+                break;
+                
+              case 'foc': // Funding offer cancel
+                if (Array.isArray(messageData)) {
+                  handleFundingOfferCancel(messageData);
+                }
+                break;
+                
+              case 'fcs': // Funding credit snapshot
+                if (Array.isArray(messageData)) {
+                  handleFundingCreditSnapshot(messageData);
+                }
+                break;
+                
+              case 'fcu': // Funding credit update
+                if (Array.isArray(messageData)) {
+                  handleFundingCreditUpdate(messageData);
+                }
+                break;
+                
+              case 'fls': // Funding loan snapshot
+                if (Array.isArray(messageData)) {
+                  handleFundingLoanSnapshot(messageData);
+                }
+                break;
+                
+              case 'flu': // Funding loan update
+                if (Array.isArray(messageData)) {
+                  handleFundingLoanUpdate(messageData);
+                }
+                break;
+                
+              case 'fte': // Funding trade execution
+                if (Array.isArray(messageData)) {
+                  handleFundingTradeExecution(messageData);
+                }
+                break;
+                
               default:
                 console.log('[WebSocketAccount] 📨 Unhandled message type:', messageType, 'data:', messageData);
                 break;
@@ -647,6 +882,15 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     handleNotification,
     handleBalanceUpdate,
     handleMarginInfoUpdate,
+    handleFundingOfferSnapshot,
+    handleFundingOfferNew,
+    handleFundingOfferUpdate,
+    handleFundingOfferCancel,
+    handleFundingCreditSnapshot,
+    handleFundingCreditUpdate,
+    handleFundingLoanSnapshot,
+    handleFundingLoanUpdate,
+    handleFundingTradeExecution,
     getBitfinexErrorMessage
   ]);
 
@@ -674,7 +918,13 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
         authSig: authData.authSig,
         authPayload: authData.authPayload,
         authNonce: authData.authNonce,
-        filter: ['trading', 'wallet', 'balance'] // Subscribe to relevant channels
+        filter: [
+          'trading',  // orders, positions, trades
+          'funding',  // offers, credits, loans, funding trades  
+          'wallet',   // wallet updates
+          'balance',  // balance info (tradable balance, ...)
+          'notify'    // notifications
+        ]
       };
 
       console.log('[WebSocketAccount] 🔐 Sending authentication request...');
@@ -751,6 +1001,18 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     return Object.values(marginInfo.symbols).reduce((total, sym) => total + sym.tradableBalance, 0);
   }, [marginInfo]);
 
+  const getActiveFundingOffers = useCallback((): BitfinexFundingOffer[] => {
+    return fundingInfo.offers.filter(offer => offer.status === 'ACTIVE');
+  }, [fundingInfo]);
+
+  const getFundingCredits = useCallback((): BitfinexFundingCredit[] => {
+    return fundingInfo.credits.filter(credit => credit.status === 'ACTIVE');
+  }, [fundingInfo]);
+
+  const getFundingLoans = useCallback((): BitfinexFundingLoan[] => {
+    return fundingInfo.loans.filter(loan => loan.status === 'ACTIVE');
+  }, [fundingInfo]);
+
   /**
    * Auto-connect effect
    */
@@ -772,6 +1034,7 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     positions,
     trades,
     marginInfo,
+    fundingInfo,
     connected,
     connecting,
     authenticated,
@@ -785,7 +1048,10 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     getActiveOrders,
     getTotalBalance,
     getMarginRequirement,
-    getTradableBalance
+    getTradableBalance,
+    getActiveFundingOffers,
+    getFundingCredits,
+    getFundingLoans
   };
 
   return (
