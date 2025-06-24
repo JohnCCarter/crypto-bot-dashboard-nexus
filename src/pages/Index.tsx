@@ -9,6 +9,7 @@ import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ActivePositionsCard } from '@/components/ActivePositionsCard';
+import { PortfolioSummaryCard } from '@/components/PortfolioSummaryCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -283,12 +284,9 @@ const Index: FC = () => {
                 />
               </div>
 
-              {/* Third Row - Positions and History */}
+              {/* Third Row - Portfolio Summary and History */}
               <div className="col-span-12 lg:col-span-4">
-                <ActivePositionsCard 
-                  showOnlySymbol={false}
-                  maxPositions={10}
-                />
+                <PortfolioSummaryCard />
               </div>
               
               <div className="col-span-12 lg:col-span-4">
