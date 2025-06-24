@@ -348,10 +348,11 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
-                    <Badge variant="default" className="text-xs bg-blue-500">
-                      SPOT
+                    <Badge variant={position.side === 'buy' ? 'default' : 'destructive'} className="text-xs">
+                      {position.side.toUpperCase()}
                     </Badge>
                     <span className="font-semibold text-sm">{position.symbol}</span>
+                    <Badge variant="outline" className="text-xs bg-blue-500 text-white border-blue-500">SPOT</Badge>
                   </div>
                   
                   <div className="text-right">
