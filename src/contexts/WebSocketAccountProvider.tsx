@@ -149,6 +149,39 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
   const apiCredentials = useRef<{ key: string; secret: string } | null>(null);
 
   /**
+   * Error message mapping baserat på Bitfinex dokumentation
+   */
+  const getBitfinexErrorMessage = useCallback((code: number, msg: string) => {
+    const errorCodes: { [key: number]: string } = {
+      10000: 'Okänt fel',
+      10001: 'Generellt fel', 
+      10008: 'Concurrency fel',
+      10020: 'Request parameter fel',
+      10050: 'Konfigurationsfel',
+      10100: 'Autentisering misslyckades',
+      10111: 'Fel i autentiserings-payload',
+      10112: 'Fel i autentiserings-signatur',
+      10113: 'Fel i autentiserings-kryptering',
+      10114: 'Fel i autentiserings-nonce',
+      10200: 'Fel vid utloggning',
+      10300: 'Prenumeration misslyckades',
+      10301: 'Prenumeration misslyckades: redan prenumererad',
+      10302: 'Prenumeration misslyckades: okänd kanal',
+      10305: 'Prenumeration misslyckades: nått gräns för öppna kanaler',
+      10400: 'Avprenumeration misslyckades: kanal hittades inte',
+      10401: 'Avprenumeration misslyckades: inte prenumererad',
+      11000: 'Inte redo, försök igen senare',
+      20051: 'WebSocket server stoppar... återanslut senare',
+      20060: 'WebSocket server synkroniserar... återanslut senare',
+      20061: 'WebSocket server synkronisering klar. återanslut',
+      5000: 'Info meddelande'
+    };
+    
+    const swedishError = errorCodes[code] || 'Okänt fel';
+    return `${swedishError}: ${msg} (Kod: ${code})`;
+  }, []);
+
+  /**
    * Crypto utility functions för Bitfinex authentication
    */
   const generateAuthPayload = useCallback((apiKey: string, apiSecret: string) => {
@@ -278,6 +311,45 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     setTrades(prev => [transformedTrade, ...prev.slice(0, 99)]); // Keep latest 100 trades
   }, [transformBitfinexTrade]);
 
+  const handlePositionNew = useCallback((positionData: BitfinexPosition) => {
+    console.log('[WebSocketAccount] 🆕 New position:', positionData.symbol);
+    const transformedPosition = transformBitfinexPosition(positionData);
+    setPositions(prev => [transformedPosition, ...prev]);
+  }, [transformBitfinexPosition]);
+
+  const handlePositionUpdate = useCallback((positionData: BitfinexPosition) => {
+    console.log('[WebSocketAccount] 🔄 Position update:', positionData.symbol);
+    const transformedPosition = transformBitfinexPosition(positionData);
+    setPositions(prev => prev.map(pos => 
+      pos.symbol === transformedPosition.symbol ? transformedPosition : pos
+    ));
+  }, [transformBitfinexPosition]);
+
+  const handlePositionClose = useCallback((positionData: BitfinexPosition) => {
+    console.log('[WebSocketAccount] ❌ Position closed:', positionData.symbol);
+    setPositions(prev => prev.filter(pos => pos.symbol !== positionData.symbol));
+  }, []);
+
+  const handleNotification = useCallback((notificationData: any) => {
+    console.log('[WebSocketAccount] 🔔 Notification received:', notificationData);
+    // Kan implementeras för att visa notifikationer i UI
+  }, []);
+
+  const handleBalanceUpdate = useCallback((balanceData: BitfinexWallet) => {
+    console.log('[WebSocketAccount] 💰 Balance update:', balanceData.currency);
+    const transformedBalance = transformBitfinexWallet(balanceData);
+    setBalances(prev => {
+      const existingIndex = prev.findIndex(b => b.currency === transformedBalance.currency);
+      if (existingIndex !== -1) {
+        const updated = [...prev];
+        updated[existingIndex] = transformedBalance;
+        return updated;
+      } else {
+        return [...prev, transformedBalance];
+      }
+    });
+  }, [transformBitfinexWallet]);
+
   /**
    * WebSocket connection management
    */
@@ -332,10 +404,11 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
             return;
           }
           
-          // Handle error messages
+          // Handle error messages enligt Bitfinex dokumentation
           if (data.event === 'error') {
             console.error('[WebSocketAccount] ❌ Error:', data);
-            setError(`${data.msg} (Code: ${data.code})`);
+            const errorMessage = getBitfinexErrorMessage(data.code, data.msg);
+            setError(errorMessage);
             return;
           }
           
@@ -395,8 +468,44 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
                 }
                 break;
                 
+              case 'tu': // Trade execution update  
+                if (Array.isArray(messageData)) {
+                  handleTradeExecution(messageData); // Same handler as te
+                }
+                break;
+                
+              case 'pn': // Position new
+                if (Array.isArray(messageData)) {
+                  handlePositionNew(messageData);
+                }
+                break;
+                
+              case 'pu': // Position update
+                if (Array.isArray(messageData)) {
+                  handlePositionUpdate(messageData);
+                }
+                break;
+                
+              case 'pc': // Position close
+                if (Array.isArray(messageData)) {
+                  handlePositionClose(messageData);
+                }
+                break;
+                
+              case 'n': // Notification
+                if (Array.isArray(messageData)) {
+                  handleNotification(messageData);
+                }
+                break;
+                
+              case 'bu': // Balance update
+                if (Array.isArray(messageData)) {
+                  handleBalanceUpdate(messageData);
+                }
+                break;
+                
               default:
-                console.log('[WebSocketAccount] 📨 Unhandled message type:', messageType);
+                console.log('[WebSocketAccount] 📨 Unhandled message type:', messageType, 'data:', messageData);
                 break;
             }
           }
@@ -446,7 +555,12 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     handleWalletSnapshot, 
     handleWalletUpdate,
     handlePositionSnapshot,
-    handleTradeExecution
+    handlePositionNew,
+    handlePositionUpdate, 
+    handlePositionClose,
+    handleTradeExecution,
+    handleNotification,
+    handleBalanceUpdate
   ]);
 
   /**
