@@ -88,11 +88,18 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
   const orderbook = getOrderbookForSymbol(currentSymbol);
 
   // Get balance data for trading capacity
-  const { data: balances = [] } = useQuery({
+  const { data: balances = [], error: balanceError } = useQuery({
     queryKey: ['balances'],
     queryFn: api.getBalances,
     refetchInterval: 5000
   });
+
+  // Log balance errors
+  useEffect(() => {
+    if (balanceError) {
+      console.error('[ManualTrade] ❌ Failed to fetch balances for trading:', balanceError.message);
+    }
+  }, [balanceError]);
 
   // Order submission mutation
   const submitOrderMutation = useMutation({
@@ -112,7 +119,14 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       // Note: Backend may not support position_type yet, but we include it for future enhancement
       ...(orderData.positionType && { position_type: orderData.positionType })
     }),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.info(`[ManualTrade] ✅ Order placed successfully:`, { 
+        symbol: variables.symbol, 
+        side: variables.side, 
+        amount: variables.amount,
+        type: variables.type 
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['balances'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['positions'] });
@@ -124,6 +138,15 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       
       // Call callback if provided
       onOrderPlaced?.();
+    },
+    onError: (error, variables) => {
+      console.error(`[ManualTrade] ❌ Order failed:`, { 
+        error: error.message,
+        symbol: variables.symbol, 
+        side: variables.side, 
+        amount: variables.amount,
+        type: variables.type 
+      });
     }
   });
 

@@ -62,6 +62,13 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     staleTime: 2000
   });
 
+  // Log errors separately
+  useEffect(() => {
+    if (error) {
+      console.error('[HybridBalanceCard] ❌ Failed to fetch balances:', error.message);
+    }
+  }, [error]);
+
   // Calculate live portfolio values (optimized)
   const portfolioData = useMemo(() => {
     if (!balances.length || !debouncedTicker) {

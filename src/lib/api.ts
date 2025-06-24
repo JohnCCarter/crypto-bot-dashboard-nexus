@@ -47,7 +47,12 @@ export const api = {
       body: JSON.stringify(order),
     });
     
-    if (!res.ok) throw new Error('Order failed');
+    if (!res.ok) {
+      const errorMsg = `❌ Order failed: ${res.status} ${res.statusText}`;
+      console.error(`[API] ${errorMsg}`, { order, status: res.status });
+      throw new Error(errorMsg);
+    }
+    console.info(`✅ Order placed successfully`, order);
     return await res.json();
   },
 
@@ -75,7 +80,11 @@ export const api = {
   async getBalances(): Promise<Balance[]> {
     const res = await fetch(`${API_BASE_URL}/api/balances`);
     
-    if (!res.ok) throw new Error('Failed to fetch balances');
+    if (!res.ok) {
+      const errorMsg = `❌ Failed to fetch balances: ${res.status} ${res.statusText}`;
+      console.error(`[API] ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
     return await res.json();
   },
 
@@ -83,7 +92,11 @@ export const api = {
   async getActiveTrades(): Promise<Trade[]> {
     const res = await fetch(`${API_BASE_URL}/api/positions`);
     
-    if (!res.ok) throw new Error('Failed to fetch trades');
+    if (!res.ok) {
+      const errorMsg = `❌ Failed to fetch trades: ${res.status} ${res.statusText}`;
+      console.error(`[API] ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
     return await res.json();
   },
 
