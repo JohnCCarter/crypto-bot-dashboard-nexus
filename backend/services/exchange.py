@@ -6,6 +6,7 @@ import time
 import threading
 
 import ccxt
+from backend.services.symbol_mapper import SymbolMapper
 
 
 class CustomBitfinex(ccxt.bitfinex):
@@ -82,6 +83,9 @@ class ExchangeService:
             ExchangeError: If order creation fails
         """
         try:
+            # Convert symbol for paper trading if needed
+            exchange_symbol = SymbolMapper.to_paper_symbol(symbol)
+            
             params = {}
             if order_type == "limit" and price is None:
                 raise ValueError("Price is required for limit orders")
@@ -92,7 +96,7 @@ class ExchangeService:
                 pass  # Let CCXT handle default parameters
 
             order = self.exchange.create_order(
-                symbol=symbol,
+                symbol=exchange_symbol,  # Use mapped symbol
                 type=order_type,
                 side=side,
                 amount=amount,
@@ -102,7 +106,7 @@ class ExchangeService:
 
             return {
                 "id": order["id"],
-                "symbol": order["symbol"],
+                "symbol": SymbolMapper.normalize_symbol_for_display(str(order.get("symbol", symbol))),  # Show standard symbol
                 "type": order["type"],
                 "side": order["side"],
                 "amount": float(order["amount"]),
