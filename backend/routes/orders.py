@@ -85,6 +85,7 @@ def register(app):
                 "side": str,            # "buy" or "sell"
                 "amount": float,        # Order size
                 "price": float,         # Required for limit orders
+                "position_type": str,   # "margin" or "spot"
                 "leverage": float,      # Optional leverage
                 "stop_loss": float,     # Optional stop loss
                 "take_profit": float    # Optional take profit
@@ -131,12 +132,14 @@ def register(app):
                 )
 
             # Place order on Bitfinex using shared service (thread-safe nonce)
+            # Include position_type for margin/spot differentiation
             order = exchange_service.create_order(
                 symbol=data["symbol"],
                 order_type=data["order_type"],
                 side=data["side"],
                 amount=float(data["amount"]),
                 price=float(data.get("price", 0)),
+                position_type=data.get("position_type", "spot"),
             )
 
             current_app.logger.info(f"✅ [Orders] Order placed: {order['id']}")

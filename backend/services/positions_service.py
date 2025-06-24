@@ -104,7 +104,7 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
                             "collateral": current_value,
                             "margin_mode": "spot",
                             "maintenance_margin": 0.0,
-                            "position_type": "spot_holding"  # Identify as spot
+                            "position_type": "spot"  # Spot holding
                         }
                         
                         spot_positions.append(spot_position)

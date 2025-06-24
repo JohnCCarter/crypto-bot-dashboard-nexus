@@ -62,6 +62,7 @@ class ExchangeService:
         side: str,
         amount: float,
         price: Optional[float] = None,
+        position_type: str = "spot",
     ) -> Dict[str, Any]:
         """
         Create a new order on the exchange.
@@ -72,6 +73,7 @@ class ExchangeService:
             side: 'buy' or 'sell'
             amount: Order size
             price: Required for limit orders
+            position_type: 'margin' or 'spot'
 
         Returns:
             Dict containing order details
@@ -83,6 +85,22 @@ class ExchangeService:
             params = {}
             if order_type == "limit" and price is None:
                 raise ValueError("Price is required for limit orders")
+
+            # Configure for margin vs spot trading on Bitfinex
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
+                if position_type == "margin":
+                    # Bitfinex margin trading parameters
+                    params["type"] = "EXCHANGE MARGIN"
+                    params["hidden"] = False
+                    params["postonly"] = False
+                else:
+                    # Bitfinex spot trading parameters (default)
+                    if order_type == "limit":
+                        params["type"] = "EXCHANGE LIMIT"
+                    else:
+                        params["type"] = "EXCHANGE MARKET"
+                    params["hidden"] = False
+                    params["postonly"] = False
 
             order = self.exchange.create_order(
                 symbol=symbol,
@@ -103,6 +121,7 @@ class ExchangeService:
                 "status": order["status"],
                 "filled": float(order.get("filled", 0)),
                 "remaining": float(order.get("remaining", amount)),
+                "position_type": position_type,  # Include position type
                 "timestamp": order.get(
                     "timestamp", int(datetime.utcnow().timestamp() * 1000)
                 ),

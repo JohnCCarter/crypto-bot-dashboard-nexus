@@ -39,6 +39,7 @@ export const api = {
     side: string;
     amount: number;
     price?: number | null;
+    position_type?: string;
   }): Promise<{ message: string }> {
     const res = await fetch(`${API_BASE_URL}/api/orders`, {
       method: 'POST',
