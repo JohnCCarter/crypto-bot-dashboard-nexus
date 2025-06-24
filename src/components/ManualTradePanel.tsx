@@ -42,12 +42,18 @@ interface ManualTradePanelProps {
   onOrderPlaced?: () => void; // Callback when order is placed
 }
 
-// Available trading pairs
+// Available trading pairs (aligned with Bitfinex paper trading)
 const AVAILABLE_SYMBOLS = [
-  { value: 'TESTBTC/TESTUSD', label: 'BTC/USD', currency: 'TESTBTC' },
-  { value: 'TESTETH/TESTUSD', label: 'ETH/USD', currency: 'TESTETH' },
-  { value: 'TESTLTC/TESTUSD', label: 'LTC/USD', currency: 'TESTLTC' },
+  { value: 'TESTBTC/TESTUSD', label: 'BTC/USD', currency: 'TESTBTC', backendSymbol: 'TESTBTC/TESTUSD' },
+  { value: 'TESTETH/TESTUSD', label: 'ETH/USD', currency: 'TESTETH', backendSymbol: 'TESTETH/TESTUSD' },
+  { value: 'TESTLTC/TESTUSD', label: 'LTC/USD', currency: 'TESTLTC', backendSymbol: 'TESTLTC/TESTUSD' },
 ];
+
+// Convert frontend symbol to backend symbol
+const mapSymbolForBackend = (frontendSymbol: string): string => {
+  const symbolInfo = AVAILABLE_SYMBOLS.find(s => s.value === frontendSymbol);
+  return symbolInfo?.backendSymbol || 'TESTBTC/TESTUSD';
+};
 
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
   symbol,
@@ -258,13 +264,19 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     if (!canSubmit) return;
 
     const orderData = {
-      symbol: currentSymbol,
+      symbol: mapSymbolForBackend(currentSymbol), // Use backend-compatible symbol
       type: orderType,
       side,
       amount: parseFloat(amount),
       positionType,
       ...(orderType === 'limit' && { price: parseFloat(price) })
     };
+
+    console.info(`[ManualTrade] 🚀 Submitting order:`, { 
+      frontendSymbol: currentSymbol, 
+      backendSymbol: mapSymbolForBackend(currentSymbol),
+      orderData 
+    });
 
     submitOrderMutation.mutate(orderData);
   };

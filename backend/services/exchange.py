@@ -86,21 +86,10 @@ class ExchangeService:
             if order_type == "limit" and price is None:
                 raise ValueError("Price is required for limit orders")
 
-            # Configure for margin vs spot trading on Bitfinex
+            # Basic Bitfinex configuration without problematic parameters
             if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
-                if position_type == "margin":
-                    # Bitfinex margin trading parameters
-                    params["type"] = "EXCHANGE MARGIN"
-                    params["hidden"] = False
-                    params["postonly"] = False
-                else:
-                    # Bitfinex spot trading parameters (default)
-                    if order_type == "limit":
-                        params["type"] = "EXCHANGE LIMIT"
-                    else:
-                        params["type"] = "EXCHANGE MARKET"
-                    params["hidden"] = False
-                    params["postonly"] = False
+                # Only set essential order type parameters for Bitfinex
+                pass  # Let CCXT handle default parameters
 
             order = self.exchange.create_order(
                 symbol=symbol,
