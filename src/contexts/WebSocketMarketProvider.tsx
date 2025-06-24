@@ -399,8 +399,10 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
       };
 
       ws.current.onerror = () => {
-        // Silent error handling - no spam
-        setError('WebSocket connection failed');
+        // Silent error handling - no spam in development
+        if (process.env.NODE_ENV !== 'development') {
+          setError('WebSocket connection failed');
+        }
         setConnecting(false);
         connectionInitialized.current = false; // Reset connection flag on error
       };

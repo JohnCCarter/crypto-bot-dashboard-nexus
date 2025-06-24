@@ -98,10 +98,10 @@ const Index: FC = () => {
   useEffect(() => {
     loadAllData();
     
-    // Set up periodic updates
+    // Set up periodic updates - reduced frequency to prevent rate limiting
     const interval = setInterval(() => {
       loadAllData();
-    }, 5000); // Update every 5 seconds
+    }, 10000); // Update every 10 seconds (reduced from 5)
 
     return () => clearInterval(interval);
   }, [selectedSymbol]); // Add selectedSymbol as dependency
@@ -172,7 +172,7 @@ const Index: FC = () => {
     // Set up periodic status updates
     const interval = setInterval(() => {
       fetchBotStatus();
-    }, 30000); // Update every 30 seconds
+    }, 60000); // Update every 60 seconds (reduced from 30)
 
     return () => {
       clearInterval(interval);

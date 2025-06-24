@@ -122,7 +122,7 @@ def init_rate_limiter(app):
     limiter = Limiter(
         app=app,
         key_func=get_remote_address,
-        default_limits=["200 per day", "50 per hour"],
+        default_limits=["10000 per day", "500 per hour", "150 per minute"],  # Increased for development
         storage_uri="memory://"  # Use Redis in production: "redis://localhost:6379"
     )
     return limiter

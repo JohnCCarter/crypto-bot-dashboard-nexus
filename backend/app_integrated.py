@@ -656,7 +656,7 @@ def get_websocket_status():
 
 
 @app.route("/api/ws-proxy/ticker", methods=["GET"])
-@app._limiter.limit("60 per minute")  # Rate limit market data access
+@app._limiter.limit("300 per minute")  # Increased rate limit for development
 @public_endpoint
 def get_websocket_ticker():
     """Get latest ticker data from WebSocket"""
