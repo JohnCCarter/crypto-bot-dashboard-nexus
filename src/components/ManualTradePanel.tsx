@@ -35,17 +35,28 @@ type OrderType = 'market' | 'limit';
 type OrderSide = 'buy' | 'sell';
 
 interface ManualTradePanelProps {
-  defaultSymbol?: string;
+  symbol?: string; // Current global symbol (from main page)
+  onOrderPlaced?: () => void; // Callback when order is placed
 }
 
+// Available trading pairs
+const AVAILABLE_SYMBOLS = [
+  { value: 'TESTBTC/TESTUSD', label: 'BTC/USD', currency: 'TESTBTC' },
+  { value: 'TESTETH/TESTUSD', label: 'ETH/USD', currency: 'TESTETH' },
+  { value: 'TESTLTC/TESTUSD', label: 'LTC/USD', currency: 'TESTLTC' },
+];
+
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
-  defaultSymbol = 'TESTBTC/TESTUSD' 
+  symbol,
+  onOrderPlaced
 }) => {
   const [orderType, setOrderType] = useState<OrderType>('market');
   const [side, setSide] = useState<OrderSide>('buy');
   const [amount, setAmount] = useState('');
   const [price, setPrice] = useState('');
-  const [currentSymbol] = useState(defaultSymbol);
+  const [currentSymbol, setCurrentSymbol] = useState(
+    AVAILABLE_SYMBOLS.find(s => s.value.includes(symbol?.replace('USD', '')))?.value || 'TESTBTC/TESTUSD'
+  );
 
   const queryClient = useQueryClient();
 
@@ -98,10 +109,14 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       queryClient.invalidateQueries({ queryKey: ['balances'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['positions'] });
+      queryClient.invalidateQueries({ queryKey: ['active-positions'] });
       
       // Reset form
       setAmount('');
       setPrice('');
+      
+      // Call callback if provided
+      onOrderPlaced?.();
     }
   });
 
@@ -148,23 +163,27 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     };
   }, [ticker, orderbook, price, amount, side]);
 
-  // Trading capacity calculation
+  // Trading capacity calculation (dynamic based on selected symbol)
   const tradingCapacity = useMemo(() => {
+    const symbolInfo = AVAILABLE_SYMBOLS.find(s => s.value === currentSymbol);
+    const baseCurrency = symbolInfo?.currency || 'TESTBTC';
+    
     const usdBalance = balances.find(b => b.currency === 'TESTUSD')?.available || 0;
-    const btcBalance = balances.find(b => b.currency === 'TESTBTC')?.available || 0;
+    const cryptoBalance = balances.find(b => b.currency === baseCurrency)?.available || 0;
     
     const maxBuyUSD = usdBalance;
-    const maxSellBTC = btcBalance;
+    const maxSellCrypto = cryptoBalance;
     const currentPrice = ticker?.price || 0;
     
     return {
+      baseCurrency,
       maxBuyUSD,
-      maxSellBTC,
-      maxBuyBTC: currentPrice > 0 ? maxBuyUSD / currentPrice : 0,
-      maxSellUSD: maxSellBTC * currentPrice,
-      hasCapacity: side === 'buy' ? maxBuyUSD > 0 : maxSellBTC > 0
+      maxSellCrypto,
+      maxBuyCrypto: currentPrice > 0 ? maxBuyUSD / currentPrice : 0,
+      maxSellUSD: maxSellCrypto * currentPrice,
+      hasCapacity: side === 'buy' ? maxBuyUSD > 0 : maxSellCrypto > 0
     };
-  }, [balances, ticker, side]);
+  }, [balances, ticker, side, currentSymbol]);
 
   // Auto-fill functions
   const fillMarketPrice = () => {
@@ -179,10 +198,10 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
 
   const fillMaxAmount = () => {
     if (side === 'buy') {
-      const maxBTC = tradingCapacity.maxBuyBTC;
-      setAmount(maxBTC.toFixed(6));
+      const maxCrypto = tradingCapacity.maxBuyCrypto;
+      setAmount(maxCrypto.toFixed(6));
     } else {
-      setAmount(tradingCapacity.maxSellBTC.toFixed(6));
+      setAmount(tradingCapacity.maxSellCrypto.toFixed(6));
     }
   };
 
@@ -281,6 +300,30 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
           </div>
         )}
 
+        {/* Trading Pair Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="symbol">Trading Pair</Label>
+          <Select value={currentSymbol} onValueChange={(value: string) => {
+            setCurrentSymbol(value);
+            setAmount(''); // Reset amount when changing pairs
+            setPrice(''); // Reset price when changing pairs
+          }}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AVAILABLE_SYMBOLS.map((symbolOption) => (
+                <SelectItem key={symbolOption.value} value={symbolOption.value}>
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4" />
+                    {symbolOption.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Order Configuration */}
         <div className="grid grid-cols-2 gap-4">
           {/* Order Type */}
@@ -325,7 +368,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
         {/* Amount Input */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <Label htmlFor="amount">Amount (BTC)</Label>
+            <Label htmlFor="amount">Amount ({tradingCapacity.baseCurrency.replace('TEST', '')})</Label>
             <Button 
               variant="outline" 
               size="sm" 
@@ -348,8 +391,8 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
           {/* Trading Capacity Info */}
           <div className="text-xs text-muted-foreground">
             Available: {side === 'buy' 
-              ? `${formatCurrency(tradingCapacity.maxBuyUSD)} (≈${formatCrypto(tradingCapacity.maxBuyBTC)} BTC)`
-              : `${formatCrypto(tradingCapacity.maxSellBTC)} BTC (≈${formatCurrency(tradingCapacity.maxSellUSD)})`
+              ? `${formatCurrency(tradingCapacity.maxBuyUSD)} (≈${formatCrypto(tradingCapacity.maxBuyCrypto)} ${tradingCapacity.baseCurrency.replace('TEST', '')})`
+              : `${formatCrypto(tradingCapacity.maxSellCrypto)} ${tradingCapacity.baseCurrency.replace('TEST', '')} (≈${formatCurrency(tradingCapacity.maxSellUSD)})`
             }
           </div>
         </div>
@@ -432,7 +475,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
           ) : (
             <div className="flex items-center gap-2">
               {side === 'buy' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              {side === 'buy' ? 'Buy' : 'Sell'} {amount && `${amount} BTC`}
+              {side === 'buy' ? 'Buy' : 'Sell'} {amount && `${amount} ${tradingCapacity.baseCurrency.replace('TEST', '')}`}
               {orderType === 'market' && ticker && amount && 
                 ` ≈ ${formatCurrency(parseFloat(amount) * marketInfo.currentPrice)}`
               }
