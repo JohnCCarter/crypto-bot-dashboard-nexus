@@ -27,27 +27,48 @@ def get_position_type_from_metadata(symbol: str) -> str:
     Get position type (margin/spot) from stored order metadata.
     
     Args:
-        symbol: Trading symbol (e.g. "BTC/USD")
+        symbol: Trading symbol (e.g. "BTC/USD" or "TESTBTC/TESTUSD")
         
     Returns:
         "margin" or "spot" based on recent order metadata
     """
     try:
         if hasattr(current_app, '_order_metadata'):
-            if symbol in current_app._order_metadata:
-                order_meta = current_app._order_metadata[symbol]
-                # Check if metadata is recent (within 24 hours)
-                if time.time() - order_meta['timestamp'] < 86400:
-                    position_type = order_meta['position_type']
-                    logging.info(
-                        f"📊 [Positions] Using metadata for {symbol}: "
-                        f"{position_type.upper()} (from recent order)"
-                    )
-                    return position_type
-                else:
-                    # Clean up old metadata
-                    del current_app._order_metadata[symbol]
-                    logging.info(f"🧹 [Positions] Cleaned old metadata for {symbol}")
+            # Check both original symbol and normalized symbol
+            symbols_to_check = [symbol]
+            
+            # Add normalized version (BTC/USD from TESTBTC/TESTUSD)
+            if symbol.startswith('TEST'):
+                normalized = symbol.replace('TEST', '').replace('TESTUSD', 'USD')
+                symbols_to_check.append(normalized)
+            
+            # Also check reverse (TESTBTC/TESTUSD from BTC/USD)
+            if not symbol.startswith('TEST'):
+                test_version = symbol
+                test_version = test_version.replace('BTC', 'TESTBTC')
+                test_version = test_version.replace('ETH', 'TESTETH')
+                test_version = test_version.replace('LTC', 'TESTLTC')
+                test_version = test_version.replace('/USD', '/TESTUSD')
+                symbols_to_check.append(test_version)
+            
+            for check_symbol in symbols_to_check:
+                if check_symbol in current_app._order_metadata:
+                    order_meta = current_app._order_metadata[check_symbol]
+                    # Check if metadata is recent (within 24 hours)
+                    if time.time() - order_meta['timestamp'] < 86400:
+                        position_type = order_meta['position_type']
+                        logging.info(
+                            f"📊 [Positions] Using metadata for {symbol}: "
+                            f"{position_type.upper()} (found via {check_symbol})"
+                        )
+                        return position_type
+                    else:
+                        # Clean up old metadata
+                        del current_app._order_metadata[check_symbol]
+                        logging.info(
+                            f"🧹 [Positions] Cleaned old metadata for "
+                            f"{check_symbol}"
+                        )
     except Exception as e:
         logging.warning(f"Error getting metadata for {symbol}: {e}")
     
