@@ -203,11 +203,29 @@ export const api = {
     return result;
   },
 
-  // Get Order History (Live)
+  // Get Order History (Live) - Combines history + open orders
   async getOrderHistory(): Promise<OrderHistoryItem[]> {
-    const res = await fetch(`${API_BASE_URL}/api/orders/history`);
-    if (!res.ok) throw new Error('Failed to fetch order history');
-    return await res.json();
+    try {
+      // Fetch both order history and open orders
+      const [historyRes, openOrdersRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/orders/history`),
+        fetch(`${API_BASE_URL}/api/orders`)
+      ]);
+      
+      const history = historyRes.ok ? await historyRes.json() : [];
+      const openOrdersData = openOrdersRes.ok ? await openOrdersRes.json() : { orders: [] };
+      const openOrders = openOrdersData.orders || [];
+      
+      // Combine and sort by timestamp (newest first)
+      const allOrders = [...history, ...openOrders].sort((a, b) => 
+        (b.timestamp || 0) - (a.timestamp || 0)
+      );
+      
+      return allOrders;
+    } catch (error) {
+      console.error('Failed to fetch order history:', error);
+      return [];
+    }
   },
 
   // Get Logs (From TradingLogger)
