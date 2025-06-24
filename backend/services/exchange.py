@@ -367,30 +367,62 @@ class ExchangeService:
         try:
             positions = self.exchange.fetch_positions(symbols)
 
-            # Filter out positions with no size
+            # Process all positions (including Bitfinex margin positions)
             active_positions = []
             for position in positions:
-                if float(position.get("size", 0)) != 0:
+                # Get position size - handle different exchange formats
+                size = position.get("size")
+                amount = position.get("amount") 
+                notional = position.get("notional", 0)
+                
+                # For Bitfinex: sometimes size is None but notional contains amount
+                if size is None and amount is None:
+                    # Check if this is a Bitfinex margin position with notional
+                    if notional != 0:
+                        # Use notional as amount for Bitfinex margin positions
+                        actual_amount = float(notional)
+                    else:
+                        # Try to extract from info array for Bitfinex
+                        info = position.get("info", [])
+                        if isinstance(info, list) and len(info) > 2:
+                            try:
+                                actual_amount = float(info[2])  # Amount is at index 2
+                            except (ValueError, IndexError):
+                                actual_amount = 0
+                        else:
+                            actual_amount = 0
+                else:
+                    actual_amount = float(size or amount or 0)
+
+                # Only include positions with non-zero amounts
+                if actual_amount != 0:
+                    # Get mark price - try different sources
+                    mark_price = position.get("markPrice")
+                    if mark_price is None:
+                        mark_price = position.get("lastPrice", 0)
+                    
                     active_positions.append(
                         {
                             "id": position.get("id", ""),
                             "symbol": position["symbol"],
                             "side": position["side"],  # 'long' or 'short'
-                            "amount": float(position["size"]),
+                            "amount": actual_amount,
                             "entry_price": float(position.get("entryPrice", 0)),
-                            "mark_price": float(position.get("markPrice", 0)),
+                            "mark_price": float(mark_price or 0),
                             "pnl": float(position.get("unrealizedPnl", 0)),
                             "pnl_percentage": float(position.get("percentage", 0)),
                             "timestamp": position.get(
                                 "timestamp", int(datetime.utcnow().timestamp() * 1000)
                             ),
-                            "contracts": float(position.get("contracts", 0)),
-                            "notional": float(position.get("notional", 0)),
-                            "collateral": float(position.get("collateral", 0)),
+                            "contracts": float(position.get("contracts") or 0),
+                            "notional": float(position.get("notional") or 0),
+                            "collateral": float(position.get("collateral") or 0),
                             "margin_mode": position.get("marginMode", "isolated"),
                             "maintenance_margin": float(
-                                position.get("maintenanceMargin", 0)
+                                position.get("maintenanceMargin") or 0
                             ),
+                            "position_type": "margin",  # Mark as real margin position
+                            "leverage": float(position.get("leverage") or 1.0),
                         }
                     )
 
