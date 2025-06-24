@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Any, Dict
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -26,6 +26,7 @@ from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
 from backend.services.risk_manager import RiskManager, RiskParameters
+from backend.services.auth_service import AuthService, init_rate_limiter, require_auth, public_endpoint
 
 # Configure logging for production performance
 log_level = (
@@ -44,9 +45,31 @@ if os.getenv("ENVIRONMENT") == "production":
 
 # Initialize Flask app
 app = Flask(__name__)
+
+# Secure CORS configuration - only allow specific development origins
+allowed_origins = [
+    "http://localhost:3000",    # React dev server (alternative)
+    "http://localhost:8080",    # Vite dev server (alternative)
+    "http://localhost:8081",    # Current Vite dev server
+    "http://127.0.0.1:3000",    # Local React dev
+    "http://127.0.0.1:8080",    # Local Vite dev (alternative)
+    "http://127.0.0.1:8081",    # Local Vite dev (current)
+]
+
+# In production, only allow specific domains
+if os.getenv("ENVIRONMENT") == "production":
+    production_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+    allowed_origins = [origin.strip() for origin in production_origins if origin.strip()]
+    if not allowed_origins:
+        logger.warning("⚠️ SECURITY: No production origins configured! CORS disabled.")
+        allowed_origins = []
+
 CORS(
     app,
-    origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"],
+    origins=allowed_origins,
+    supports_credentials=True,  # For future authentication
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
 )
 
 # Registrera routes som inte använder blueprint
@@ -187,6 +210,10 @@ services = init_services()
 # Make services available to blueprints
 app._services = services
 
+# Initialize authentication and rate limiting
+app._auth_service = AuthService()
+app._limiter = init_rate_limiter(app)
+
 # In-memory order metadata tracking for margin/spot classification
 app._order_metadata = {}
 
@@ -203,8 +230,60 @@ def register_routes():
 register_routes()
 
 
+# Authentication endpoints
+@app.route("/api/auth/login", methods=["POST"])
+@app._limiter.limit("5 per minute")  # Rate limit login attempts
+def login():
+    """Authenticate user and return JWT token."""
+    data = request.get_json()
+    if not data or "username" not in data or "password" not in data:
+        return jsonify({
+            "error": "Invalid request",
+            "message": "Username and password required"
+        }), 400
+    
+    username = data["username"]
+    password = data["password"]
+    
+    user = app._auth_service.authenticate_user(username, password)
+    if not user:
+        logger.warning(f"🔒 Failed login attempt for username: {username}")
+        return jsonify({
+            "error": "Authentication failed",
+            "message": "Invalid username or password"
+        }), 401
+    
+    # Generate JWT token
+    token = app._auth_service.generate_token(user["username"], user["role"])
+    
+    logger.info(f"✅ Successful login: {username} ({user['role']})")
+    
+    return jsonify({
+        "message": "Login successful",
+        "token": token,
+        "user": {
+            "username": user["username"],
+            "role": user["role"],
+            "permissions": user["permissions"]
+        },
+        "expires_in_hours": app._auth_service.token_expiry_hours
+    }), 200
+
+
+@app.route("/api/auth/verify", methods=["GET"])
+@require_auth()
+def verify_token():
+    """Verify current JWT token is valid."""
+    from flask import g
+    return jsonify({
+        "message": "Token is valid",
+        "user": g.current_user
+    }), 200
+
+
 # Root route for API documentation
 @app.route("/", methods=["GET"])
+@public_endpoint
 def api_documentation():
     """Show API documentation and available endpoints."""
     api_info = {
@@ -266,6 +345,7 @@ def api_documentation():
 
 # Add monitoring endpoints
 @app.route("/api/monitor/status", methods=["GET"])
+@require_auth(required_role="user")
 def get_status():
     """Get trading bot status."""
     try:
@@ -284,6 +364,7 @@ def get_status():
 
 
 @app.route("/api/monitor/alerts", methods=["GET"])
+@require_auth(required_role="user")
 def get_alerts():
     """Get recent alerts."""
     try:
@@ -434,6 +515,7 @@ def init_bitfinex_websocket():
 
 
 @app.route("/api/ws-proxy/status", methods=["GET"])
+@public_endpoint  # Allow public access for monitoring
 def get_websocket_status():
     """Get WebSocket proxy status"""
     return jsonify(
@@ -447,6 +529,8 @@ def get_websocket_status():
 
 
 @app.route("/api/ws-proxy/ticker", methods=["GET"])
+@app._limiter.limit("60 per minute")  # Rate limit market data access
+@public_endpoint
 def get_websocket_ticker():
     """Get latest ticker data från WebSocket"""
     if latest_ticker_data:
