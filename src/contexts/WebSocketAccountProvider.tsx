@@ -188,6 +188,44 @@ interface FundingInfo {
   lastUpdated: number;
 }
 
+// WS Input Interfaces baserat på Bitfinex WS Inputs dokumentation
+interface NewOrderInput {
+  type: string;        // Order type (MARKET, LIMIT, STOP, etc.)
+  symbol: string;      // Trading pair (tBTCUSD, etc.)
+  amount: number;      // Order amount (positive for buy, negative for sell)
+  price?: number;      // Price for limit orders
+  priceTrailing?: number; // Trailing price
+  priceAuxLimit?: number; // Auxiliary limit price
+  priceOcoStop?: number;  // OCO stop price
+  flags?: number;      // Order flags
+  tif?: string;        // Time in force
+  affiliateCode?: string; // Affiliate code
+}
+
+interface UpdateOrderInput {
+  price?: number;      // New price
+  amount?: number;     // New amount
+  delta?: number;      // Amount delta
+  priceAuxLimit?: number; // New aux limit price
+  priceTrailing?: number; // New trailing price
+  flags?: number;      // New flags
+  tif?: string;        // New time in force
+}
+
+interface NewFundingOfferInput {
+  type: string;        // Offer type (LIMIT)
+  symbol: string;      // Funding currency (fUSD, fBTC, etc.)
+  amount: number;      // Offer amount
+  rate: number;        // Daily rate
+  period: number;      // Period in days (2-120)
+  flags?: number;      // Offer flags
+}
+
+interface CalcInput {
+  // Calc request can trigger margin info calculation
+  // according to Bitfinex documentation
+}
+
 // State interface för Account WebSocket
 interface WebSocketAccountState {
   // Real-time account data
@@ -209,6 +247,15 @@ interface WebSocketAccountState {
   // Control functions
   authenticate: (apiKey: string, apiSecret: string) => void;
   disconnect: () => void;
+  
+  // WS Input Commands (Trading Operations)
+  newOrder: (orderData: NewOrderInput) => Promise<boolean>;
+  updateOrder: (orderId: number, updateData: UpdateOrderInput) => Promise<boolean>;
+  cancelOrder: (orderId: number) => Promise<boolean>;
+  cancelAllOrders: () => Promise<boolean>;
+  newFundingOffer: (offerData: NewFundingOfferInput) => Promise<boolean>;
+  cancelFundingOffer: (offerId: number) => Promise<boolean>;
+  calcRequest: (calcData: CalcInput) => Promise<boolean>;
   
   // Data getters
   getOrderById: (id: string) => OrderHistoryItem | null;
@@ -1014,6 +1061,227 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
   }, [fundingInfo]);
 
   /**
+   * WS Input Commands - Trading Operations
+   * Baserat på List of WS Inputs från Bitfinex dokumentation
+   */
+  const newOrder = useCallback(async (orderData: NewOrderInput): Promise<boolean> => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !authenticated) {
+      console.error('[WebSocketAccount] ❌ Cannot send order: not authenticated');
+      setError('Inte autentiserad - kan inte skicka order');
+      return false;
+    }
+
+    try {
+      const cid = Date.now(); // Client order ID
+      const orderMessage = [
+        0,
+        'on',
+        null,
+        {
+          type: orderData.type,
+          symbol: orderData.symbol,
+          amount: orderData.amount.toString(),
+          price: orderData.price?.toString() || '0',
+          price_trailing: orderData.priceTrailing?.toString(),
+          price_aux_limit: orderData.priceAuxLimit?.toString(),
+          price_oco_stop: orderData.priceOcoStop?.toString(),
+          flags: orderData.flags || 0,
+          tif: orderData.tif,
+          affiliate_code: orderData.affiliateCode,
+          cid: cid
+        }
+      ];
+
+      console.log('[WebSocketAccount] 📤 Sending new order:', orderData.symbol, orderData.amount);
+      ws.current.send(JSON.stringify(orderMessage));
+      return true;
+
+    } catch (error) {
+      console.error('[WebSocketAccount] ❌ Error sending order:', error);
+      setError(`Fel vid order: ${error}`);
+      return false;
+    }
+  }, [authenticated]);
+
+  const updateOrder = useCallback(async (orderId: number, updateData: UpdateOrderInput): Promise<boolean> => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !authenticated) {
+      console.error('[WebSocketAccount] ❌ Cannot update order: not authenticated');
+      setError('Inte autentiserad - kan inte uppdatera order');
+      return false;
+    }
+
+    try {
+      const updateMessage = [
+        0,
+        'ou',
+        null,
+        {
+          id: orderId,
+          price: updateData.price?.toString(),
+          amount: updateData.amount?.toString(),
+          delta: updateData.delta?.toString(),
+          price_aux_limit: updateData.priceAuxLimit?.toString(),
+          price_trailing: updateData.priceTrailing?.toString(),
+          flags: updateData.flags,
+          tif: updateData.tif
+        }
+      ];
+
+      console.log('[WebSocketAccount] 📤 Updating order:', orderId);
+      ws.current.send(JSON.stringify(updateMessage));
+      return true;
+
+    } catch (error) {
+      console.error('[WebSocketAccount] ❌ Error updating order:', error);
+      setError(`Fel vid order-uppdatering: ${error}`);
+      return false;
+    }
+  }, [authenticated]);
+
+  const cancelOrder = useCallback(async (orderId: number): Promise<boolean> => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !authenticated) {
+      console.error('[WebSocketAccount] ❌ Cannot cancel order: not authenticated');
+      setError('Inte autentiserad - kan inte avbryta order');
+      return false;
+    }
+
+    try {
+      const cancelMessage = [
+        0,
+        'oc',
+        null,
+        {
+          id: orderId
+        }
+      ];
+
+      console.log('[WebSocketAccount] 📤 Cancelling order:', orderId);
+      ws.current.send(JSON.stringify(cancelMessage));
+      return true;
+
+    } catch (error) {
+      console.error('[WebSocketAccount] ❌ Error cancelling order:', error);
+      setError(`Fel vid order-avbrytning: ${error}`);
+      return false;
+    }
+  }, [authenticated]);
+
+  const cancelAllOrders = useCallback(async (): Promise<boolean> => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !authenticated) {
+      console.error('[WebSocketAccount] ❌ Cannot cancel all orders: not authenticated');
+      setError('Inte autentiserad - kan inte avbryta alla ordrar');
+      return false;
+    }
+
+    try {
+      const cancelAllMessage = [
+        0,
+        'oc_multi',
+        null,
+        {
+          all: 1
+        }
+      ];
+
+      console.log('[WebSocketAccount] 📤 Cancelling all orders');
+      ws.current.send(JSON.stringify(cancelAllMessage));
+      return true;
+
+    } catch (error) {
+      console.error('[WebSocketAccount] ❌ Error cancelling all orders:', error);
+      setError(`Fel vid avbrytning av alla ordrar: ${error}`);
+      return false;
+    }
+  }, [authenticated]);
+
+  const newFundingOffer = useCallback(async (offerData: NewFundingOfferInput): Promise<boolean> => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !authenticated) {
+      console.error('[WebSocketAccount] ❌ Cannot send funding offer: not authenticated');
+      setError('Inte autentiserad - kan inte skicka funding offer');
+      return false;
+    }
+
+    try {
+      const offerMessage = [
+        0,
+        'fon',
+        null,
+        {
+          type: offerData.type,
+          symbol: offerData.symbol,
+          amount: offerData.amount.toString(),
+          rate: offerData.rate.toString(),
+          period: offerData.period,
+          flags: offerData.flags || 0
+        }
+      ];
+
+      console.log('[WebSocketAccount] 📤 Sending funding offer:', offerData.symbol, offerData.amount);
+      ws.current.send(JSON.stringify(offerMessage));
+      return true;
+
+    } catch (error) {
+      console.error('[WebSocketAccount] ❌ Error sending funding offer:', error);
+      setError(`Fel vid funding offer: ${error}`);
+      return false;
+    }
+  }, [authenticated]);
+
+  const cancelFundingOffer = useCallback(async (offerId: number): Promise<boolean> => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !authenticated) {
+      console.error('[WebSocketAccount] ❌ Cannot cancel funding offer: not authenticated');
+      setError('Inte autentiserad - kan inte avbryta funding offer');
+      return false;
+    }
+
+    try {
+      const cancelMessage = [
+        0,
+        'foc',
+        null,
+        {
+          id: offerId
+        }
+      ];
+
+      console.log('[WebSocketAccount] 📤 Cancelling funding offer:', offerId);
+      ws.current.send(JSON.stringify(cancelMessage));
+      return true;
+
+    } catch (error) {
+      console.error('[WebSocketAccount] ❌ Error cancelling funding offer:', error);
+      setError(`Fel vid funding offer-avbrytning: ${error}`);
+      return false;
+    }
+  }, [authenticated]);
+
+  const calcRequest = useCallback(async (calcData: CalcInput): Promise<boolean> => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !authenticated) {
+      console.error('[WebSocketAccount] ❌ Cannot send calc request: not authenticated');
+      setError('Inte autentiserad - kan inte skicka calc request');
+      return false;
+    }
+
+    try {
+      const calcMessage = [
+        0,
+        'calc',
+        null,
+        calcData
+      ];
+
+      console.log('[WebSocketAccount] 📤 Sending calc request');
+      ws.current.send(JSON.stringify(calcMessage));
+      return true;
+
+    } catch (error) {
+      console.error('[WebSocketAccount] ❌ Error sending calc request:', error);
+      setError(`Fel vid calc request: ${error}`);
+      return false;
+    }
+  }, [authenticated]);
+
+  /**
    * Auto-connect effect
    */
   useEffect(() => {
@@ -1043,6 +1311,15 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     lastHeartbeat,
     authenticate,
     disconnect,
+    // WS Input Commands (Trading Operations)
+    newOrder,
+    updateOrder,
+    cancelOrder,
+    cancelAllOrders,
+    newFundingOffer,
+    cancelFundingOffer,
+    calcRequest,
+    // Data getters
     getOrderById,
     getBalanceBySymbol,
     getActiveOrders,

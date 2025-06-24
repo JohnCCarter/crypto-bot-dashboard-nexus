@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ActivePositionsCard } from '@/components/ActivePositionsCard';
 import { PortfolioSummaryCard } from '@/components/PortfolioSummaryCard';
 import { AccountStatus } from '@/components/AccountStatus';
+import { WebSocketTradePanel } from '@/components/WebSocketTradePanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -234,8 +235,9 @@ const Index: FC = () => {
       {/* Main Dashboard */}
       <main className="container mx-auto px-6 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="dashboard">Trading Dashboard</TabsTrigger>
+            <TabsTrigger value="websocket">🚀 WebSocket Trading</TabsTrigger>
             <TabsTrigger value="analysis">Probability Analysis</TabsTrigger>
           </TabsList>
           
@@ -300,6 +302,30 @@ const Index: FC = () => {
               {/* Fourth Row - Log Viewer */}
               <div className="col-span-12">
                 <LogViewer logs={logs} isLoading={isLoading} />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="websocket" className="space-y-6">
+            <div className="grid grid-cols-12 gap-6">
+              {/* Main Trading Panel */}
+              <div className="col-span-12 lg:col-span-8">
+                <WebSocketTradePanel />
+              </div>
+              
+              {/* Side panels */}
+              <div className="col-span-12 lg:col-span-4 space-y-6">
+                <AccountStatus />
+                <HybridPriceChart 
+                  symbol={selectedSymbol} 
+                  height={300}
+                  showControls={false}
+                />
+                <HybridOrderBook 
+                  symbol={selectedSymbol} 
+                  maxLevels={8}
+                  showControls={false}
+                />
               </div>
             </div>
           </TabsContent>
