@@ -86,18 +86,31 @@ class ExchangeService:
             # Convert symbol for paper trading if needed
             exchange_symbol = SymbolMapper.to_paper_symbol(symbol)
             
-            params = {}
+            # Validate limit order requirements
             if order_type == "limit" and price is None:
                 raise ValueError("Price is required for limit orders")
-
-            # Basic Bitfinex configuration without problematic parameters
+            
+            # Prepare order parameters
+            params = {}
+            
+            # Handle Bitfinex margin vs spot orders correctly
             if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
-                # Only set essential order type parameters for Bitfinex
-                pass  # Let CCXT handle default parameters
+                # For Bitfinex, we use params to specify margin vs exchange orders
+                # Based on Bitfinex V1 API documentation:
+                # - Default orders (margin=True) are margin trading orders
+                # - Exchange orders (exchange=True) are spot orders
+                
+                if position_type == "spot":
+                    # For spot orders, add exchange=True to params
+                    params['exchange'] = True
+                # For margin orders, we don't need to add anything (default behavior)
+            
+            # Use standard order_type for all exchanges
+            ccxt_order_type = order_type
 
             order = self.exchange.create_order(
                 symbol=exchange_symbol,  # Use mapped symbol
-                type=order_type,
+                type=ccxt_order_type,     # Use correct order type for margin/spot
                 side=side,
                 amount=amount,
                 price=price,
