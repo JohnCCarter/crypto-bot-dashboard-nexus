@@ -30,7 +30,8 @@ import {
   Zap,
   Target,
   Layers,
-  Coins
+  Coins,
+  Info
 } from 'lucide-react';
 
 type OrderType = 'market' | 'limit';
@@ -100,12 +101,56 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     refetchInterval: 5000
   });
 
+  // Get symbol information including minimum order sizes
+  const { data: symbolInfo, error: symbolInfoError } = useQuery({
+    queryKey: ['symbol-info'],
+    queryFn: () => api.getSymbolInfo(),
+    staleTime: 5 * 60 * 1000, // 5 minutes - symbol info doesn't change often
+    retry: 2
+  });
+
   // Log balance errors
   useEffect(() => {
     if (balanceError) {
       console.error('[ManualTrade] ❌ Failed to fetch balances for trading:', balanceError.message);
     }
   }, [balanceError]);
+
+  // Log symbol info errors
+  useEffect(() => {
+    if (symbolInfoError) {
+      console.error('[ManualTrade] ❌ Failed to fetch symbol info:', symbolInfoError.message);
+    }
+  }, [symbolInfoError]);
+
+  // Helper functions for minimum order validation
+  const getSymbolMinimumOrder = (symbol: string): number => {
+    if (!symbolInfo?.symbols) return 0.001;
+    
+    // Convert display symbol (BTC/USD) to lookup key
+    const lookupSymbol = symbol.replace('TEST', '').replace('TESTUSD', 'USD');
+    return symbolInfo.symbols[lookupSymbol]?.minimum_order_size || 0.001;
+  };
+
+  const getSymbolSuggestedMinimum = (symbol: string): number => {
+    if (!symbolInfo?.symbols) return 0.0011;
+    
+    const lookupSymbol = symbol.replace('TEST', '').replace('TESTUSD', 'USD');
+    return symbolInfo.symbols[lookupSymbol]?.suggested_minimum || 0.0011;
+  };
+
+  const validateOrderAmount = (symbol: string, amount: number) => {
+    const minimum = getSymbolMinimumOrder(symbol);
+    const suggested = getSymbolSuggestedMinimum(symbol);
+    
+    return {
+      isValid: amount >= minimum,
+      isSuggested: amount >= suggested,
+      minimum,
+      suggested,
+      amount
+    };
+  };
 
   // Order submission mutation
   const submitOrderMutation = useMutation({
@@ -248,6 +293,32 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     }
   };
 
+  // Quick amount functions (25%, 50%, 75%, Max)
+  const fillQuickAmount = (percentage: number) => {
+    const validation = validateOrderAmount(currentSymbol, 0);
+    
+    if (side === 'buy') {
+      const maxCrypto = tradingCapacity.maxBuyCrypto;
+      const targetAmount = maxCrypto * (percentage / 100);
+      
+      // Ensure we meet minimum requirements
+      const finalAmount = Math.max(targetAmount, validation.suggested);
+      setAmount(finalAmount.toFixed(6));
+    } else {
+      const maxCrypto = tradingCapacity.maxSellCrypto;
+      const targetAmount = maxCrypto * (percentage / 100);
+      
+      // Ensure we meet minimum requirements
+      const finalAmount = Math.max(targetAmount, validation.suggested);
+      setAmount(finalAmount.toFixed(6));
+    }
+  };
+
+  const fillSuggestedMinimum = () => {
+    const suggested = getSymbolSuggestedMinimum(currentSymbol);
+    setAmount(suggested.toFixed(6));
+  };
+
   // Validation
   const canSubmit = useMemo(() => {
     const amountNum = parseFloat(amount);
@@ -257,8 +328,12 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     if (orderType === 'limit' && (!priceNum || priceNum <= 0)) return false;
     if (!tradingCapacity.hasCapacity) return false;
     
+    // Check minimum order size
+    const orderValidation = validateOrderAmount(currentSymbol, amountNum);
+    if (!orderValidation.isValid) return false;
+    
     return true;
-  }, [amount, price, orderType, tradingCapacity.hasCapacity]);
+  }, [amount, price, orderType, tradingCapacity.hasCapacity, currentSymbol]);
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -468,6 +543,114 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
             placeholder="0.001000"
           />
           
+          {/* Quick Amount Buttons */}
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fillSuggestedMinimum}
+              className="text-xs"
+            >
+              <Info className="w-3 h-3 mr-1" />
+              Min
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => fillQuickAmount(25)}
+              disabled={!tradingCapacity.hasCapacity}
+              className="text-xs"
+            >
+              25%
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => fillQuickAmount(50)}
+              disabled={!tradingCapacity.hasCapacity}
+              className="text-xs"
+            >
+              50%
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => fillQuickAmount(75)}
+              disabled={!tradingCapacity.hasCapacity}
+              className="text-xs"
+            >
+              75%
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => fillQuickAmount(100)}
+              disabled={!tradingCapacity.hasCapacity}
+              className="text-xs"
+            >
+              Max
+            </Button>
+          </div>
+
+          {/* Minimum Order Information */}
+          {symbolInfo && (
+            <div className="p-2 bg-muted/50 rounded text-xs space-y-1">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Info className="w-3 h-3" />
+                Order Requirements
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-muted-foreground">Minimum:</span>
+                  <span className="ml-1 font-medium">
+                    {getSymbolMinimumOrder(currentSymbol).toFixed(6)} {tradingCapacity.baseCurrency.replace('TEST', '')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Suggested:</span>
+                  <span className="ml-1 font-medium text-blue-600">
+                    {getSymbolSuggestedMinimum(currentSymbol).toFixed(6)} {tradingCapacity.baseCurrency.replace('TEST', '')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Order Amount Validation */}
+          {amount && parseFloat(amount) > 0 && (
+            (() => {
+              const validation = validateOrderAmount(currentSymbol, parseFloat(amount));
+              return (
+                <div className={`text-xs p-2 rounded ${
+                  validation.isValid 
+                    ? validation.isSuggested 
+                      ? 'bg-green-50 text-green-700' 
+                      : 'bg-yellow-50 text-yellow-700'
+                    : 'bg-red-50 text-red-700'
+                }`}>
+                  {validation.isValid ? (
+                    validation.isSuggested ? (
+                      <div className="flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Optimal order size
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        Above minimum but below suggested
+                      </div>
+                    )
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Below minimum order size ({validation.minimum.toFixed(6)})
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+          )}
+
           {/* Trading Capacity Info */}
           <div className="text-xs space-y-1">
             <div className="text-muted-foreground">

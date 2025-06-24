@@ -8,6 +8,7 @@ from flask import current_app, jsonify, request
 
 from backend.services.validation import validate_order_data
 from backend.services.exchange import ExchangeError
+from backend.services.symbol_mapper import SymbolMapper
 
 try:
     from dotenv import load_dotenv
@@ -302,3 +303,56 @@ def register(app):
         except Exception as e:
             current_app.logger.error(f"❌ [Orders] Unexpected error: {e}")
             return jsonify({"error": "Failed to fetch order status"}), 500
+
+    @app.route("/api/symbol-info", methods=["GET"])
+    def get_symbol_info():
+        """
+        Get symbol information including minimum order sizes.
+
+        Query parameters:
+            symbol: Optional specific symbol to get info for
+
+        Returns:
+            200: Symbol information
+            500: Server error
+        """
+        current_app.logger.info("📋 [Symbol Info] GET symbol info request")
+
+        try:
+            symbol = request.args.get("symbol")
+
+            if symbol:
+                # Get info for specific symbol
+                minimum_size = SymbolMapper.get_minimum_order_size(symbol)
+                suggested_minimum = SymbolMapper.suggest_minimum_amount(symbol)
+                paper_symbol = SymbolMapper.to_paper_symbol(symbol)
+                
+                return jsonify({
+                    "symbol": symbol,
+                    "minimum_order_size": minimum_size,
+                    "suggested_minimum": suggested_minimum,
+                    "paper_symbol": paper_symbol,
+                    "paper_trading_enabled": SymbolMapper.is_paper_trading_enabled()
+                }), 200
+            else:
+                # Get info for all symbols
+                mapping_info = SymbolMapper.get_mapping_info()
+                
+                # Create detailed symbol info for each available symbol
+                symbols_info = {}
+                for std_symbol in SymbolMapper.get_available_standard_symbols():
+                    symbols_info[std_symbol] = {
+                        "minimum_order_size": SymbolMapper.get_minimum_order_size(std_symbol),
+                        "suggested_minimum": SymbolMapper.suggest_minimum_amount(std_symbol),
+                        "paper_symbol": SymbolMapper.to_paper_symbol(std_symbol)
+                    }
+
+                return jsonify({
+                    "symbols": symbols_info,
+                    "paper_trading_enabled": mapping_info["paper_trading_enabled"],
+                    "available_symbols": mapping_info["available_symbols"]
+                }), 200
+
+        except Exception as e:
+            current_app.logger.error(f"❌ [Symbol Info] Unexpected error: {e}")
+            return jsonify({"error": "Failed to fetch symbol info"}), 500

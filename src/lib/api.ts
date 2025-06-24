@@ -1,5 +1,20 @@
 import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, OrderBook, OrderHistoryItem, Trade, TradingConfig } from '@/types/trading';
 
+// Symbol Info interface
+interface SymbolInfo {
+  symbol?: string;
+  minimum_order_size?: number;
+  suggested_minimum?: number;
+  paper_symbol?: string;
+  paper_trading_enabled?: boolean;
+  symbols?: Record<string, {
+    minimum_order_size: number;
+    suggested_minimum: number;
+    paper_symbol: string;
+  }>;
+  available_symbols?: string[];
+}
+
 // Use Vite proxy instead of direct backend connection
 // In development: requests go to '/api/*' which Vite proxies to http://127.0.0.1:5000
 // In production: API requests will go to same origin
@@ -156,6 +171,25 @@ export const api = {
     
     const markets = await res.json();
     return markets;
+  },
+
+  // Get Symbol Information (Live Backend)
+  async getSymbolInfo(symbol?: string): Promise<SymbolInfo> {
+    const url = symbol 
+      ? `${API_BASE_URL}/api/symbol-info?symbol=${encodeURIComponent(symbol)}`
+      : `${API_BASE_URL}/api/symbol-info`;
+    
+    const res = await fetch(url);
+    
+    if (!res.ok) {
+      const errorMsg = `❌ Failed to fetch symbol info: ${res.status} ${res.statusText}`;
+      console.error(`[API] ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
+    
+    const symbolInfo = await res.json();
+    console.info(`✅ Symbol info fetched`, { symbol, symbolInfo });
+    return symbolInfo;
   },
 
   // Bot control endpoints
