@@ -495,9 +495,15 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
 
   // Auto-connect on mount with proper cleanup
   useEffect(() => {
-    connect();
+    // Delay initial connection in development to avoid React Strict Mode issues
+    const connectTimer = setTimeout(() => {
+      connect();
+    }, process.env.NODE_ENV === 'development' ? 1000 : 0);
 
     return () => {
+      // Clear connection timer
+      clearTimeout(connectTimer);
+      
       // Clean shutdown
       connectionInitialized.current = false;
       
