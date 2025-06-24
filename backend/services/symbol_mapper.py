@@ -28,6 +28,19 @@ class SymbolMapper:
         "ETH/EUR": "TESTETH/TESTEUR",
     }
     
+    # Minimum order sizes for Bitfinex paper trading (based on actual API limits)
+    MINIMUM_ORDER_SIZES = {
+        "BTC/USD": 0.00004,   # TESTBTC/TESTUSD minimum
+        "ETH/USD": 0.0008,    # TESTETH/TESTUSD minimum  
+        "LTC/USD": 0.04,      # TESTLTC/TESTUSD minimum
+        "XRP/USD": 0.1,       # Estimated
+        "BTC/USDT": 0.00004,
+        "ETH/USDT": 0.0008,
+        "LTC/USDT": 0.04,
+        "BTC/EUR": 0.00004,
+        "ETH/EUR": 0.0008,
+    }
+    
     # Reverse mapping for converting back
     REVERSE_MAP = {v: k for k, v in SYMBOL_MAP.items()}
     
@@ -117,11 +130,68 @@ class SymbolMapper:
             return symbol in cls.SYMBOL_MAP
     
     @classmethod
+    def get_minimum_order_size(cls, symbol: str) -> float:
+        """
+        Get minimum order size for a symbol.
+        
+        Args:
+            symbol: Standard symbol (e.g. "BTC/USD")
+            
+        Returns:
+            Minimum order size as float
+        """
+        return cls.MINIMUM_ORDER_SIZES.get(symbol, 0.001)  # Default fallback
+    
+    @classmethod
+    def validate_order_amount(cls, symbol: str, amount: float) -> Dict[str, Any]:
+        """
+        Validate if order amount meets minimum requirements.
+        
+        Args:
+            symbol: Standard symbol (e.g. "BTC/USD")
+            amount: Order amount to validate
+            
+        Returns:
+            Dict with validation result and details
+        """
+        minimum = cls.get_minimum_order_size(symbol)
+        
+        if amount >= minimum:
+            return {
+                "valid": True,
+                "minimum": minimum,
+                "amount": amount
+            }
+        else:
+            return {
+                "valid": False,
+                "minimum": minimum,
+                "amount": amount,
+                "error": f"Order amount {amount} is below minimum {minimum} for {symbol}"
+            }
+    
+    @classmethod
+    def suggest_minimum_amount(cls, symbol: str) -> float:
+        """
+        Suggest a reasonable minimum amount for trading.
+        
+        Args:
+            symbol: Standard symbol
+            
+        Returns:
+            Suggested minimum amount (slightly above exchange minimum)
+        """
+        minimum = cls.get_minimum_order_size(symbol)
+        # Add 10% buffer above minimum to ensure orders go through
+        return round(minimum * 1.1, 8)
+    
+    @classmethod
     def get_mapping_info(cls) -> Dict[str, Any]:
         """Get current symbol mapping information for debugging."""
         return {
             "paper_trading_enabled": cls.is_paper_trading_enabled(),
             "mappings": cls.SYMBOL_MAP if cls.is_paper_trading_enabled() else {},
+            "minimums": cls.MINIMUM_ORDER_SIZES,
             "available_symbols": (
                 cls.get_available_paper_symbols() 
                 if cls.is_paper_trading_enabled() 
