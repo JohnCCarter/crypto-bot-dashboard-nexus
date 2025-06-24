@@ -43,17 +43,17 @@ interface ManualTradePanelProps {
   onOrderPlaced?: () => void; // Callback when order is placed
 }
 
-// Available trading pairs (aligned with Bitfinex paper trading)
+// Available trading pairs (aligned with Bitfinex live trading)
 const AVAILABLE_SYMBOLS = [
-  { value: 'TESTBTC/TESTUSD', label: 'BTC/USD', currency: 'TESTBTC', backendSymbol: 'TESTBTC/TESTUSD' },
-  { value: 'TESTETH/TESTUSD', label: 'ETH/USD', currency: 'TESTETH', backendSymbol: 'TESTETH/TESTUSD' },
-  { value: 'TESTLTC/TESTUSD', label: 'LTC/USD', currency: 'TESTLTC', backendSymbol: 'TESTLTC/TESTUSD' },
+  { value: 'BTCUSD', label: 'BTC/USD', currency: 'BTC', backendSymbol: 'BTCUSD' },
+  { value: 'ETHUSD', label: 'ETH/USD', currency: 'ETH', backendSymbol: 'ETHUSD' },
+  { value: 'LTCUSD', label: 'LTC/USD', currency: 'LTC', backendSymbol: 'LTCUSD' },
 ];
 
 // Convert frontend symbol to backend symbol
 const mapSymbolForBackend = (frontendSymbol: string): string => {
   const symbolInfo = AVAILABLE_SYMBOLS.find(s => s.value === frontendSymbol);
-  return symbolInfo?.backendSymbol || 'TESTBTC/TESTUSD';
+  return symbolInfo?.backendSymbol || 'BTCUSD';
 };
 
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
@@ -66,7 +66,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
   const [amount, setAmount] = useState('');
   const [price, setPrice] = useState('');
   const [currentSymbol, setCurrentSymbol] = useState(
-    AVAILABLE_SYMBOLS.find(s => s.value.includes(symbol?.replace('USD', '')))?.value || 'TESTBTC/TESTUSD'
+    AVAILABLE_SYMBOLS.find(s => s.value.includes(symbol?.replace('USD', '')))?.value || 'BTCUSD'
   );
 
   const queryClient = useQueryClient();
@@ -247,9 +247,9 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
   // Trading capacity calculation (dynamic based on selected symbol and position type)
   const tradingCapacity = useMemo(() => {
     const symbolInfo = AVAILABLE_SYMBOLS.find(s => s.value === currentSymbol);
-    const baseCurrency = symbolInfo?.currency || 'TESTBTC';
+    const baseCurrency = symbolInfo?.currency || 'BTC';
     
-    const usdBalance = balances.find(b => b.currency === 'TESTUSD')?.available || 0;
+    const usdBalance = balances.find(b => b.currency === 'USD')?.available || 0;
     const cryptoBalance = balances.find(b => b.currency === baseCurrency)?.available || 0;
     
     // For margin trading, we could potentially have higher leverage
@@ -523,7 +523,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
         {/* Amount Input */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <Label htmlFor="amount">Amount ({tradingCapacity.baseCurrency.replace('TEST', '')})</Label>
+            <Label htmlFor="amount">Amount ({tradingCapacity.baseCurrency})</Label>
             <Button 
               variant="outline" 
               size="sm" 

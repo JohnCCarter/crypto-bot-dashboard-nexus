@@ -10,7 +10,6 @@ import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ActivePositionsCard } from '@/components/ActivePositionsCard';
 import { PortfolioSummaryCard } from '@/components/PortfolioSummaryCard';
-import { AccountStatus } from '@/components/AccountStatus';
 import { WebSocketTradePanel } from '@/components/WebSocketTradePanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -263,7 +262,7 @@ const Index: FC = () => {
               </div>
               
               <div className="col-span-12 lg:col-span-3">
-                <AccountStatus />
+                <PortfolioSummaryCard />
               </div>
 
               {/* Second Row - Positions and Chart Preview */}
@@ -315,7 +314,10 @@ const Index: FC = () => {
               
               {/* Side panels */}
               <div className="col-span-12 lg:col-span-4 space-y-6">
-                <AccountStatus />
+                <HybridBalanceCard 
+                  symbol={selectedSymbol} 
+                  showDetails={true}
+                />
                 <HybridPriceChart 
                   symbol={selectedSymbol} 
                   height={300}
