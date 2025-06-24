@@ -35,7 +35,7 @@ class TradeModel(BaseModel):
     status: Literal['open', 'closed', 'cancelled'] = 'open'
     opened_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

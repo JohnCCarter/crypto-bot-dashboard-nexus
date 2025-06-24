@@ -62,11 +62,37 @@ class DatabaseService:
         """Get all open trades"""
         try:
             result = self.client.table('trades').select("*").eq('status', 'open').execute()
-            trades = [TradeModel(**trade) for trade in result.data]
+            trades = []
+            for row in result.data:
+                clean_row = self._clean_metadata(row)
+                try:
+                    trades.append(TradeModel(**clean_row))
+                except Exception as e:
+                    logger.warning(f"Skipping invalid trade row: {e}")
+                    continue
             logger.debug(f"📊 Retrieved {len(trades)} open trades")
             return trades
         except Exception as e:
             logger.error(f"❌ Failed to get open trades: {e}")
+            return []
+    
+    def get_recent_trades(self, limit: int = 10) -> List[TradeModel]:
+        """Get recent trades"""
+        try:
+            result = self.client.table('trades').select("*").order(
+                'created_at', desc=True).limit(limit).execute()
+            trades = []
+            for row in result.data:
+                clean_row = self._clean_metadata(row)
+                try:
+                    trades.append(TradeModel(**clean_row))
+                except Exception as e:
+                    logger.warning(f"Skipping invalid trade row: {e}")
+                    continue
+            logger.debug(f"� Retrieved {len(trades)} recent trades")
+            return trades
+        except Exception as e:
+            logger.error(f"❌ Failed to get recent trades: {e}")
             return []
     
     def close_trade(self, trade_id: int, pnl: Decimal) -> bool:
@@ -117,15 +143,28 @@ class DatabaseService:
             logger.error(f"❌ Failed to create/update position: {e}")
             raise
     
+    def _clean_metadata(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Fix None metadata values for Pydantic validation"""
+        if 'metadata' in data and data['metadata'] is None:
+            data['metadata'] = {}
+        return data
+
     def get_all_positions(self) -> List[PositionModel]:
-        """Get all active positions"""
+        """Get all open positions"""
         try:
-            result = self.client.table('positions').select("*").execute()
-            positions = [PositionModel(**pos) for pos in result.data]
-            logger.debug(f"🎯 Retrieved {len(positions)} positions")
+            result = self.client.table('positions').select('*').execute()
+            positions = []
+            for row in result.data:
+                # Fix None metadata before Pydantic validation
+                clean_row = self._clean_metadata(row)
+                try:
+                    positions.append(PositionModel(**clean_row))
+                except Exception as e:
+                    logger.warning(f"Skipping invalid position row: {e}")
+                    continue
             return positions
         except Exception as e:
-            logger.error(f"❌ Failed to get positions: {e}")
+            logger.error(f"Failed to get positions: {e}")
             return []
     
     def close_position(self, symbol: str) -> bool:
