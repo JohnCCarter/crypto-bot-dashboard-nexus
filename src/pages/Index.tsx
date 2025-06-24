@@ -261,8 +261,7 @@ const Index: FC = () => {
               
               <div className="col-span-12 lg:col-span-3">
                 <ActivePositionsCard 
-                  symbol={selectedSymbol} 
-                  showOnlySymbol={true}
+                  showOnlySymbol={false}
                   maxPositions={5}
                 />
               </div>
