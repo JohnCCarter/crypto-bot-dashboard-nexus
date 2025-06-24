@@ -85,6 +85,30 @@ interface BitfinexTrade {
   cid: number;
 }
 
+// Margin Info interfaces enligt Bitfinex WebSocket dokumentation
+interface BitfinexMarginBase {
+  userPL: number;         // User profit and loss
+  userSwaps: number;      // Amount of swaps a user has
+  marginBalance: number;  // Balance in your margin funding account
+  marginNet: number;      // Balance after P&L is accounted for
+  marginRequired: number; // Minimum required margin to keep positions open
+}
+
+interface BitfinexMarginSym {
+  symbol: string;
+  tradableBalance: number; // Your buying power (how large a position you can obtain)
+  grossBalance: number;    // Your buying power including funds already reserved for open positions
+  buy: number | null;      // Maximum amount you can buy at current best ASK
+  sell: number | null;     // Maximum amount you can sell at current best BID
+}
+
+// Application margin info interface
+interface MarginInfo {
+  base: BitfinexMarginBase | null;
+  symbols: { [symbol: string]: BitfinexMarginSym };
+  lastUpdated: number;
+}
+
 // State interface för Account WebSocket
 interface WebSocketAccountState {
   // Real-time account data
@@ -92,6 +116,7 @@ interface WebSocketAccountState {
   balances: Balance[];
   positions: Trade[];
   trades: Trade[];
+  marginInfo: MarginInfo;
   
   // Connection status
   connected: boolean;
@@ -110,6 +135,8 @@ interface WebSocketAccountState {
   getBalanceBySymbol: (symbol: string) => Balance | null;
   getActiveOrders: () => OrderHistoryItem[];
   getTotalBalance: () => number;
+  getMarginRequirement: () => number;
+  getTradableBalance: (symbol?: string) => number;
 }
 
 const WebSocketAccountContext = createContext<WebSocketAccountState | null>(null);
@@ -128,6 +155,11 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
   const [balances, setBalances] = useState<Balance[]>([]);
   const [positions, setPositions] = useState<Trade[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [marginInfo, setMarginInfo] = useState<MarginInfo>({
+    base: null,
+    symbols: {},
+    lastUpdated: 0
+  });
   
   // Connection state
   const [connected, setConnected] = useState(false);
@@ -351,6 +383,53 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
   }, [transformBitfinexWallet]);
 
   /**
+   * Margin Info Handlers baserat på dokumentation
+   * https://docs.bitfinex.com/reference/ws-auth-margin-info
+   */
+  const handleMarginInfoUpdate = useCallback((updateData: any[]) => {
+    const [updateType, ...rest] = updateData;
+    
+    if (updateType === 'base') {
+      // Base margin info update
+      const [userPL, userSwaps, marginBalance, marginNet, marginRequired] = rest[0];
+      console.log('[WebSocketAccount] 📊 Margin base update - Required:', marginRequired, 'Balance:', marginBalance);
+      
+      setMarginInfo(prev => ({
+        ...prev,
+        base: {
+          userPL: userPL || 0,
+          userSwaps: userSwaps || 0,
+          marginBalance: marginBalance || 0,
+          marginNet: marginNet || 0,
+          marginRequired: marginRequired || 0
+        },
+        lastUpdated: Date.now()
+      }));
+      
+    } else if (updateType === 'sym') {
+      // Symbol-specific margin info update
+      const [symbol, symData] = rest;
+      const [tradableBalance, grossBalance, buy, sell] = symData;
+      console.log('[WebSocketAccount] 📊 Margin symbol update:', symbol, 'Tradable:', tradableBalance);
+      
+      setMarginInfo(prev => ({
+        ...prev,
+        symbols: {
+          ...prev.symbols,
+          [symbol]: {
+            symbol,
+            tradableBalance: tradableBalance || 0,
+            grossBalance: grossBalance || 0,
+            buy: buy,
+            sell: sell
+          }
+        },
+        lastUpdated: Date.now()
+      }));
+    }
+  }, []);
+
+  /**
    * WebSocket connection management
    */
   const connect = useCallback(() => {
@@ -504,6 +583,12 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
                 }
                 break;
                 
+              case 'miu': // Margin info update
+                if (Array.isArray(messageData)) {
+                  handleMarginInfoUpdate(messageData);
+                }
+                break;
+                
               default:
                 console.log('[WebSocketAccount] 📨 Unhandled message type:', messageType, 'data:', messageData);
                 break;
@@ -560,7 +645,9 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     handlePositionClose,
     handleTradeExecution,
     handleNotification,
-    handleBalanceUpdate
+    handleBalanceUpdate,
+    handleMarginInfoUpdate,
+    getBitfinexErrorMessage
   ]);
 
   /**
@@ -652,6 +739,18 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     return balances.reduce((total, balance) => total + balance.total_balance, 0);
   }, [balances]);
 
+  const getMarginRequirement = useCallback((): number => {
+    return marginInfo.base?.marginRequired || 0;
+  }, [marginInfo]);
+
+  const getTradableBalance = useCallback((symbol?: string): number => {
+    if (symbol && marginInfo.symbols[symbol]) {
+      return marginInfo.symbols[symbol].tradableBalance;
+    }
+    // Return total tradable balance across all symbols if no specific symbol
+    return Object.values(marginInfo.symbols).reduce((total, sym) => total + sym.tradableBalance, 0);
+  }, [marginInfo]);
+
   /**
    * Auto-connect effect
    */
@@ -672,6 +771,7 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     balances,
     positions,
     trades,
+    marginInfo,
     connected,
     connecting,
     authenticated,
@@ -683,7 +783,9 @@ export const WebSocketAccountProvider: React.FC<{ children: React.ReactNode }> =
     getOrderById,
     getBalanceBySymbol,
     getActiveOrders,
-    getTotalBalance
+    getTotalBalance,
+    getMarginRequirement,
+    getTradableBalance
   };
 
   return (

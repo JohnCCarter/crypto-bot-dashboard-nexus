@@ -38,10 +38,13 @@ export const AccountStatus: React.FC = () => {
     balances,
     positions,
     trades,
+    marginInfo,
     authenticate,
     disconnect,
     getActiveOrders,
-    getTotalBalance
+    getTotalBalance,
+    getMarginRequirement,
+    getTradableBalance
   } = useWebSocketAccount();
 
   // Local state för authentication form
@@ -124,22 +127,48 @@ export const AccountStatus: React.FC = () => {
 
         {/* Account Summary (only if authenticated) */}
         {authenticated && (
-          <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{activeOrders.length}</div>
-              <div className="text-xs text-muted-foreground">Aktiva Orders</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{positions.length}</div>
-              <div className="text-xs text-muted-foreground">Positioner</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                ${totalBalance.toFixed(2)}
+          <>
+            <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{activeOrders.length}</div>
+                <div className="text-xs text-muted-foreground">Aktiva Orders</div>
               </div>
-              <div className="text-xs text-muted-foreground">Total Balance</div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{positions.length}</div>
+                <div className="text-xs text-muted-foreground">Positioner</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  ${totalBalance.toFixed(2)}
+                </div>
+                <div className="text-xs text-muted-foreground">Total Balance</div>
+              </div>
             </div>
-          </div>
+
+            {/* Margin Info Summary */}
+            {marginInfo.base && (
+              <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="space-y-1">
+                  <Label className="text-xs text-blue-600 font-medium">Margin Required</Label>
+                  <div className="text-lg font-bold text-blue-800">
+                    ${getMarginRequirement().toFixed(2)}
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    Net: ${marginInfo.base.marginNet.toFixed(2)}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-blue-600 font-medium">P&L</Label>
+                  <div className={`text-lg font-bold ${marginInfo.base.userPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ${marginInfo.base.userPL.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-blue-600">
+                    Tradable: ${getTradableBalance().toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Recent Activity */}
