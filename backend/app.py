@@ -187,6 +187,9 @@ services = init_services()
 # Make services available to blueprints
 app._services = services
 
+# In-memory order metadata tracking for margin/spot classification
+app._order_metadata = {}
+
 
 def register_routes():
     """Register all API routes."""

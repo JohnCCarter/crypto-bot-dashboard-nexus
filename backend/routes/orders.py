@@ -133,14 +133,36 @@ def register(app):
 
             # Place order on Bitfinex using shared service (thread-safe nonce)
             # Include position_type for margin/spot differentiation
+            position_type = data.get("position_type", "spot")  # Default to spot
             order = exchange_service.create_order(
                 symbol=data["symbol"],
                 order_type=data["order_type"],
                 side=data["side"],
                 amount=float(data["amount"]),
                 price=float(data.get("price", 0)),
-                position_type=data.get("position_type", "spot"),
+                position_type=position_type,
             )
+
+            # Store order metadata for position classification
+            if hasattr(current_app, '_order_metadata'):
+                # Normalize symbol for metadata storage
+                # (TESTBTC/TESTUSD -> BTC/USD)
+                normalized_symbol = (
+                    data["symbol"].replace('TEST', '').replace('TESTUSD', 'USD')
+                )
+                
+                current_app._order_metadata[normalized_symbol] = {
+                    'position_type': position_type,
+                    'timestamp': time.time(),
+                    'side': data["side"],
+                    'amount': float(data["amount"]),
+                    'order_id': order.get('id'),
+                    'original_symbol': data["symbol"],
+                }
+                current_app.logger.info(
+                    f"📊 [Order Metadata] Saved {position_type.upper()} order: "
+                    f"{data['symbol']} -> {normalized_symbol} {data['side']} {data['amount']}"
+                )
 
             current_app.logger.info(f"✅ [Orders] Order placed: {order['id']}")
 
