@@ -226,7 +226,7 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
             </Badge>
             
             {connected ? (
-              <Badge variant="default" className="bg-green-500 text-white">
+              <Badge variant="default" className="bg-green-600">
                 <Activity className="w-3 h-3 mr-1" />
                 Live P&L
               </Badge>
@@ -281,8 +281,8 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
               <div 
                 key={position.id}
                 className={`p-3 rounded-lg border transition-colors ${
-                  (position.livePnL || 0) > 0 ? 'bg-green-50 border-green-200' :
-                  (position.livePnL || 0) < 0 ? 'bg-red-50 border-red-200' :
+                  (position.livePnL || 0) > 0 ? 'bg-green-500/10 border-green-500/20' :
+                  (position.livePnL || 0) < 0 ? 'bg-red-500/10 border-red-500/20' :
                   'bg-muted border-border'
                 }`}
               >
@@ -344,7 +344,7 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
             {processedPositions.spotPositions.map((position) => (
               <div 
                 key={position.id}
-                className="p-3 rounded-lg bg-blue-50 border border-blue-200 transition-colors"
+                className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 transition-colors"
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
@@ -352,7 +352,7 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
                       {position.side.toUpperCase()}
                     </Badge>
                     <span className="font-semibold text-sm">{position.symbol}</span>
-                    <Badge variant="outline" className="text-xs bg-blue-500 text-white border-blue-500">SPOT</Badge>
+                                         <Badge variant="outline" className="text-xs">SPOT</Badge>
                   </div>
                   
                   <div className="text-right">
