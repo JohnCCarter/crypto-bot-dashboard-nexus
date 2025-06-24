@@ -1,0 +1,13 @@
+{
+    "cursor.general.enableCodeActions": false,
+    "cursor.general.enableHoverInfo": false,
+    "cursor.cpp.disabledLanguageFeatures": ["hover", "completion", "diagnostics"],
+    "python.analysis.typeCheckingMode": "off",
+    "python.languageServer": "None",
+    "editor.inlineSuggest.enabled": false,
+    "workbench.settings.enableNaturalLanguageSearch": false,
+    "extensions.autoCheckUpdates": false,
+    "extensions.autoUpdate": false,
+    "telemetry.telemetryLevel": "off",
+    "workbench.enableExperiments": false
+}
