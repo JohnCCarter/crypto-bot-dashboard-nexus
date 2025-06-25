@@ -1,29 +1,20 @@
 import os
 import time
 import logging
-from typing import Dict, List, Any
 
-import ccxt
-from dotenv import load_dotenv
 from backend.services.authenticated_websocket_service import get_authenticated_websocket_client
+from dotenv import load_dotenv
 
 load_dotenv()
+
 logger = logging.getLogger(__name__)
-
-
-class MyBitfinex(ccxt.bitfinex):
-    _last_nonce = int(time.time() * 1000)
-    def nonce(self):
-        now = int(time.time() * 1000)
-        self._last_nonce = max(self._last_nonce + 1, now)
-        return self._last_nonce
-
 
 def fetch_balances():
     """
-    Hämtar saldon från Bitfinex via authenticated WebSocket (första prioritet) 
-    eller ccxt som fallback.
-    Returnerar data i standardformat för trading systemet.
+    Hämtar saldon från Bitfinex via AUTHENTICATED WebSocket.
+    Använder riktig Bitfinex authentication protokoll istället för ccxt.
+    :return: dict med balansdata från Bitfinex WebSocket eller mock data
+    :raises: ValueError
     """
     api_key = os.getenv("BITFINEX_API_KEY")
     api_secret = os.getenv("BITFINEX_API_SECRET")
@@ -46,80 +37,80 @@ def fetch_balances():
             "total": {"BTC": 0.20, "ETH": 2.5, "USD": 2000.0}
         }
     
-    # Försök hämta från authenticated WebSocket först
+    # Använd authenticated WebSocket för KORREKT Bitfinex integration
     try:
-        ws_client = get_authenticated_websocket_client()
-        if ws_client and ws_client.authenticated:
-            logger.info("� [WS] Fetching balances from authenticated WebSocket...")
+        logger.info("📄 [WALLET] Connecting to Bitfinex via authenticated WebSocket...")
+        
+        # Hämta authenticated WebSocket klient
+        client = get_authenticated_websocket_client()
+        
+        if not client:
+            logger.warning("⚠️ [WALLET] Authenticated WebSocket client not available")
+            raise ValueError("Authenticated WebSocket client not available")
+        
+        if not client.authenticated:
+            logger.warning("⚠️ [WALLET] WebSocket not authenticated")
+            raise ValueError("WebSocket not authenticated")
+        
+        # Hämta wallet data från authenticated WebSocket
+        wallets = client.get_wallets()
+        
+        if not wallets:
+            logger.warning("⚠️ [WALLET] No wallet data available from WebSocket")
+            # Returnera tom struktur istället för att fejla
+            return {
+                "info": {},
+                "free": {},
+                "used": {},
+                "total": {}
+            }
+        
+        logger.info(f"✅ [WALLET] Successfully fetched {len(wallets)} wallet entries from WebSocket")
+        
+        # Konvertera Bitfinex WebSocket wallet format till ccxt-kompatibel format
+        balance_result = {
+            "info": wallets,  # Rå Bitfinex data
+            "free": {},
+            "used": {},
+            "total": {}
+        }
+        
+        # Processa wallet data från WebSocket
+        for wallet_key, wallet_data in wallets.items():
+            currency = wallet_data["currency"]
+            wallet_type = wallet_data["type"]
+            balance = wallet_data["balance"]
+            available = wallet_data["available"]
             
-            wallets = ws_client.get_wallets()
-            if wallets:
-                # Konvertera WebSocket wallet format till ccxt-kompatibelt format
-                balance_data = {
-                    "info": wallets,
-                    "free": {},
-                    "used": {},
-                    "total": {}
-                }
-                
-                # Gruppera per currency
-                currencies = {}
-                for wallet_key, wallet in wallets.items():
-                    currency = wallet["currency"]
-                    wallet_type = wallet["type"]
-                    
-                    if currency not in currencies:
-                        currencies[currency] = {"free": 0.0, "used": 0.0, "total": 0.0}
-                    
-                    # Bitfinex wallet types: exchange, margin, funding
-                    # available = trading balance, balance = total balance
-                    available = wallet.get("available", 0.0)
-                    total = wallet.get("balance", 0.0)
-                    used = max(0.0, total - available)
-                    
-                    currencies[currency]["free"] += available
-                    currencies[currency]["used"] += used  
-                    currencies[currency]["total"] += total
-                
-                # Lägg till i balance_data
-                for currency, amounts in currencies.items():
-                    balance_data[currency] = amounts
-                    balance_data["free"][currency] = amounts["free"]
-                    balance_data["used"][currency] = amounts["used"]
-                    balance_data["total"][currency] = amounts["total"]
-                
-                logger.info(f"✅ [WS] Successfully fetched balances for {len(currencies)} currencies")
-                return balance_data
+            # Logga wallet information
+            logger.info(f"   💰 {wallet_type} {currency}: {balance} (Available: {available})")
             
-            else:
-                logger.warning("⚠️ [WS] WebSocket authenticated but no wallet data available yet")
+            # Sätt huvudvaluta-data (använd exchange wallet som primär)
+            if wallet_type == "exchange":
+                if currency not in balance_result:
+                    balance_result[currency] = {"free": 0.0, "used": 0.0, "total": 0.0}
                 
-    except Exception as e:
-        logger.warning(f"⚠️ [WS] WebSocket balance fetch failed: {e}")
-    
-    # Fallback till ccxt REST API
-    try:
-        logger.info("📄 [REST] Falling back to Bitfinex REST API...")
-        exchange = MyBitfinex({
-            "apiKey": api_key,
-            "secret": api_secret,
-            "enableRateLimit": True
-        })
-        balance = exchange.fetch_balance()
-        logger.info("✅ [REST] Successfully fetched balance from Bitfinex REST API")
-        return balance
+                balance_result[currency]["free"] = available
+                balance_result[currency]["used"] = balance - available
+                balance_result[currency]["total"] = balance
+                
+                # Sätt även i top-level dictionaries
+                balance_result["free"][currency] = available
+                balance_result["used"][currency] = balance - available
+                balance_result["total"][currency] = balance
+        
+        logger.info("✅ [WALLET] Successfully processed wallet data from Bitfinex WebSocket")
+        return balance_result
         
     except Exception as e:
-        logger.error(f"❌ [REST] Failed to fetch balances: {str(e)}")
-        if "authentication" in str(e).lower() or "api" in str(e).lower():
-            logger.error("🔧 [REST] API authentication failed - check if keys are from Paper Trading sub account")
-        raise ValueError(f"Failed to fetch balances from Bitfinex: {str(e)}")
+        logger.error(f"❌ [WALLET] Failed to fetch balances from WebSocket: {str(e)}")
+        raise ValueError(f"Failed to fetch balances from Bitfinex WebSocket: {str(e)}")
 
 
 def fetch_balances_list():
     """
     Hämtar balances och returnerar i list-format för API endpoints.
-    Konverterar från ccxt-format till vårt standardformat.
+    Konverterar från WebSocket-format till vårt standardformat.
     """
     try:
         balance_data = fetch_balances()

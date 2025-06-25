@@ -1,14 +1,14 @@
-"""Order management API endpoints med real Bitfinex integration via authenticated WebSocket."""
+"""Order management API endpoints med KORREKT Bitfinex WebSocket integration."""
 
 import os
 import time
 import logging
+import asyncio
 from typing import Optional
 
 from flask import current_app, jsonify, request
 
 from backend.services.validation import validate_order_data
-from backend.services.exchange import ExchangeService, ExchangeError
 from backend.services.authenticated_websocket_service import get_authenticated_websocket_client
 
 try:
@@ -18,10 +18,9 @@ except ImportError:
     # dotenv not available in all environments
     pass
 
-logger = logging.getLogger(__name__)
 
-def get_live_order_service():
-    """Get order service från Bitfinex API (stöder paper trading)."""
+def get_authenticated_client():
+    """Hämta authenticated WebSocket klient för KORREKT Bitfinex integration."""
     api_key = os.getenv("BITFINEX_API_KEY")
     api_secret = os.getenv("BITFINEX_API_SECRET")
     
@@ -31,117 +30,82 @@ def get_live_order_service():
                           "placeholder" in api_key or "placeholder" in api_secret)
     
     if has_placeholder_keys:
-        logger.info("🔧 [Orders] No real API keys - order service disabled")
+        current_app.logger.info("🔧 [Orders] No real API keys - order service disabled")
         return None
     
     try:
-        # Create ExchangeService för Bitfinex Paper Trading
-        is_paper_trading = os.getenv("PAPER_TRADING", "false").lower() == "true"
+        # Hämta authenticated WebSocket klient
+        client = get_authenticated_websocket_client()
         
-        if is_paper_trading:
-            logger.info("📄 [Orders] Creating Paper Trading order service")
+        if client and client.authenticated:
+            current_app.logger.info("✅ [Orders] Authenticated WebSocket tillgänglig")
+            return client
         else:
-            logger.info("💰 [Orders] Creating LIVE Trading order service")
+            current_app.logger.warning("⚠️ [Orders] Authenticated WebSocket inte tillgänglig")
+            return None
             
-        exchange_service = ExchangeService(
-            exchange_id="bitfinex", 
-            api_key=api_key, 
-            api_secret=api_secret
-        )
-        
-        # Note: ccxt kommer automatiskt använda sandbox om API keys är från paper trading account
-        return exchange_service
     except Exception as e:
-        logger.error(f"❌ [Orders] Failed to create order service: {e}")
+        current_app.logger.error(f"❌ [Orders] Failed to get authenticated client: {e}")
         return None
 
 
 def register(app):
-    """Register order endpoints."""
+    """Register order endpoints med KORREKT Bitfinex integration."""
     
     @app.route("/api/orders", methods=["GET"])
     def get_orders():
         """
-        Hämta open orders från Bitfinex via authenticated WebSocket (första prioritet)
-        eller REST API som fallback.
+        Hämta open orders från Bitfinex via AUTHENTICATED WebSocket.
         
         Returns:
-            200: List of open orders från Bitfinex
+            200: List of open orders från Bitfinex WebSocket
             500: Server error
         """
-        logger.info("📋 [Orders] GET open orders request")
+        current_app.logger.info("📋 [Orders] GET open orders request (WebSocket)")
         
         try:
-            # Försök hämta från authenticated WebSocket först
-            ws_client = get_authenticated_websocket_client()
-            if ws_client and ws_client.authenticated:
-                logger.info("📋 [WS] Fetching orders from authenticated WebSocket...")
-                
-                orders = ws_client.get_orders()
-                if orders is not None:  # orders kan vara tom lista []
-                    # Konvertera WebSocket order format till vårt API format
-                    formatted_orders = []
-                    
-                    for order in orders:
-                        # Filtrera endast aktiva orders
-                        if order.get("status") in ["ACTIVE", "PARTIALLY FILLED"]:
-                            formatted_order = {
-                                "id": str(order.get("id", "")),
-                                "symbol": order.get("symbol", ""),
-                                "type": order.get("type", "").lower(),
-                                "side": "buy" if order.get("amount", 0) > 0 else "sell",
-                                "amount": abs(order.get("amount", 0.0)),
-                                "price": order.get("price", 0.0),
-                                "status": order.get("status", "").lower(),
-                                "timestamp": order.get("mts_create", int(time.time() * 1000)),
-                                "remaining": abs(order.get("amount", 0.0)),  # amount_remaining inte alltid tillgängligt
-                                "filled": abs(order.get("amount_orig", 0.0)) - abs(order.get("amount", 0.0)),
-                                "fee": 0.0,  # Fees beräknas vid execution
-                                "average": order.get("price_avg", 0.0)
-                            }
-                            formatted_orders.append(formatted_order)
-                    
-                    logger.info(f"✅ [WS] Retrieved {len(formatted_orders)} open orders")
-                    return jsonify({"orders": formatted_orders}), 200
-                
-                else:
-                    logger.info("✅ [WS] WebSocket authenticated - no open orders")
-                    return jsonify({"orders": []}), 200
-                    
-            # Fallback till ExchangeService
-            exchange_service = get_live_order_service()
-            if not exchange_service:
-                logger.warning("⚠️ [Orders] No exchange service available")
+            client = get_authenticated_client()
+            if not client:
+                current_app.logger.warning("⚠️ [Orders] No authenticated client available")
                 return jsonify({"orders": []}), 200
             
-            logger.info("📋 [REST] Falling back to REST API for orders...")
-            open_orders = exchange_service.fetch_open_orders()
+            # Hämta orders från authenticated WebSocket
+            orders = client.get_orders()
             
-            logger.info(f"✅ [REST] Retrieved {len(open_orders)} open orders")
-            return jsonify({"orders": open_orders}), 200
+            current_app.logger.info(f"✅ [Orders] Retrieved {len(orders)} open orders via WebSocket")
             
-        except ExchangeError as e:
-            logger.error(f"❌ [Orders] Exchange error: {e}")
-            return jsonify({"orders": []}), 200  # Empty rather than error
+            # Konvertera till förväntad format
+            formatted_orders = []
+            for order in orders:
+                formatted_orders.append({
+                    "id": str(order["id"]),
+                    "symbol": order["symbol"],
+                    "type": order["type"],
+                    "side": "buy" if float(order["amount"]) > 0 else "sell",
+                    "amount": abs(float(order["amount"])),
+                    "price": float(order["price"]),
+                    "status": order["status"],
+                    "timestamp": order["created"]
+                })
+            
+            return jsonify({"orders": formatted_orders}), 200
+            
         except Exception as e:
-            logger.error(f"❌ [Orders] Unexpected error: {e}")
+            current_app.logger.error(f"❌ [Orders] Unexpected error: {e}")
             return jsonify({"error": "Failed to fetch orders"}), 500
 
     @app.route("/api/orders", methods=["POST"])
     def place_order():
         """
-        Placera ny order på Bitfinex.
+        Placera ny order på Bitfinex via AUTHENTICATED WebSocket.
         
         Request body:
             {
-                "symbol": str,          # Trading pair (e.g. "BTC/USD")
-                "order_type": str,      # "market" or "limit"
-                "side": str,            # "buy" or "sell"
+                "symbol": str,          # Trading pair (e.g. "TESTBTC/TESTUSD")
+                "order_type": str,      # "market" eller "limit"
+                "side": str,            # "buy" eller "sell"
                 "amount": float,        # Order size
-                "price": float,         # Required för limit orders
-                "leverage": float,      # Optional leverage
-                "stop_loss": float,     # Optional stop loss
-                "take_profit": float    # Optional take profit
+                "price": float,         # Required for limit orders
             }
         
         Returns:
@@ -149,7 +113,7 @@ def register(app):
             400: Invalid input data
             500: Server error
         """
-        logger.info("📋 [Orders] POST order request")
+        current_app.logger.info("📋 [Orders] POST order request (WebSocket)")
         
         try:
             data = request.get_json()
@@ -164,47 +128,67 @@ def register(app):
                     "details": validation_result["errors"]
                 }), 400
 
-            exchange_service = get_live_order_service()
-            if not exchange_service:
-                logger.error("❌ [Orders] Cannot place order - no exchange service")
+            client = get_authenticated_client()
+            if not client:
+                current_app.logger.error("❌ [Orders] Cannot place order - no authenticated client")
                 return jsonify({
                     "error": "Order service not available",
-                    "details": "Bitfinex API keys not configured"
+                    "details": "Bitfinex WebSocket not authenticated"
                 }), 503
 
-            # Placera order på Bitfinex
-            order = exchange_service.create_order(
-                symbol=data["symbol"],
-                order_type=data["order_type"],
-                side=data["side"],
-                amount=float(data["amount"]),
-                price=float(data.get("price", 0))
+            # Konvertera paper trading symbol till Bitfinex format
+            symbol = data["symbol"]
+            if symbol.startswith("TEST"):
+                # TESTBTC/TESTUSD → tBTCUSD
+                if symbol == "TESTBTC/TESTUSD":
+                    symbol = "tBTCUSD"
+                elif symbol == "TESTETH/TESTUSD":
+                    symbol = "tETHUSD"
+                elif symbol == "TESTLTC/TESTUSD":
+                    symbol = "tLTCUSD"
+            
+            # Konvertera amount baserat på side
+            amount = float(data["amount"])
+            if data["side"] == "sell":
+                amount = -amount  # Bitfinex använder negativa värden för sell
+                
+            price = float(data.get("price", 0)) if data.get("price") else None
+
+            # Placera order via authenticated WebSocket
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            order_id = loop.run_until_complete(
+                client.new_order(
+                    order_type=data["order_type"].upper(),
+                    symbol=symbol,
+                    amount=amount,
+                    price=price
+                )
             )
             
-            logger.info(f"✅ [Orders] Order placed: {order['id']}")
+            current_app.logger.info(f"✅ [Orders] Order placed via WebSocket: {order_id}")
             
             return jsonify({
-                "message": "Order placed successfully",
-                "order": order
+                "message": "Order placed successfully via WebSocket",
+                "order_id": order_id,
+                "symbol": symbol,
+                "amount": data["amount"],
+                "price": price,
+                "side": data["side"]
             }), 201
             
-        except ExchangeError as e:
-            logger.error(f"❌ [Orders] Exchange error: {e}")
-            return jsonify({
-                "error": "Failed to place order",
-                "details": str(e)
-            }), 400
         except Exception as e:
-            logger.error(f"❌ [Orders] Unexpected error: {e}")
+            current_app.logger.error(f"❌ [Orders] WebSocket order error: {e}")
             return jsonify({
-                "error": "Failed to place order",
+                "error": "Failed to place order via WebSocket",
                 "details": str(e)
             }), 500
 
     @app.route("/api/orders/<order_id>", methods=["DELETE"])
     def cancel_order(order_id: str):
         """
-        Cancel order på Bitfinex.
+        Avbryt order på Bitfinex via AUTHENTICATED WebSocket.
         
         Args:
             order_id: Bitfinex order ID
@@ -214,130 +198,82 @@ def register(app):
             404: Order not found
             500: Server error
         """
-        logger.info(f"📋 [Orders] DELETE order: {order_id}")
+        current_app.logger.info(f"📋 [Orders] DELETE order via WebSocket: {order_id}")
         
         try:
-            exchange_service = get_live_order_service()
-            if not exchange_service:
+            client = get_authenticated_client()
+            if not client:
                 return jsonify({
                     "error": "Order service not available"
                 }), 503
 
-            # Cancel order på Bitfinex
-            result = exchange_service.cancel_order(order_id)
+            # Avbryt order via authenticated WebSocket
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             
-            logger.info(f"✅ [Orders] Order cancelled: {order_id}")
+            loop.run_until_complete(client.cancel_order(int(order_id)))
+            
+            current_app.logger.info(f"✅ [Orders] Order cancelled via WebSocket: {order_id}")
             
             return jsonify({
-                "message": f"Order {order_id} cancelled successfully",
-                "order": result
+                "message": f"Order {order_id} cancelled successfully via WebSocket"
             }), 200
             
-        except ExchangeError as e:
-            if "not found" in str(e).lower():
-                return jsonify({"error": "Order not found"}), 404
-            logger.error(f"❌ [Orders] Cancel error: {e}")
+        except Exception as e:
+            current_app.logger.error(f"❌ [Orders] Cancel error: {e}")
             return jsonify({
-                "error": "Failed to cancel order",
+                "error": "Failed to cancel order via WebSocket",
                 "details": str(e)
             }), 400
-        except Exception as e:
-            logger.error(f"❌ [Orders] Unexpected error: {e}")
-            return jsonify({
-                "error": "Failed to cancel order"
-            }), 500
 
     @app.route("/api/orders/history", methods=["GET"])
     def get_order_history():
         """
-        Hämta order history från Bitfinex via authenticated WebSocket (första prioritet)
-        eller REST API som fallback.
+        Hämta order history från Bitfinex via AUTHENTICATED WebSocket.
         
-        Query parameters:
-            symbol: Optional filter by trading pair
-            limit: Maximum orders to return (default 50)
-            
         Returns:
-            200: List of historical orders från Bitfinex
+            200: List of historical orders
             500: Server error
         """
-        logger.info("📋 [Orders] GET order history request")
+        current_app.logger.info("📋 [Orders] GET order history request (WebSocket)")
         
         try:
-            # Försök hämta från authenticated WebSocket först
-            ws_client = get_authenticated_websocket_client()
-            if ws_client and ws_client.authenticated:
-                logger.info("📋 [WS] Fetching order history from authenticated WebSocket...")
-                
-                trade_history = ws_client.get_trade_history()
-                if trade_history is not None:  # trade_history kan vara tom lista []
-                    # Konvertera WebSocket trade format till order history format
-                    symbol_filter = request.args.get("symbol")
-                    limit = int(request.args.get("limit", 50))
-                    
-                    formatted_history = []
-                    for trade in trade_history[-limit:]:  # Senaste trades först
-                        # Filtrera på symbol om angivet
-                        if symbol_filter and trade.get("symbol") != symbol_filter:
-                            continue
-                            
-                        formatted_trade = {
-                            "id": str(trade.get("id", "")),
-                            "symbol": trade.get("symbol", ""),
-                            "type": trade.get("order_type", "").lower(),
-                            "side": "buy" if trade.get("exec_amount", 0) > 0 else "sell",
-                            "amount": abs(trade.get("exec_amount", 0.0)),
-                            "price": trade.get("exec_price", 0.0),
-                            "status": "filled",  # Trades är alltid filled
-                            "timestamp": trade.get("mts_create", int(time.time() * 1000)),
-                            "fee": abs(trade.get("fee", 0.0)),
-                            "fee_currency": trade.get("fee_currency", "USD")
-                        }
-                        formatted_history.append(formatted_trade)
-                    
-                    logger.info(f"✅ [WS] Retrieved {len(formatted_history)} trade history entries")
-                    return jsonify(formatted_history), 200
-                
-                else:
-                    logger.info("✅ [WS] WebSocket authenticated - no trade history")
-                    return jsonify([]), 200
-                    
-            # Fallback till ExchangeService
-            exchange_service = get_live_order_service()
-            if not exchange_service:
-                logger.warning("⚠️ [Orders] No exchange service for history")
+            client = get_authenticated_client()
+            if not client:
+                current_app.logger.warning("⚠️ [Orders] No authenticated client for history")
                 return jsonify([]), 200
             
-            logger.info("📋 [REST] Falling back to REST API for order history...")
+            # För nu, returnera orders från WebSocket
+            # I framtiden kan vi lägga till historik-funktionalitet
+            orders = client.get_orders()
             
-            # Get query parameters
-            symbol = request.args.get("symbol")
-            limit = int(request.args.get("limit", 50))
+            # Konvertera till history format
+            history = []
+            for order in orders:
+                history.append({
+                    "id": str(order["id"]),
+                    "symbol": order["symbol"],
+                    "order_type": order["type"].lower(),
+                    "side": "buy" if float(order["amount"]) > 0 else "sell",
+                    "amount": abs(float(order["amount"])),
+                    "price": float(order["price"]),
+                    "fee": 0.0,  # WebSocket data kanske inte har fee ännu
+                    "timestamp": order["created"],
+                    "status": order["status"]
+                })
             
-            # Fetch order history från Bitfinex
-            symbols = [symbol] if symbol else None
-            order_history = exchange_service.fetch_order_history(
-                symbols=symbols, 
-                limit=limit
-            )
+            current_app.logger.info(f"✅ [Orders] Retrieved {len(history)} historical orders via WebSocket")
             
-            logger.info(f"✅ [REST] Retrieved {len(order_history)} historical orders")
-            return jsonify(order_history), 200
+            return jsonify(history), 200
             
-        except ExchangeError as e:
-            logger.error(f"❌ [Orders] Exchange error: {e}")
-            # Return empty array rather than error for history
-            return jsonify([]), 200  
         except Exception as e:
-            logger.error(f"❌ [Orders] Unexpected error: {e}")
-            return jsonify({
-                "error": "Failed to fetch order history"
-            }), 500
+            current_app.logger.error(f"❌ [Orders] History error: {e}")
+            return jsonify([]), 200
 
     @app.route("/api/orders/<order_id>", methods=["GET"])
     def get_order_status(order_id: str):
         """
-        Hämta order status från Bitfinex.
+        Hämta order status från Bitfinex via AUTHENTICATED WebSocket.
         
         Args:
             order_id: Bitfinex order ID
@@ -347,31 +283,45 @@ def register(app):
             404: Order not found
             500: Server error
         """
-        logger.info(f"📋 [Orders] GET order status: {order_id}")
+        current_app.logger.info(f"📋 [Orders] GET order status via WebSocket: {order_id}")
         
         try:
-            exchange_service = get_live_order_service()
-            if not exchange_service:
+            client = get_authenticated_client()
+            if not client:
                 return jsonify({
                     "error": "Order service not available"
                 }), 503
 
-            # Fetch order status från Bitfinex
-            order = exchange_service.fetch_order(order_id)
+            # Hitta order i authenticated data
+            orders = client.get_orders()
+            target_order = None
             
-            logger.info(f"✅ [Orders] Order status retrieved: {order_id}")
+            for order in orders:
+                if str(order["id"]) == order_id:
+                    target_order = order
+                    break
             
-            return jsonify(order), 200
-            
-        except ExchangeError as e:
-            if "not found" in str(e).lower():
+            if not target_order:
                 return jsonify({"error": "Order not found"}), 404
-            logger.error(f"❌ [Orders] Exchange error: {e}")
-            return jsonify({
-                "error": "Failed to fetch order status"
-            }), 400
+            
+            # Konvertera till förväntat format
+            order_status = {
+                "id": str(target_order["id"]),
+                "symbol": target_order["symbol"],
+                "type": target_order["type"],
+                "side": "buy" if float(target_order["amount"]) > 0 else "sell",
+                "amount": abs(float(target_order["amount"])),
+                "price": float(target_order["price"]),
+                "status": target_order["status"],
+                "timestamp": target_order["created"]
+            }
+            
+            current_app.logger.info(f"✅ [Orders] Order status retrieved via WebSocket: {order_id}")
+            
+            return jsonify(order_status), 200
+            
         except Exception as e:
-            logger.error(f"❌ [Orders] Unexpected error: {e}")
+            current_app.logger.error(f"❌ [Orders] Status error: {e}")
             return jsonify({
-                "error": "Failed to fetch order status"
+                "error": "Failed to fetch order status via WebSocket"
             }), 500

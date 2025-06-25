@@ -192,8 +192,8 @@ def register_routes():
     # Market data routes (fallback for REST)
     market_data.register(app)
     
-    # NY: Authenticated WebSocket routes (TEMPORÄRT INAKTIVERAD)
-    # websocket_integration.register(app)
+    # NY: Authenticated WebSocket routes (NU AKTIVERADE!)
+    websocket_integration.register(app)
     
     # Analysis routes
     app.register_blueprint(backtest.backtest_bp)

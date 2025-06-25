@@ -1,6 +1,6 @@
 """
-WebSocket Integration Routes - Ersätter public market data med authenticated WebSocket.
-Använder endast riktiga Bitfinex API-nycklar för alla marknadsdata.
+WebSocket Integration Routes - KORREKT implementation för Bitfinex authenticated streams.
+Använder endast riktiga Bitfinex API-nycklar för all data.
 """
 
 import asyncio
@@ -15,33 +15,60 @@ from backend.services.authenticated_websocket_service import (
 # Skapa Blueprint
 websocket_bp = Blueprint('websocket', __name__)
 
-# Globala variabler för cached data
-cached_market_data = {}
-authenticated_ws_client = None
-
 logger = logging.getLogger(__name__)
 
 def register(app):
-    """Registrera WebSocket routes som ersätter public market data."""
+    """Registrera WebSocket routes för KORREKT Bitfinex integration."""
     
     @app.route("/api/ws/start", methods=["POST"])
     def start_websocket_service():
-        """Starta authenticated WebSocket service."""
+        """Starta authenticated WebSocket service med KORREKT Bitfinex protokoll."""
         try:
-            # Detta körs i async context
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+            current_app.logger.info("🔐 [WS] Starting authenticated WebSocket service...")
             
-            client = loop.run_until_complete(start_authenticated_websocket_service())
+            # Kolla om service redan körs
+            existing_client = get_authenticated_websocket_client()
+            if existing_client and existing_client.authenticated:
+                current_app.logger.info("✅ [WS] Service already running and authenticated")
+                return jsonify({
+                    "status": "success",
+                    "message": "Authenticated WebSocket service already running",
+                    "authenticated": True,
+                    "wallets": len(existing_client.get_wallets()),
+                    "positions": len(existing_client.get_positions()),
+                    "orders": len(existing_client.get_orders())
+                }), 200
             
-            return jsonify({
-                "status": "success",
-                "message": "Authenticated WebSocket service started",
-                "authenticated": client.authenticated if client else False
-            }), 200
+            # Starta ny service
+            def run_start_service():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(start_authenticated_websocket_service())
+                finally:
+                    loop.close()
+            
+            client = run_start_service()
+            
+            if client and client.authenticated:
+                current_app.logger.info("✅ [WS] Authenticated WebSocket service started successfully")
+                return jsonify({
+                    "status": "success",
+                    "message": "Authenticated WebSocket service started",
+                    "authenticated": True,
+                    "wallets": len(client.get_wallets()),
+                    "positions": len(client.get_positions()),
+                    "orders": len(client.get_orders())
+                }), 200
+            else:
+                current_app.logger.error("❌ [WS] Failed to authenticate WebSocket")
+                return jsonify({
+                    "status": "error",
+                    "message": "WebSocket authentication failed"
+                }), 500
             
         except Exception as e:
-            current_app.logger.error(f"❌ Failed to start WebSocket service: {e}")
+            current_app.logger.error(f"❌ [WS] Failed to start WebSocket service: {e}")
             return jsonify({
                 "status": "error", 
                 "message": str(e)
@@ -54,12 +81,22 @@ def register(app):
             client = get_authenticated_websocket_client()
             
             if client:
+                wallets = client.get_wallets()
+                positions = client.get_positions()
+                orders = client.get_orders()
+                
                 return jsonify({
                     "status": "running",
                     "authenticated": client.authenticated,
                     "running": client.running,
-                    "subscriptions": len(client.subscriptions),
-                    "callbacks": len(client.callbacks)
+                    "data_summary": {
+                        "wallets": len(wallets),
+                        "positions": len(positions),
+                        "orders": len(orders)
+                    },
+                    "wallet_currencies": list(set([w["currency"] for w in wallets.values()])) if wallets else [],
+                    "position_symbols": [p["symbol"] for p in positions] if positions else [],
+                    "order_symbols": list(set([o["symbol"] for o in orders])) if orders else []
                 }), 200
             else:
                 return jsonify({
@@ -69,9 +106,75 @@ def register(app):
                 }), 200
                 
         except Exception as e:
-            current_app.logger.error(f"❌ WebSocket status error: {e}")
+            current_app.logger.error(f"❌ [WS] Status error: {e}")
             return jsonify({
                 "status": "error",
+                "message": str(e)
+            }), 500
+
+    @app.route("/api/ws/stop", methods=["POST"])
+    def stop_websocket_service():
+        """Stoppa authenticated WebSocket service."""
+        try:
+            current_app.logger.info("🔐 [WS] Stopping authenticated WebSocket service...")
+            
+            def run_stop_service():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(stop_authenticated_websocket_service())
+                finally:
+                    loop.close()
+            
+            run_stop_service()
+            
+            current_app.logger.info("✅ [WS] Authenticated WebSocket service stopped")
+            return jsonify({
+                "status": "success",
+                "message": "Authenticated WebSocket service stopped"
+            }), 200
+            
+        except Exception as e:
+            current_app.logger.error(f"❌ [WS] Failed to stop WebSocket service: {e}")
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 500
+
+    @app.route("/api/ws/account", methods=["GET"])
+    def get_account_data():
+        """Hämta all kontoinformation från authenticated WebSocket."""
+        try:
+            client = get_authenticated_websocket_client()
+            if not client or not client.authenticated:
+                return jsonify({
+                    "error": "Authenticated WebSocket not available",
+                    "message": "Requires valid Bitfinex API keys"
+                }), 503
+            
+            wallets = client.get_wallets()
+            positions = client.get_positions()
+            orders = client.get_orders()
+            
+            return jsonify({
+                "status": "success",
+                "data": {
+                    "wallets": wallets,
+                    "positions": positions,
+                    "orders": orders
+                },
+                "summary": {
+                    "total_wallets": len(wallets),
+                    "total_positions": len(positions),
+                    "total_orders": len(orders),
+                    "authenticated": True
+                }
+            }), 200
+                
+        except Exception as e:
+            current_app.logger.error(f"❌ [WS] Account data error: {e}")
+            return jsonify({
+                "error": "Failed to get account data",
                 "message": str(e)
             }), 500
 
