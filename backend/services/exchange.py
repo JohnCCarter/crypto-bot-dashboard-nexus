@@ -488,8 +488,9 @@ class ExchangeService:
                 
                 # Fallback check: limited markets available in paper trading
                 markets = self.exchange.load_markets()
-                spot_pairs = sum(1 for market in markets.values() 
-                               if market.get('spot', False) and market.get('active', False))
+                spot_pairs = sum(bool(market.get('spot', False) and market.get('active', False))
+                             for market in markets.values())
+
                 
                 # Live Bitfinex typically has 300+ spot pairs, paper has ~18
                 if spot_pairs <= 50:  # Conservative threshold
