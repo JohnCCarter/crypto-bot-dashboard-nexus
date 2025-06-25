@@ -694,7 +694,12 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
                     timestamp: executionData[2] || Date.now()
                   };
                   
-                  setUserFills(prev => [fill, ...prev.slice(0, 49)]); // Keep last 50 fills
+                  setUserFills(prev => {
+                    // Remove any fill with the same id as the new fill
+                    const filtered = prev.filter(f => f.id !== fill.id);
+                    // Prepend the new fill and keep only the last 50 unique fills
+                    return [fill, ...filtered].slice(0, 50);
+                  });
                 }
               } else if (msgType === 'ou' || msgType === 'on') {
                 // Order update or new order
