@@ -11,6 +11,7 @@
 import React, { useState } from 'react';
 import { HybridPriceChart } from '@/components/HybridPriceChart';
 import { HybridOrderBook } from '@/components/HybridOrderBook';
+import { UserDataStreamDemo } from '@/components/UserDataStreamDemo';
 import { PriceChart } from '@/components/PriceChart';
 import { OrderBook } from '@/components/OrderBook';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -177,8 +178,9 @@ export const HybridDemo: React.FC = () => {
       {/* Live Demo Tabs */}
       <Tabs defaultValue="hybrid" className="space-y-4">
         <div className="flex justify-between items-center">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="hybrid">Hybrid Components</TabsTrigger>
+            <TabsTrigger value="userdata">User Data Streams</TabsTrigger>
             <TabsTrigger value="comparison">Comparison</TabsTrigger>
           </TabsList>
           
@@ -212,6 +214,18 @@ export const HybridDemo: React.FC = () => {
             maxLevels={15}
             showControls={true}
           />
+        </TabsContent>
+
+        <TabsContent value="userdata" className="space-y-6">
+          <Alert>
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>User Data Streams:</strong> Real-time order executions, live order status, 
+              och balance updates via authenticated WebSocket. För paper trading använder vi mock data.
+            </AlertDescription>
+          </Alert>
+
+          <UserDataStreamDemo />
         </TabsContent>
 
         <TabsContent value="comparison" className="space-y-6">
