@@ -26,6 +26,7 @@ from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
 from backend.services.risk_manager import RiskManager, RiskParameters
+from backend.routes import websocket_integration  # NY: Authenticated WebSocket routes
 
 # Configure logging for production performance
 log_level = logging.WARNING if os.getenv("ENVIRONMENT") == "production" else logging.INFO
@@ -178,11 +179,35 @@ app._services = services
 
 
 def register_routes():
-    """Register all API routes."""
-    app.register_blueprint(status_bp)
-    app.register_blueprint(backtest_bp)
-    app.register_blueprint(strategy_analysis_bp)
-    app.register_blueprint(live_portfolio_bp)
+    """Register all route blueprints."""
+    from backend.routes import balances, bot_control, config, orders, positions, status, market_data
+    from backend.routes import backtest, live_portfolio, strategy_analysis
+    # NY: Authenticated WebSocket routes (ERSÄTTER public market data)
+    # TEMPORÄRT INAKTIVERAD - behöver installera websockets bibliotek
+    # websocket_integration.register(app)
+    
+    logger.info("📋 Registering route blueprints...")
+    
+    # Core routes
+    balances.register(app)
+    bot_control.register(app)
+    config.register(app)
+    orders.register(app)
+    positions.register(app)
+    status.register(app)
+    
+    # Market data routes (fallback for REST)
+    market_data.register(app)
+    
+    # NY: Authenticated WebSocket routes (ERSÄTTER public market data)
+    websocket_integration.register(app)
+    
+    # Analysis routes
+    app.register_blueprint(backtest.backtest_bp)
+    app.register_blueprint(live_portfolio.live_portfolio_bp)
+    app.register_blueprint(strategy_analysis.strategy_analysis_bp)
+    
+    logger.info("✅ All routes registered successfully")
 
 
 # Register routes
