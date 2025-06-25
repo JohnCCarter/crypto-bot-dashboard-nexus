@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
+import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
 import {
   Balance,
   BotStatus,
@@ -26,14 +27,27 @@ import {
 } from '@/types/trading';
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, RefreshCw, TrendingUp } from 'lucide-react';
+import { Settings, RefreshCw, TrendingUp, Wifi, WifiOff } from 'lucide-react';
 
 /**
  * Main dashboard page for the crypto trading application.
- * Displays balances, active trades, order history, charts, and control panels.
+ * Now uses WebSocket live data instead of REST polling for real-time updates.
  */
 const Index: FC = () => {
-  // State management
+  // WebSocket Market Data - LIVE DATA!
+  const { 
+    connected: wsConnected, 
+    connecting: wsConnecting,
+    subscribeToSymbol,
+    unsubscribeFromSymbol,
+    getTickerForSymbol,
+    getOrderbookForSymbol,
+    platformStatus,
+    error: wsError,
+    latency
+  } = useGlobalWebSocketMarket();
+
+  // State management (reduced - most data comes from WebSocket now)
   const [balances, setBalances] = useState<Balance[]>([]);
   const [activeTrades, setActiveTrades] = useState<Trade[]>([]);
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
@@ -42,7 +56,6 @@ const Index: FC = () => {
     uptime: 0,
     last_update: new Date().toISOString()
   });
-  const [orderBook, setOrderBook] = useState<OrderBookType | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [chartData, setChartData] = useState<OHLCVData[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -51,7 +64,6 @@ const Index: FC = () => {
   const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
   const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
 
   // Global symbol selection state
@@ -63,6 +75,16 @@ const Index: FC = () => {
     { label: 'ETHUSD', value: 'TESTETH/TESTUSD' },
     { label: 'LTCUSD', value: 'TESTLTC/TESTUSD' }
   ];
+
+  // Convert paper trading symbols to Bitfinex format for WebSocket
+  const getBitfinexSymbol = (symbol: string) => {
+    const mapping: Record<string, string> = {
+      'TESTBTC/TESTUSD': 'tBTCUSD',
+      'TESTETH/TESTUSD': 'tETHUSD', 
+      'TESTLTC/TESTUSD': 'tLTCUSD'
+    };
+    return mapping[symbol] || 'tBTCUSD';
+  };
 
   const loadEmaCrossover = useCallback(async () => {
     try {
@@ -97,17 +119,25 @@ const Index: FC = () => {
     }
   }, [chartData]);
 
-  // Load initial data
+  // Load initial data (only REST for non-market data)
   useEffect(() => {
-    loadAllData();
+    loadInitialData();
     
-    // Set up periodic updates
+    // Subscribe to WebSocket data for selected symbol
+    const bitfinexSymbol = getBitfinexSymbol(selectedSymbol);
+    subscribeToSymbol(bitfinexSymbol);
+    
+    // Setup periodic updates only for non-market data
     const interval = setInterval(() => {
-      loadAllData();
-    }, 5000); // Update every 5 seconds
+      loadNonMarketData();
+    }, 10000); // Reduced frequency since market data is live
 
-    return () => clearInterval(interval);
-  }, [selectedSymbol]); // Add selectedSymbol as dependency
+    return () => {
+      clearInterval(interval);
+      // Unsubscribe when changing symbols or unmounting
+      unsubscribeFromSymbol(bitfinexSymbol);
+    };
+  }, [selectedSymbol, subscribeToSymbol, unsubscribeFromSymbol]);
 
   // Load EMA crossover data when chartData is available
   useEffect(() => {
@@ -116,14 +146,15 @@ const Index: FC = () => {
     }
   }, [chartData, loadEmaCrossover]);
 
-  const loadAllData = async () => {
+  const loadInitialData = async () => {
     try {
+      setIsLoading(true);
+      
       const [
         balancesData,
         tradesData,
         ordersData,
         statusData,
-        orderBookData,
         logsData,
         chartDataResponse
       ] = await Promise.all([
@@ -131,7 +162,6 @@ const Index: FC = () => {
         api.getActiveTrades(),
         api.getOrderHistory(),
         api.getBotStatus(),
-        api.getOrderBook(selectedSymbol),
         api.getLogs(),
         api.getChartData(selectedSymbol)
       ]);
@@ -140,14 +170,43 @@ const Index: FC = () => {
       setActiveTrades(tradesData);
       setOrderHistory(ordersData);
       setBotStatus(statusData);
-      setOrderBook(orderBookData);
       setLogs(logsData);
       setChartData(chartDataResponse);
-      setIsConnected(true); // Set connected to true when API calls succeed
     } catch (error) {
-      setIsConnected(false); // Set connected to false when API calls fail
+      toast({
+        title: "Data Loading Error",
+        description: "Failed to load initial data",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Load only non-market data (balances, orders, logs, bot status)
+  const loadNonMarketData = async () => {
+    try {
+      const [
+        balancesData,
+        tradesData,
+        ordersData,
+        statusData,
+        logsData
+      ] = await Promise.all([
+        api.getBalances(),
+        api.getActiveTrades(),
+        api.getOrderHistory(),
+        api.getBotStatus(),
+        api.getLogs()
+      ]);
+
+      setBalances(balancesData);
+      setActiveTrades(tradesData);
+      setOrderHistory(ordersData);
+      setBotStatus(statusData);
+      setLogs(logsData);
+    } catch (error) {
+      // Silent error handling for background updates
     }
   };
 
@@ -166,21 +225,16 @@ const Index: FC = () => {
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+    loadNonMarketData();
     fetchBotStatus();
   };
 
-  useEffect(() => {
-    fetchBotStatus();
-    
-    // Set up periodic status updates
-    const interval = setInterval(() => {
-      fetchBotStatus();
-    }, 30000); // Update every 30 seconds
+  // Get live market data from WebSocket
+  const currentTicker = getTickerForSymbol(getBitfinexSymbol(selectedSymbol));
+  const currentOrderbook = getOrderbookForSymbol(getBitfinexSymbol(selectedSymbol));
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
+  // Connection status for display
+  const isConnected = wsConnected && platformStatus === 'operative';
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -190,9 +244,41 @@ const Index: FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold">Crypto Trading Dashboard</h1>
-              <Badge variant="outline" className="text-xs">
-                {isConnected ? '🟢 Connected' : '🔴 Offline'}
-              </Badge>
+              
+              {/* Live Connection Status */}
+              <div className="flex items-center space-x-2">
+                {isConnected ? (
+                  <Badge variant="default" className="bg-green-500">
+                    <Wifi className="w-3 h-3 mr-1" />
+                    Live Data
+                  </Badge>
+                ) : wsConnecting ? (
+                  <Badge variant="outline">
+                    <div className="w-3 h-3 mr-1 animate-spin rounded-full border border-gray-400 border-t-transparent"></div>
+                    Connecting...
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive">
+                    <WifiOff className="w-3 h-3 mr-1" />
+                    Offline
+                  </Badge>
+                )}
+                
+                {/* Platform Status */}
+                {platformStatus === 'maintenance' && (
+                  <Badge variant="secondary" className="bg-yellow-500">
+                    Maintenance
+                  </Badge>
+                )}
+                
+                {/* Latency Display */}
+                {latency !== null && isConnected && (
+                  <Badge variant="outline" className="text-xs">
+                    {latency}ms
+                  </Badge>
+                )}
+              </div>
+              
               {/* Global Symbol Selector */}
               <div className="flex items-center space-x-2">
                 <TrendingUp className="w-4 h-4 text-muted-foreground" />
@@ -209,14 +295,30 @@ const Index: FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* Live Price Display */}
+              {currentTicker && (
+                <div className="text-sm">
+                  <span className="font-semibold text-green-600">
+                    ${currentTicker.price.toFixed(2)}
+                  </span>
+                  {currentTicker.bid && currentTicker.ask && (
+                    <span className="text-gray-500 ml-2">
+                      Spread: ${(currentTicker.ask - currentTicker.bid).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
+            
             <div className="flex items-center space-x-2">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={handleRefresh}
+                disabled={isLoading}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
               <Button 
@@ -233,11 +335,19 @@ const Index: FC = () => {
         </div>
       </header>
 
+      {/* Error Display */}
+      {wsError && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+          <p className="font-bold">WebSocket Error:</p>
+          <p>{wsError}</p>
+        </div>
+      )}
+
       {/* Main Dashboard */}
       <main className="container mx-auto px-6 py-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="dashboard">Trading Dashboard</TabsTrigger>
+            <TabsTrigger value="dashboard">Trading Dashboard - Live Data</TabsTrigger>
             <TabsTrigger value="analysis">Probability Analysis</TabsTrigger>
           </TabsList>
           
@@ -269,10 +379,10 @@ const Index: FC = () => {
                 />
               </div>
 
-              {/* Second Row - Chart and Order Book */}
+              {/* Second Row - Chart and Order Book - LIVE DATA */}
               <div className="col-span-12 lg:col-span-8">
                 <HybridPriceChart 
-                  symbol={selectedSymbol} 
+                  symbol={getBitfinexSymbol(selectedSymbol)}
                   height={400}
                   showControls={true}
                 />
@@ -280,7 +390,7 @@ const Index: FC = () => {
               
               <div className="col-span-12 lg:col-span-4">
                 <HybridOrderBook 
-                  symbol={selectedSymbol} 
+                  symbol={getBitfinexSymbol(selectedSymbol)}
                   maxLevels={10}
                   showControls={true}
                 />
