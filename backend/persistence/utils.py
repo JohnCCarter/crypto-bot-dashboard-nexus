@@ -55,9 +55,13 @@ def load_bot_state() -> Optional[Dict[str, Any]]:
         return {
             "running": status.running,
             "start_time": status.start_time,
-            "last_update": status.last_update.isoformat() if status.last_update else None,
+            "last_update": (
+                status.last_update.isoformat() if status.last_update else None
+            ),
             "cycle_count": status.cycle_count,
-            "last_cycle_time": status.last_cycle_time.isoformat() if status.last_cycle_time else None,
+            "last_cycle_time": (
+                status.last_cycle_time.isoformat() if status.last_cycle_time else None
+            ),
             "error": status.error,
         }
     finally:

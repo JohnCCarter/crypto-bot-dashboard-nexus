@@ -48,7 +48,7 @@ class ExchangeService:
                 exchange_class = CustomBitfinex
             else:
                 exchange_class = getattr(ccxt, exchange_id)
-                
+
             self.exchange = exchange_class(
                 {"apiKey": api_key, "secret": api_secret, "enableRateLimit": True}
             )
@@ -90,7 +90,7 @@ class ExchangeService:
             if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
                 # Check if this is paper trading
                 is_paper = self.is_paper_trading()
-                
+
                 if is_paper:
                     # Paper trading: Use simple parameters
                     # Don't use EXCHANGE prefixes or complex params
@@ -160,7 +160,7 @@ class ExchangeService:
             price = float(order["price"]) if order.get("price") else 0.0
             filled = float(order["filled"]) if order.get("filled") else 0.0
             remaining = float(order["remaining"]) if order.get("remaining") else 0.0
-            
+
             return {
                 "id": order["id"],
                 "symbol": order["symbol"],
@@ -237,39 +237,39 @@ class ExchangeService:
         try:
             balance = self.exchange.fetch_balance()
             result = {}
-            
+
             # Handle different balance structure formats
-            if 'total' in balance and isinstance(balance['total'], dict):
+            if "total" in balance and isinstance(balance["total"], dict):
                 # Standard CCXT format with nested structure
-                for currency, amount in balance['total'].items():
-                    if isinstance(amount, dict) and 'free' in amount:
-                        free_amount = float(amount['free'])
+                for currency, amount in balance["total"].items():
+                    if isinstance(amount, dict) and "free" in amount:
+                        free_amount = float(amount["free"])
                     else:
                         free_amount = float(amount)
-                    
+
                     if free_amount > 0:
                         result[currency] = free_amount
             else:
                 # Direct format or other structures
                 for currency, data in balance.items():
-                    if currency in ['info', 'datetime', 'timestamp']:
+                    if currency in ["info", "datetime", "timestamp"]:
                         continue
-                        
+
                     if isinstance(data, dict):
-                        if 'free' in data:
-                            free_amount = float(data['free'])
-                        elif 'total' in data:
-                            free_amount = float(data['total'])
+                        if "free" in data:
+                            free_amount = float(data["free"])
+                        elif "total" in data:
+                            free_amount = float(data["total"])
                         else:
-                            free_amount = float(data.get('available', 0))
+                            free_amount = float(data.get("available", 0))
                     else:
                         free_amount = float(data)
-                    
+
                     if free_amount > 0:
                         result[currency] = free_amount
-            
+
             return result
-            
+
         except Exception as e:
             raise ExchangeError(f"Failed to fetch balance: {str(e)}")
 
@@ -400,9 +400,9 @@ class ExchangeService:
             for position in positions:
                 # Get position size - handle different exchange formats
                 size = position.get("size")
-                amount = position.get("amount") 
+                amount = position.get("amount")
                 notional = position.get("notional", 0)
-                
+
                 # For Bitfinex: sometimes size is None but notional contains amount
                 if size is None and amount is None:
                     # Check if this is a Bitfinex margin position with notional
@@ -428,7 +428,7 @@ class ExchangeService:
                     mark_price = position.get("markPrice")
                     if mark_price is None:
                         mark_price = position.get("lastPrice", 0)
-                    
+
                     active_positions.append(
                         {
                             "id": position.get("id", ""),
@@ -462,7 +462,7 @@ class ExchangeService:
     def is_paper_trading(self) -> bool:
         """
         Detect if this is a paper trading account.
-        
+
         Returns:
             True if paper trading, False if live trading
         """
@@ -470,34 +470,35 @@ class ExchangeService:
             # For Bitfinex, check account info to determine if it's paper trading
             if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
                 balance = self.exchange.fetch_balance()
-                info = balance.get('info', [])
-                
+                info = balance.get("info", [])
+
                 # Primary check: Look for TEST currency prefixes in balance
                 # Paper trading accounts use TESTUSD, TESTBTC, etc.
                 if isinstance(info, list) and len(info) > 0:
                     for account_info in info:
                         if isinstance(account_info, list) and len(account_info) >= 2:
                             currency = str(account_info[1])
-                            if currency.startswith('TEST'):
+                            if currency.startswith("TEST"):
                                 return True
-                
+
                 # Secondary check: Look for TEST currencies in balance currencies
                 for currency in balance.keys():
-                    if isinstance(currency, str) and currency.startswith('TEST'):
+                    if isinstance(currency, str) and currency.startswith("TEST"):
                         return True
-                
+
                 # Fallback check: limited markets available in paper trading
                 markets = self.exchange.load_markets()
-                spot_pairs = sum(bool(market.get('spot', False) and market.get('active', False))
-                             for market in markets.values())
+                spot_pairs = sum(
+                    bool(market.get("spot", False) and market.get("active", False))
+                    for market in markets.values()
+                )
 
-                
                 # Live Bitfinex typically has 300+ spot pairs, paper has ~18
                 if spot_pairs <= 50:  # Conservative threshold
                     return True
-                    
+
             return False
-            
+
         except Exception:
             # If detection fails, assume live trading for safety
             return False
@@ -505,7 +506,7 @@ class ExchangeService:
     def get_trading_limitations(self) -> Dict[str, Any]:
         """
         Get trading limitations for current account type.
-        
+
         Returns:
             Dict containing account limitations
         """
@@ -519,15 +520,15 @@ class ExchangeService:
                     "18 spot trading pairs available",
                     "16 perpetual contract pairs available",
                     "Full margin trading not supported",
-                    "Complex derivatives not available"
-                ]
+                    "Complex derivatives not available",
+                ],
             }
         else:
             return {
                 "is_paper_trading": False,
                 "margin_trading_available": True,
                 "supported_order_types": ["spot", "margin", "perpetual", "futures"],
-                "limitations": []
+                "limitations": [],
             }
 
     def get_markets(self) -> Dict[str, Any]:

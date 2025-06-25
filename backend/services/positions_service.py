@@ -25,38 +25,38 @@ def get_shared_exchange_service():
 def get_position_type_from_metadata(symbol: str) -> str:
     """
     Get position type (margin/spot) from stored order metadata.
-    
+
     Args:
         symbol: Trading symbol (e.g. "BTC/USD" or "TESTBTC/TESTUSD")
-        
+
     Returns:
         "margin" or "spot" based on recent order metadata
     """
     try:
-        if hasattr(current_app, '_order_metadata'):
+        if hasattr(current_app, "_order_metadata"):
             # Check both original symbol and normalized symbol
             symbols_to_check = [symbol]
-            
+
             # Add normalized version (BTC/USD from TESTBTC/TESTUSD)
-            if symbol.startswith('TEST'):
-                normalized = symbol.replace('TEST', '').replace('TESTUSD', 'USD')
+            if symbol.startswith("TEST"):
+                normalized = symbol.replace("TEST", "").replace("TESTUSD", "USD")
                 symbols_to_check.append(normalized)
-            
+
             # Also check reverse (TESTBTC/TESTUSD from BTC/USD)
-            if not symbol.startswith('TEST'):
+            if not symbol.startswith("TEST"):
                 test_version = symbol
-                test_version = test_version.replace('BTC', 'TESTBTC')
-                test_version = test_version.replace('ETH', 'TESTETH')
-                test_version = test_version.replace('LTC', 'TESTLTC')
-                test_version = test_version.replace('/USD', '/TESTUSD')
+                test_version = test_version.replace("BTC", "TESTBTC")
+                test_version = test_version.replace("ETH", "TESTETH")
+                test_version = test_version.replace("LTC", "TESTLTC")
+                test_version = test_version.replace("/USD", "/TESTUSD")
                 symbols_to_check.append(test_version)
-            
+
             for check_symbol in symbols_to_check:
                 if check_symbol in current_app._order_metadata:
                     order_meta = current_app._order_metadata[check_symbol]
                     # Check if metadata is recent (within 24 hours)
-                    if time.time() - order_meta['timestamp'] < 86400:
-                        position_type = order_meta['position_type']
+                    if time.time() - order_meta["timestamp"] < 86400:
+                        position_type = order_meta["position_type"]
                         logging.info(
                             f"📊 [Positions] Using metadata for {symbol}: "
                             f"{position_type.upper()} (found via {check_symbol})"
@@ -71,7 +71,7 @@ def get_position_type_from_metadata(symbol: str) -> str:
                         )
     except Exception as e:
         logging.warning(f"Error getting metadata for {symbol}: {e}")
-    
+
     # Default to spot if no metadata
     return "spot"
 
@@ -79,8 +79,8 @@ def get_position_type_from_metadata(symbol: str) -> str:
 def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """
     Fetch live positions from Bitfinex using hybrid approach.
-    
-    For Bitfinex SPOT trading, we convert non-zero cryptocurrency balances 
+
+    For Bitfinex SPOT trading, we convert non-zero cryptocurrency balances
     into "position" format since spot trades don't create margin positions.
 
     Args:
@@ -117,32 +117,32 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
         # STEP 2: Create "spot positions" from cryptocurrency holdings
         spot_positions = []
         margin_positions_from_holdings = []
-        
+
         try:
             balances = exchange_service.fetch_balance()
-            
+
             # Get current market prices for major cryptocurrencies
-            major_cryptos = ['TESTBTC', 'TESTETH', 'TESTLTC', 'BTC', 'ETH', 'LTC']
-            
+            major_cryptos = ["TESTBTC", "TESTETH", "TESTLTC", "BTC", "ETH", "LTC"]
+
             for crypto in major_cryptos:
                 if crypto in balances and balances[crypto] > 0:
                     # Determine symbol for price lookup
                     base_currency = (
-                        crypto.replace('TEST', '') 
-                        if crypto.startswith('TEST') 
+                        crypto.replace("TEST", "")
+                        if crypto.startswith("TEST")
                         else crypto
                     )
                     symbol = f"{base_currency}/USD"
-                    
+
                     try:
                         ticker = exchange_service.fetch_ticker(symbol)
                         amount = balances[crypto]
-                        current_price = ticker['last']
+                        current_price = ticker["last"]
                         current_value = amount * current_price
-                        
+
                         # Check if this should be margin or spot position
                         position_type = get_position_type_from_metadata(symbol)
-                        
+
                         if position_type == "margin":
                             # Create margin-classified position
                             margin_position = {
@@ -193,23 +193,20 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
                                 f"📊 [Positions] Created SPOT position: "
                                 f"{crypto} = {amount:.6f} @ ${current_price:,.2f}"
                             )
-                        
+
                     except Exception as e:
                         logging.warning(
-                            f"❌ [Positions] Failed to get price for "
-                            f"{symbol}: {e}"
+                            f"❌ [Positions] Failed to get price for " f"{symbol}: {e}"
                         )
-                        
+
         except Exception as e:
             logging.error(f"❌ [Positions] Failed to create positions: {e}")
 
         # STEP 3: Combine all position types
         all_positions = (
-            traditional_positions + 
-            margin_positions_from_holdings + 
-            spot_positions
+            traditional_positions + margin_positions_from_holdings + spot_positions
         )
-        
+
         # STEP 4: Filter by symbols if requested
         if symbols and all_positions:
             filtered_positions = []
@@ -224,7 +221,7 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
             f"Classified Margin: {len(margin_positions_from_holdings)}, "
             f"Spot: {len(spot_positions)})"
         )
-        
+
         return all_positions
 
     except ExchangeError as e:
@@ -232,9 +229,7 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
         raise e
     except Exception as e:
         logging.error(f"❌ [Positions] Failed to fetch positions: {str(e)}")
-        raise ExchangeError(
-            f"Failed to fetch positions: {str(e)}"
-        )
+        raise ExchangeError(f"Failed to fetch positions: {str(e)}")
 
 
 def get_mock_positions():

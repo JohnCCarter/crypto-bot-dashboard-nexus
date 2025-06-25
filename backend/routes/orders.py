@@ -23,15 +23,11 @@ def get_shared_exchange_service():
     try:
         if hasattr(current_app, "_services") and current_app._services:
             return current_app._services.get("exchange")
-        
-        current_app.logger.warning(
-            "Exchange service not available in app context"
-        )
+
+        current_app.logger.warning("Exchange service not available in app context")
         return None
     except Exception as e:
-        current_app.logger.error(
-            f"Failed to get shared exchange service: {e}"
-        )
+        current_app.logger.error(f"Failed to get shared exchange service: {e}")
         return None
 
 
@@ -52,9 +48,7 @@ def register(app):
         try:
             exchange_service = get_shared_exchange_service()
             if not exchange_service:
-                current_app.logger.warning(
-                    "⚠️ [Orders] No exchange service available"
-                )
+                current_app.logger.warning("⚠️ [Orders] No exchange service available")
                 return jsonify({"orders": []}), 200
 
             # Fetch open orders from Bitfinex
@@ -144,20 +138,20 @@ def register(app):
             )
 
             # Store order metadata for position classification
-            if hasattr(current_app, '_order_metadata'):
+            if hasattr(current_app, "_order_metadata"):
                 # Normalize symbol for metadata storage
                 # (TESTBTC/TESTUSD -> BTC/USD)
                 normalized_symbol = (
-                    data["symbol"].replace('TEST', '').replace('TESTUSD', 'USD')
+                    data["symbol"].replace("TEST", "").replace("TESTUSD", "USD")
                 )
-                
+
                 current_app._order_metadata[normalized_symbol] = {
-                    'position_type': position_type,
-                    'timestamp': time.time(),
-                    'side': data["side"],
-                    'amount': float(data["amount"]),
-                    'order_id': order.get('id'),
-                    'original_symbol': data["symbol"],
+                    "position_type": position_type,
+                    "timestamp": time.time(),
+                    "side": data["side"],
+                    "amount": float(data["amount"]),
+                    "order_id": order.get("id"),
+                    "original_symbol": data["symbol"],
                 }
                 current_app.logger.info(
                     f"📊 [Order Metadata] Saved {position_type.upper()} order: "
@@ -317,26 +311,40 @@ def register(app):
         try:
             exchange_service = get_shared_exchange_service()
             if not exchange_service:
-                current_app.logger.warning("⚠️ [Limitations] No exchange service available")
+                current_app.logger.warning(
+                    "⚠️ [Limitations] No exchange service available"
+                )
                 # Return safe defaults on error
-                return jsonify({
-                    "is_paper_trading": False,
-                    "margin_trading_available": True,
-                    "supported_order_types": ["spot", "margin"],
-                    "limitations": []
-                }), 200
+                return (
+                    jsonify(
+                        {
+                            "is_paper_trading": False,
+                            "margin_trading_available": True,
+                            "supported_order_types": ["spot", "margin"],
+                            "limitations": [],
+                        }
+                    ),
+                    200,
+                )
 
             limitations = exchange_service.get_trading_limitations()
-            
-            current_app.logger.info(f"✅ [Limitations] Retrieved limitations: {limitations['is_paper_trading']}")
+
+            current_app.logger.info(
+                f"✅ [Limitations] Retrieved limitations: {limitations['is_paper_trading']}"
+            )
             return jsonify(limitations), 200
 
         except Exception as e:
             current_app.logger.error(f"❌ [Limitations] Unexpected error: {e}")
             # Return safe defaults on error
-            return jsonify({
-                "is_paper_trading": False,
-                "margin_trading_available": True,
-                "supported_order_types": ["spot", "margin"],
-                "limitations": []
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "is_paper_trading": False,
+                        "margin_trading_available": True,
+                        "supported_order_types": ["spot", "margin"],
+                        "limitations": [],
+                    }
+                ),
+                200,
+            )

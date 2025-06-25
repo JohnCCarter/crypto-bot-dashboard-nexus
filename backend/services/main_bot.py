@@ -31,7 +31,7 @@ def main():
     config_service = ConfigService()
     config = config_service.load_config()
     # Strategiparametrar - using TradingConfig dataclass
-    
+
     ema_params = config.strategy_config.copy()
     rsi_params = config.strategy_config.copy()
     fvg_params = config.strategy_config.copy()

@@ -171,21 +171,23 @@ class LiveDataService:
             # Fetch all data in parallel would be better, but keeping simple for now
             ohlcv_df = self.fetch_live_ohlcv(symbol, timeframe, limit)
             ticker = self.fetch_live_ticker(symbol)
-            
+
             # Try to fetch orderbook, use fallback for paper trading
             try:
                 orderbook = self.fetch_live_orderbook(symbol)
             except Exception as e:
-                logger.warning(f"⚠️ [LiveData] Orderbook failed for {symbol}, using fallback: {e}")
+                logger.warning(
+                    f"⚠️ [LiveData] Orderbook failed for {symbol}, using fallback: {e}"
+                )
                 # Create fallback orderbook based on ticker price
                 current_price = float(ticker.get("last", 0))
                 spread = current_price * 0.001  # 0.1% spread fallback
                 orderbook = {
-                    "bids": [[current_price - spread/2, 1.0]],
-                    "asks": [[current_price + spread/2, 1.0]],
+                    "bids": [[current_price - spread / 2, 1.0]],
+                    "asks": [[current_price + spread / 2, 1.0]],
                     "timestamp": ticker.get("timestamp"),
                     "datetime": ticker.get("datetime"),
-                    "nonce": None
+                    "nonce": None,
                 }
 
             # Calculate additional metrics
