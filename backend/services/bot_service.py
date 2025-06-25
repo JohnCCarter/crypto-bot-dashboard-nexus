@@ -5,6 +5,7 @@ import os
 from datetime import UTC, datetime
 from typing import Optional, Dict, Any
 import logging
+from backend.persistence.utils import save_bot_state, load_bot_state  # NEW IMPORT
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,10 @@ class ThreadSafeBotState:
             "cycle_count": 0,
             "last_cycle_time": None
         }
+        # Load persisted state if available
+        persisted = load_bot_state()
+        if persisted:
+            self._state.update(persisted)
     
     def get_state(self) -> Dict[str, Any]:
         """Get current state safely."""
@@ -38,11 +43,13 @@ class ThreadSafeBotState:
                 self._state["error"] = None
             else:
                 self._state["start_time"] = None
+        self._persist()
     
     def set_thread(self, thread: Optional[threading.Thread]) -> None:
         """Set thread reference safely."""
         with self._lock:
             self._state["thread"] = thread
+        self._persist()
     
     def set_error(self, error: Optional[str]) -> None:
         """Set error state safely."""
@@ -51,6 +58,7 @@ class ThreadSafeBotState:
             self._state["last_update"] = datetime.now(UTC).isoformat()
             if error:
                 self._state["running"] = False
+        self._persist()
     
     def increment_cycle(self) -> None:
         """Increment cycle counter safely."""
@@ -58,11 +66,19 @@ class ThreadSafeBotState:
             self._state["cycle_count"] += 1
             self._state["last_cycle_time"] = datetime.now(UTC).isoformat()
             self._state["last_update"] = datetime.now(UTC).isoformat()
+        self._persist()
     
     def is_running(self) -> bool:
         """Check if bot is running safely."""
         with self._lock:
             return self._state["running"]
+
+    def _persist(self):
+        """Persist current state asynchronously (fire-and-forget)."""
+        try:
+            save_bot_state(self._state)
+        except Exception as exc:  # pragma: no cover
+            logger.warning(f"Failed to persist bot state: {exc}")
 
 # Global thread-safe bot state instance
 bot_state = ThreadSafeBotState()
