@@ -11,8 +11,8 @@ sys.path.insert(0, workspace_path)
 try:
     from backend.app import app
     print("✅ Backend app imported successfully")
-    print("🚀 Starting Flask server on http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("🚀 Starting Flask server on http://localhost:5001")
+    app.run(host='0.0.0.0', port=5001, debug=True)
 except Exception as e:
     print(f"❌ Error starting backend: {e}")
     import traceback
