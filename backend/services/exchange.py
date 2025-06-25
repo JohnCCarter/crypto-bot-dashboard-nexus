@@ -508,9 +508,7 @@ class ExchangeService:
         Returns:
             Dict containing account limitations
         """
-        is_paper = self.is_paper_trading()
-        
-        if is_paper:
+        if is_paper := self.is_paper_trading():
             return {
                 "is_paper_trading": True,
                 "margin_trading_available": False,
