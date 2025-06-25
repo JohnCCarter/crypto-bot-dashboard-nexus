@@ -72,7 +72,7 @@ jobs:
       - name: 🔍 Code quality check (Flake8)
         run: |
           source venv/bin/activate
-          flake8 backend/ --max-line-length=88 --extend-ignore=E203,W503 || {
+          flake8 . --max-line-length=88 --extend-ignore=E203,W503 || {
             echo "❌ Code quality issues found. Check flake8 output above."
             exit 1
           }
