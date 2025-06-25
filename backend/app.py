@@ -1,4 +1,4 @@
-"""Trading bot application entrypoint."""
+THIS SHOULD BE A LINTER ERROR"""Trading bot application entrypoint."""
 
 import json
 import logging
@@ -45,14 +45,6 @@ if os.getenv("ENVIRONMENT") == "production":
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"])
-
-# Registrera routes som inte använder blueprint
-register_balances(app)
-register_bot_control(app)
-register_orders(app)
-register_positions(app)
-register_config(app)
-market_data.register(app)
 
 
 def load_config() -> Dict[str, Any]:
@@ -180,11 +172,10 @@ app._services = services
 
 def register_routes():
     """Register all route blueprints."""
-    from backend.routes import balances, bot_control, config, orders, positions, status, market_data
+    from backend.routes import balances, bot_control, config, orders, positions, market_data
+    from backend.routes.status import status_bp
     from backend.routes import backtest, live_portfolio, strategy_analysis
-    # NY: Authenticated WebSocket routes (ERSÄTTER public market data)
-    # TEMPORÄRT INAKTIVERAD - behöver installera websockets bibliotek
-    # websocket_integration.register(app)
+    from backend.routes import websocket_integration  # NY: Authenticated WebSocket routes
     
     logger.info("📋 Registering route blueprints...")
     
@@ -194,7 +185,9 @@ def register_routes():
     config.register(app)
     orders.register(app)
     positions.register(app)
-    status.register(app)
+    
+    # Blueprint routes
+    app.register_blueprint(status_bp)
     
     # Market data routes (fallback for REST)
     market_data.register(app)
