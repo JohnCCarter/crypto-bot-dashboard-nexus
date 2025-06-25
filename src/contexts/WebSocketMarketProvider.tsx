@@ -717,10 +717,18 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
                     timestamp: orderData[5] || Date.now()
                   };
                   
-                  setLiveOrders(prev => ({
-                    ...prev,
-                    [order.id]: order
-                  }));
+                  setLiveOrders(prev => {
+                    // Remove order if status is 'filled' or 'cancelled'
+                    if (order.status === 'filled' || order.status === 'cancelled') {
+                      const { [order.id]: _, ...rest } = prev;
+                      return rest;
+                    }
+                    // Otherwise, add/update the order
+                    return {
+                      ...prev,
+                      [order.id]: order
+                    };
+                  });
                 }
               } else if (msgType === 'wu' || msgType === 'ws') {
                 // Wallet update or snapshot
