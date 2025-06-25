@@ -36,16 +36,40 @@ type OrderSide = 'buy' | 'sell';
 
 interface ManualTradePanelProps {
   defaultSymbol?: string;
+  symbol?: string;
+  onOrderPlaced?: () => void;
 }
 
+// Convert symbol to paper trading format
+const convertToPaperSymbol = (inputSymbol: string): string => {
+  const symbolMap: Record<string, string> = {
+    'BTCUSD': 'TESTBTC/TESTUSD',
+    'ETHUSD': 'TESTETH/TESTUSD', 
+    'LTCUSD': 'TESTLTC/TESTUSD',
+    'XRPUSD': 'TESTXRP/TESTUSD',
+    'ADAUSD': 'TESTADA/TESTUSD'
+  };
+  return symbolMap[inputSymbol] || inputSymbol;
+};
+
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
-  defaultSymbol = 'TESTBTC/TESTUSD' 
+  defaultSymbol = 'TESTBTC/TESTUSD',
+  symbol,
+  onOrderPlaced
 }) => {
   const [orderType, setOrderType] = useState<OrderType>('market');
   const [side, setSide] = useState<OrderSide>('buy');
   const [amount, setAmount] = useState('');
   const [price, setPrice] = useState('');
-  const [currentSymbol] = useState(defaultSymbol);
+  const [currentSymbol, setCurrentSymbol] = useState(convertToPaperSymbol(symbol || defaultSymbol));
+
+  // Update current symbol when prop changes
+  useEffect(() => {
+    if (symbol) {
+      const paperSymbol = convertToPaperSymbol(symbol);
+      setCurrentSymbol(paperSymbol);
+    }
+  }, [symbol]);
 
   const queryClient = useQueryClient();
 
@@ -102,6 +126,9 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       // Reset form
       setAmount('');
       setPrice('');
+      
+      // Notify parent component
+      onOrderPlaced?.();
     }
   });
 
@@ -280,6 +307,8 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
             </div>
           </div>
         )}
+
+
 
         {/* Order Configuration */}
         <div className="grid grid-cols-2 gap-4">

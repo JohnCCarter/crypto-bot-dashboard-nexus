@@ -55,10 +55,14 @@ const Index: FC = () => {
   const { toast } = useToast();
 
   // Global symbol selection state
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('BTCUSD');
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('TESTBTC/TESTUSD');
 
-  // Available trading symbols
-  const SYMBOLS = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'ADAUSD'];
+  // Available trading symbols (paper trading)
+  const SYMBOLS = [
+    { label: 'BTCUSD', value: 'TESTBTC/TESTUSD' },
+    { label: 'ETHUSD', value: 'TESTETH/TESTUSD' },
+    { label: 'LTCUSD', value: 'TESTLTC/TESTUSD' }
+  ];
 
   const loadEmaCrossover = useCallback(async () => {
     try {
@@ -198,8 +202,8 @@ const Index: FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {SYMBOLS.map((symbol) => (
-                      <SelectItem key={symbol} value={symbol}>
-                        {symbol}
+                      <SelectItem key={symbol.value} value={symbol.value}>
+                        {symbol.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
