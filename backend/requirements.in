@@ -1,0 +1,16 @@
+ccxt
+Flask
+flask-cors
+numpy
+pandas
+pytest
+python-dotenv
+supabase
+websocket-client
+websockets
+black
+scikit-learn
+matplotlib
+requests
+h11<0.15
+# Lägg till andra huvudpaket du faktiskt använder här
