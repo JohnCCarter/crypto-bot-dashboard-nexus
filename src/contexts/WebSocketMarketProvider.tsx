@@ -103,14 +103,16 @@ interface WebSocketMarketState {
   getOrderbookForSymbol: (symbol: string) => OrderBook | null;
   getTradesForSymbol: (symbol: string) => Trade[];
   
-  // Add user data streams
+  // User data streams
   userFills: OrderFill[];
   liveOrders: Record<string, LiveOrder>;
   liveBalances: Record<string, LiveBalance>;
+  userDataConnected: boolean;
+  userDataError: string | null;
   
-  // Add user data subscriptions
-  subscribeToUserData: () => void;
-  unsubscribeFromUserData: () => void;
+  // User data subscriptions
+  subscribeToUserData: () => Promise<void>;
+  unsubscribeFromUserData: () => Promise<void>;
 }
 
 const WebSocketMarketContext = createContext<WebSocketMarketState | null>(null);
@@ -137,6 +139,13 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   const [lastHeartbeat, setLastHeartbeat] = useState<number | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   
+  // User data state
+  const [userFills, setUserFills] = useState<OrderFill[]>([]);
+  const [liveOrders, setLiveOrders] = useState<Record<string, LiveOrder>>({});
+  const [liveBalances, setLiveBalances] = useState<Record<string, LiveBalance>>({});
+  const [userDataConnected, setUserDataConnected] = useState(false);
+  const [userDataError, setUserDataError] = useState<string | null>(null);
+  
   // WebSocket refs - SINGLE CONNECTION with proper state management
   const ws = useRef<WebSocket | null>(null);
   const subscriptions = useRef<Map<number, ChannelSubscription>>(new Map());
@@ -148,6 +157,11 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   const maxReconnectAttempts = 3;
   const pingCounter = useRef<number>(0);
   const connectionInitialized = useRef<boolean>(false); // Prevent multiple connections
+  
+  // User data WebSocket refs
+  const userDataWS = useRef<WebSocket | null>(null);
+  const userDataConnecting = useRef<boolean>(false);
+  const userDataAuthenticated = useRef<boolean>(false);
 
   // Ping/Pong för latency measurement
   const sendPing = useCallback(() => {
@@ -535,7 +549,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     connect();
 
     return () => {
-      // Clean shutdown
+      // Clean shutdown - market data WebSocket
       connectionInitialized.current = false;
       
       if (reconnectTimeout.current) {
@@ -554,8 +568,224 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
         ws.current.close(1000, 'Provider unmount');
         ws.current = null;
       }
+      
+      // Clean shutdown - user data WebSocket
+      if (userDataWS.current && userDataWS.current.readyState !== WebSocket.CLOSED) {
+        userDataWS.current.close(1000, 'Provider unmount');
+        userDataWS.current = null;
+      }
+      userDataConnecting.current = false;
+      userDataAuthenticated.current = false;
     };
   }, [connect]);
+
+  // User data WebSocket implementation
+  const subscribeToUserData = useCallback(async (): Promise<void> => {
+    // If already connected or connecting, don't create another connection
+    if (userDataConnected || userDataConnecting.current) {
+      return;
+    }
+
+    userDataConnecting.current = true;
+    setUserDataError(null);
+
+    try {
+      // Get API credentials from environment or config
+      const apiKey = process.env.REACT_APP_BITFINEX_API_KEY || 
+                   localStorage.getItem('bitfinex_api_key') || '';
+      const apiSecret = process.env.REACT_APP_BITFINEX_API_SECRET || 
+                       localStorage.getItem('bitfinex_api_secret') || '';
+
+      if (!apiKey || !apiSecret) {
+        // For paper trading, we can simulate user data or use mock data
+        console.log('📊 No API credentials found - using mock user data for paper trading');
+        setUserDataConnected(true);
+        userDataConnecting.current = false;
+        
+        // Simulate some mock data for paper trading
+        setLiveBalances({
+          'TESTUSD': {
+            currency: 'TESTUSD',
+            available: 10000,
+            total: 10000,
+            timestamp: Date.now()
+          },
+          'TESTBTC': {
+            currency: 'TESTBTC',
+            available: 0.1,
+            total: 0.1,
+            timestamp: Date.now()
+          }
+        });
+        
+        return;
+      }
+
+      // Connect to authenticated WebSocket for user data
+      userDataWS.current = new WebSocket('wss://api-pub.bitfinex.com/ws/2');
+
+      userDataWS.current.onopen = async () => {
+        try {
+          // Generate authentication payload
+          const nonce = (Date.now() * 1000).toString();
+          const authPayload = `AUTH${nonce}`;
+          
+          // This is a simplified version - in production you'd want to do this server-side
+          // For now, we'll focus on the WebSocket structure
+          const authMessage = {
+            event: 'auth',
+            apiKey: apiKey,
+            authSig: 'placeholder_signature', // Would be HMAC-SHA384 in production
+            authPayload: authPayload,
+            authNonce: nonce
+          };
+
+          userDataWS.current?.send(JSON.stringify(authMessage));
+        } catch (error) {
+          setUserDataError('Authentication failed');
+          userDataConnecting.current = false;
+        }
+      };
+
+      userDataWS.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // Handle authentication response
+          if (data.event === 'auth') {
+            if (data.status === 'OK') {
+              userDataAuthenticated.current = true;
+              setUserDataConnected(true);
+              setUserDataError(null);
+              console.log('✅ User data WebSocket authenticated');
+            } else {
+              setUserDataError(`Authentication failed: ${data.msg || 'Unknown error'}`);
+              userDataAuthenticated.current = false;
+            }
+            userDataConnecting.current = false;
+            return;
+          }
+
+          // Handle user data messages
+          if (Array.isArray(data) && data.length >= 2) {
+            const [channelId, messageData] = data;
+            
+            if (messageData === 'hb') {
+              // Heartbeat - user data connection is alive
+              return;
+            }
+
+            // Handle different user data message types
+            if (Array.isArray(messageData) && messageData.length > 0) {
+              const msgType = messageData[0];
+              
+              if (msgType === 'te') {
+                // Trade execution (order fill)
+                const executionData = messageData[1];
+                if (executionData && executionData.length >= 6) {
+                  const fill: OrderFill = {
+                    id: executionData[0]?.toString() || '',
+                    orderId: executionData[3]?.toString() || '',
+                    symbol: executionData[1] || '',
+                    side: (executionData[4] || 0) > 0 ? 'buy' : 'sell',
+                    amount: Math.abs(executionData[4] || 0),
+                    price: executionData[5] || 0,
+                    fee: executionData[9] || 0,
+                    timestamp: executionData[2] || Date.now()
+                  };
+                  
+                  setUserFills(prev => [fill, ...prev.slice(0, 49)]); // Keep last 50 fills
+                }
+              } else if (msgType === 'ou' || msgType === 'on') {
+                // Order update or new order
+                const orderData = messageData[1];
+                if (orderData && orderData.length >= 16) {
+                  const order: LiveOrder = {
+                    id: orderData[0]?.toString() || '',
+                    symbol: orderData[3] || '',
+                    side: (orderData[7] || 0) > 0 ? 'buy' : 'sell',
+                    amount: Math.abs(orderData[7] || 0),
+                    price: orderData[16] || 0,
+                    filled: Math.abs(orderData[7] || 0) - Math.abs(orderData[6] || 0),
+                    remaining: Math.abs(orderData[6] || 0),
+                    status: parseOrderStatus(orderData[13]),
+                    timestamp: orderData[5] || Date.now()
+                  };
+                  
+                  setLiveOrders(prev => ({
+                    ...prev,
+                    [order.id]: order
+                  }));
+                }
+              } else if (msgType === 'wu' || msgType === 'ws') {
+                // Wallet update or snapshot
+                const walletData = messageData[1];
+                if (walletData && walletData.length >= 5) {
+                  const balance: LiveBalance = {
+                    currency: walletData[1] || '',
+                    available: walletData[4] || 0,
+                    total: walletData[2] || 0,
+                    timestamp: Date.now()
+                  };
+                  
+                  setLiveBalances(prev => ({
+                    ...prev,
+                    [balance.currency]: balance
+                  }));
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error processing user data message:', error);
+        }
+      };
+
+      userDataWS.current.onclose = () => {
+        setUserDataConnected(false);
+        userDataAuthenticated.current = false;
+        userDataConnecting.current = false;
+        console.log('🔌 User data WebSocket disconnected');
+      };
+
+      userDataWS.current.onerror = (error) => {
+        setUserDataError('User data WebSocket connection failed');
+        userDataConnecting.current = false;
+        console.error('❌ User data WebSocket error:', error);
+      };
+
+    } catch (error) {
+      setUserDataError(`Failed to connect to user data stream: ${error}`);
+      userDataConnecting.current = false;
+    }
+  }, [userDataConnected]);
+
+  const unsubscribeFromUserData = useCallback(async (): Promise<void> => {
+    if (userDataWS.current) {
+      userDataWS.current.close();
+      userDataWS.current = null;
+    }
+    
+    setUserDataConnected(false);
+    userDataAuthenticated.current = false;
+    userDataConnecting.current = false;
+    setUserFills([]);
+    setLiveOrders({});
+    setLiveBalances({});
+    
+    console.log('🔌 User data WebSocket unsubscribed');
+  }, []);
+
+  // Helper function to parse order status
+  const parseOrderStatus = (statusInfo: any): 'open' | 'filled' | 'cancelled' | 'partial' => {
+    if (!statusInfo) return 'open';
+    
+    const statusStr = statusInfo.toString();
+    if (statusStr.includes('EXECUTED')) return 'filled';
+    if (statusStr.includes('CANCELED')) return 'cancelled';
+    if (statusStr.includes('PARTIALLY FILLED')) return 'partial';
+    return 'open';
+  };
 
   const value: WebSocketMarketState = {
     tickers,
@@ -572,11 +802,13 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     getTickerForSymbol,
     getOrderbookForSymbol,
     getTradesForSymbol,
-    userFills: [],
-    liveOrders: {},
-    liveBalances: {},
-    subscribeToUserData: () => {},
-    unsubscribeFromUserData: () => {}
+    userFills,
+    liveOrders,
+    liveBalances,
+    userDataConnected,
+    userDataError,
+    subscribeToUserData,
+    unsubscribeFromUserData
   };
 
   return (
