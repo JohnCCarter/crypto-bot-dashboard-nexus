@@ -23,10 +23,8 @@ class ThreadSafeBotState:
             "cycle_count": 0,
             "last_cycle_time": None
         }
-        # Load persisted state if available
-        persisted = load_bot_state()
-        if persisted:
-            self._state.update(persisted)
+        if persisted := load_bot_state():
+            self._state |= persisted
     
     def get_state(self) -> Dict[str, Any]:
         """Get current state safely."""
