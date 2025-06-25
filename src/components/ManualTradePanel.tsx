@@ -39,7 +39,7 @@ interface ManualTradePanelProps {
 }
 
 export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({ 
-  defaultSymbol = 'BTCUSD' 
+  defaultSymbol = 'TESTBTC/TESTUSD' 
 }) => {
   const [orderType, setOrderType] = useState<OrderType>('market');
   const [side, setSide] = useState<OrderSide>('buy');

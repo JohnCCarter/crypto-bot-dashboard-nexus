@@ -21,7 +21,7 @@ def register(app):
             current_app.logger.error(f"Failed to get exchange service: {e}")
             return None
 
-    @app.route("/api/market/ohlcv/<symbol>", methods=["GET"])
+    @app.route("/api/market/ohlcv/<path:symbol>", methods=["GET"])
     def get_live_ohlcv(symbol):
         """
         Get live OHLCV data from Bitfinex.
@@ -98,7 +98,7 @@ def register(app):
                 "error": f"Failed to fetch OHLCV data: {str(e)}"
             }), 500
 
-    @app.route("/api/market/orderbook/<symbol>", methods=["GET"])  
+    @app.route("/api/market/orderbook/<path:symbol>", methods=["GET"])  
     def get_live_orderbook(symbol):
         """
         Get live order book from Bitfinex.
@@ -179,7 +179,7 @@ def register(app):
                 "message": "Live orderbook unavailable"
             }), 500
 
-    @app.route("/api/market/ticker/<symbol>", methods=["GET"])
+    @app.route("/api/market/ticker/<path:symbol>", methods=["GET"])
     def get_live_ticker(symbol):
         """
         Get live ticker data from Bitfinex.
