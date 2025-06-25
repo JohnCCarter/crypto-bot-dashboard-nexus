@@ -322,27 +322,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
           </div>
         )}
 
-        {/* Paper Trading Limitations Warning */}
-        {tradingLimitations?.is_paper_trading && (
-          <Alert className="border-blue-200 bg-blue-50">
-            <AlertTriangle className="h-4 w-4 text-blue-600" />
-            <AlertDescription>
-              <div className="space-y-2">
-                <div className="font-semibold text-blue-800">📊 Paper Trading Account Detected</div>
-                <div className="text-sm text-blue-700">
-                  Du använder ett Bitfinex Paper Trading sub-account. Detta är normalt och förväntat!
-                </div>
-                <div className="text-xs text-blue-600 space-y-1">
-                  <div>• {tradingLimitations.margin_conversion_note}</div>
-                  {tradingLimitations.limitations?.map((limitation: string, index: number) => (
-                    <div key={index}>• {limitation}</div>
-                  ))}
-                </div>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Trading Pair Selection */}
         <div className="space-y-2">
           <Label htmlFor="symbol">Trading Pair</Label>
@@ -390,17 +369,9 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       Margin Trading
-                      {tradingLimitations?.is_paper_trading && (
-                        <Badge variant="outline" className="text-xs text-blue-600">
-                          Auto-convert to Spot
-                        </Badge>
-                      )}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {tradingLimitations?.is_paper_trading 
-                        ? "Converted to spot trading in paper account" 
-                        : "Leveraged position (Future: 2-10x)"
-                      }
+                      Leveraged position (Future: 2-10x)
                     </div>
                   </div>
                 </div>
