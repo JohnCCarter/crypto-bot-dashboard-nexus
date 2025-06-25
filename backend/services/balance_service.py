@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERRORimport os
+import os
 import time
 
 import ccxt
@@ -18,32 +18,23 @@ class MyBitfinex(ccxt.bitfinex):
 def fetch_balances():
     """
     Hämtar saldon från Bitfinex via ccxt och returnerar hela balance-objektet.
-    I utvecklingsläge returneras mock-data.
-    :return: dict med balansdata från ccxt eller mock-data
+    Använder riktiga API-nycklar för paper trading.
+    :return: dict med balansdata från ccxt
     :raises: ValueError, ccxt.BaseError
     """
-    # Kolla om vi är i utvecklingsläge
-    development_mode = os.getenv("DEVELOPMENT_MODE", "false").lower() == "true"
-    
-    if development_mode:
-        # Returnera mock balance data för utveckling
-        return {
-            "info": {},
-            "BTC": {"free": 0.15, "used": 0.05, "total": 0.20},
-            "ETH": {"free": 2.5, "used": 0.0, "total": 2.5},
-            "USD": {"free": 1500.0, "used": 500.0, "total": 2000.0},
-            "free": {"BTC": 0.15, "ETH": 2.5, "USD": 1500.0},
-            "used": {"BTC": 0.05, "ETH": 0.0, "USD": 500.0},
-            "total": {"BTC": 0.20, "ETH": 2.5, "USD": 2000.0}
-        }
-    
     api_key = os.getenv("BITFINEX_API_KEY")
     api_secret = os.getenv("BITFINEX_API_SECRET")
-    if not api_key or not api_secret:
-        raise ValueError("API keys not configured properly")
-    exchange = MyBitfinex({
-        "apiKey": api_key,
-        "secret": api_secret,
-        "enableRateLimit": True,
-    })
-    return exchange.fetch_balance()
+    
+    if not api_key or not api_secret or api_key.startswith("your_") or api_secret.startswith("your_"):
+        raise ValueError("API keys not configured properly. Please update .env with your Bitfinex Paper Trading API keys.")
+    
+    try:
+        exchange = MyBitfinex({
+            "apiKey": api_key,
+            "secret": api_secret,
+            "enableRateLimit": True,
+            "sandbox": True  # Viktigt för paper trading
+        })
+        return exchange.fetch_balance()
+    except Exception as e:
+        raise ValueError(f"Failed to fetch balances from Bitfinex: {str(e)}")
