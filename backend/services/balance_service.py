@@ -1,4 +1,4 @@
-import os
+THIS SHOULD BE A LINTER ERRORimport os
 import time
 
 import ccxt
