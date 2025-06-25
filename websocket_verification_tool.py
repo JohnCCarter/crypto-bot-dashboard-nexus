@@ -136,10 +136,11 @@ class BitfinexWebSocketVerifier:
                     'spread_pct': ((float(data[2]) - float(data[0])) / float(data[6])) * 100
                 }
                 
+                previous_ticker = self.ticker_data.get(symbol, {})
                 self.ticker_data[symbol] = ticker_info
                 
                 # Log significant price updates (not every tick to avoid spam)
-                if symbol not in self.ticker_data or abs(ticker_info['last_price'] - self.ticker_data.get(symbol, {}).get('last_price', 0)) > 0.01:
+                if not previous_ticker or abs(ticker_info['last_price'] - previous_ticker.get('last_price', 0)) > 0.01:
                     logger.info(f"📊 {symbol}: ${ticker_info['last_price']:.2f} (Vol: {ticker_info['volume']:.2f}, Spread: ${ticker_info['spread']:.2f})")
                     
         except Exception as e:
