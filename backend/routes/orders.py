@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR"""Order management API endpoints with real Bitfinex integration."""
+"""Order management API endpoints with real Bitfinex integration."""
 
 import os
 import time
@@ -19,26 +19,38 @@ except ImportError:
 
 
 def get_live_order_service():
-    """Get live order service from Bitfinex API."""
+    """Get order service from Bitfinex API (supports paper trading)."""
     api_key = os.getenv("BITFINEX_API_KEY")
     api_secret = os.getenv("BITFINEX_API_SECRET")
     
-    if not api_key or not api_secret:
-        current_app.logger.warning(
-            "Bitfinex API keys not configured for order service"
-        )
+    # Kolla om vi har placeholder-nycklar
+    has_placeholder_keys = (not api_key or not api_secret or 
+                          api_key.startswith("your_") or api_secret.startswith("your_") or
+                          "placeholder" in api_key or "placeholder" in api_secret)
+    
+    if has_placeholder_keys:
+        current_app.logger.info("🔧 [Orders] No real API keys - order service disabled")
         return None
     
     try:
-        # Create ExchangeService for Bitfinex
+        # Create ExchangeService for Bitfinex Paper Trading
+        is_paper_trading = os.getenv("PAPER_TRADING", "false").lower() == "true"
+        
+        if is_paper_trading:
+            current_app.logger.info("📄 [Orders] Creating Paper Trading order service")
+        else:
+            current_app.logger.info("💰 [Orders] Creating LIVE Trading order service")
+            
         exchange_service = ExchangeService(
             exchange_id="bitfinex", 
             api_key=api_key, 
             api_secret=api_secret
         )
+        
+        # Note: ccxt will automatically use sandbox if API keys are from paper trading account
         return exchange_service
     except Exception as e:
-        current_app.logger.error(f"Failed to create order service: {e}")
+        current_app.logger.error(f"❌ [Orders] Failed to create order service: {e}")
         return None
 
 
