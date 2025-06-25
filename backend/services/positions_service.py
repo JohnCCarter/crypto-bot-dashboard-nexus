@@ -1,4 +1,4 @@
-"""Positions service for fetching real positions from Bitfinex."""
+"""Positions service för att hämta real positions från Bitfinex via authenticated WebSocket."""
 
 import os
 import time
@@ -7,11 +7,11 @@ from typing import List, Dict, Any, Optional
 
 import ccxt
 from dotenv import load_dotenv
-
+from backend.services.authenticated_websocket_service import get_authenticated_websocket_client
 from backend.services.exchange import ExchangeService, ExchangeError
 
 load_dotenv()
-
+logger = logging.getLogger(__name__)
 
 class MyBitfinex(ccxt.bitfinex):
     """Custom Bitfinex class with nonce handling."""
@@ -23,11 +23,10 @@ class MyBitfinex(ccxt.bitfinex):
         return self._last_nonce
 
 
-def fetch_live_positions(
-    symbols: Optional[List[str]] = None
-) -> List[Dict[str, Any]]:
+def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """
-    Fetch live positions from Bitfinex.
+    Hämta live positions från Bitfinex via authenticated WebSocket (första prioritet)
+    eller ExchangeService som fallback.
     
     Args:
         symbols: Optional list of symbols to filter by
@@ -43,22 +42,82 @@ def fetch_live_positions(
     api_secret = os.getenv("BITFINEX_API_SECRET")
     
     if not api_key or not api_secret:
-        logging.warning(
-            "Bitfinex API keys not configured, using empty positions"
-        )
+        logger.warning("Bitfinex API keys not configured, using empty positions")
         return []
     
+    # Kolla om vi har placeholder-nycklar
+    has_placeholder_keys = (api_key.startswith("your_") or api_secret.startswith("your_") or
+                          "placeholder" in api_key or "placeholder" in api_secret)
+    
+    if has_placeholder_keys:
+        logger.info("🔧 [DEV] Using empty positions (placeholder API keys)")
+        return []
+    
+    # Försök hämta från authenticated WebSocket först
     try:
-        # Create exchange service
+        ws_client = get_authenticated_websocket_client()
+        if ws_client and ws_client.authenticated:
+            logger.info("📊 [WS] Fetching positions from authenticated WebSocket...")
+            
+            positions = ws_client.get_positions()
+            if positions is not None:  # positions kan vara tom lista []
+                formatted_positions = []
+                
+                for position in positions:
+                    # Filtrera på symbols om angivet
+                    if symbols and position.get("symbol") not in symbols:
+                        continue
+                    
+                    # Konvertera WebSocket position format till vårt standardformat
+                    amount = position.get("amount", 0.0)
+                    if amount == 0.0:
+                        continue  # Skippa stängda positioner
+                    
+                    # Bestäm side baserat på amount (positiv = long/buy, negativ = short/sell)
+                    side = "buy" if amount > 0 else "sell"
+                    amount = abs(amount)  # Gör amount positivt
+                    
+                    formatted_position = {
+                        "id": f"pos_{position.get('symbol', 'unknown')}_{int(time.time())}",
+                        "symbol": position.get("symbol", ""),
+                        "side": side,
+                        "amount": amount,
+                        "entry_price": position.get("base_price", 0.0),
+                        "pnl": position.get("pl", 0.0),
+                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        "mark_price": 0.0,  # Inte tillgängligt i position data
+                        "pnl_percentage": position.get("pl_perc", 0.0),
+                        "contracts": amount,  # Samma som amount för Bitfinex
+                        "notional": amount * position.get("base_price", 0.0),
+                        "collateral": 0.0,  # Beräknas från margin data
+                        "margin_mode": "cross",  # Standard för Bitfinex
+                        "maintenance_margin": 0.0,  # Inte direkt tillgängligt
+                        "leverage": position.get("leverage", 1.0)
+                    }
+                    
+                    formatted_positions.append(formatted_position)
+                
+                logger.info(f"✅ [WS] Successfully fetched {len(formatted_positions)} live positions")
+                return formatted_positions
+            
+            else:
+                logger.info("✅ [WS] WebSocket authenticated - no open positions")
+                return []
+                
+    except Exception as e:
+        logger.warning(f"⚠️ [WS] WebSocket position fetch failed: {e}")
+    
+    # Fallback till ExchangeService (REST API)
+    try:
+        logger.info("📊 [REST] Falling back to ExchangeService...")
         exchange_service = ExchangeService("bitfinex", api_key, api_secret)
         
-        # Fetch live positions
         positions = exchange_service.fetch_positions(symbols)
         
-        # Convert to format expected by trading system
+        # Konvertera till format förväntat av trading systemet
         formatted_positions = []
         for position in positions:
-            # Convert side format (long/short -> buy/sell for consistency)
+            # Konvertera side format (long/short -> buy/sell för konsistens)
             side = "buy" if position["side"] == "long" else "sell"
             
             formatted_positions.append({
@@ -81,16 +140,14 @@ def fetch_live_positions(
                 "maintenance_margin": position["maintenance_margin"]
             })
             
-        logging.info(
-            f"✅ [Positions] Fetched {len(formatted_positions)} live positions"
-        )
+        logger.info(f"✅ [REST] Fetched {len(formatted_positions)} live positions")
         return formatted_positions
         
     except ExchangeError as e:
-        logging.error(f"❌ [Positions] Exchange error: {str(e)}")
+        logger.error(f"❌ [REST] Exchange error: {str(e)}")
         raise e
     except Exception as e:
-        logging.error(f"❌ [Positions] Failed to fetch positions: {str(e)}")
+        logger.error(f"❌ [REST] Failed to fetch positions: {str(e)}")
         raise ExchangeError(f"Failed to fetch positions: {str(e)}")
 
 
@@ -99,9 +156,7 @@ def get_mock_positions():
     DEPRECATED: Returns mock positions for testing.
     This should NOT be used in production!
     """
-    logging.warning(
-        "⚠️ [Positions] Using MOCK positions - NOT suitable for live trading!"
-    )
+    logger.warning("⚠️ [Positions] Using MOCK positions - NOT suitable for live trading!")
     return [
         {
             "id": "mock_pos_1",

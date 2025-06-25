@@ -1,35 +1,35 @@
-from flask import jsonify
+import json
 import logging
 
-from backend.services.balance_service import fetch_balances
+from flask import current_app, jsonify
 
+from backend.services.balance_service import fetch_balances_list
+
+logger = logging.getLogger(__name__)
 
 def register(app):
     @app.route("/api/balances", methods=["GET"])
     def get_balances():
         """
-        Hämta saldon från Bitfinex.
-        ---
-        responses:
-            200:
-                Beskriver en lista med saldon per valuta.
-            500:
-                Felmeddelande om något går fel.
+        Hämta account balances från Bitfinex via authenticated WebSocket (första prioritet)
+        eller REST API som fallback.
+        
+        Returns:
+            200: List av balances från Bitfinex
+            500: Server error
         """
+        logger.info("💰 [Balances] GET balances request")
+        
         try:
-            balance_data = fetch_balances()
-            result = []
-            for currency, info in balance_data["total"].items():
-                if info is None or info == 0:
-                    continue
-                result.append(
-                    {
-                        "currency": currency,
-                        "total_balance": balance_data["total"][currency],
-                        "available": balance_data["free"][currency],
-                    }
-                )
-            return jsonify(result), 200
+            # Använd den nya balance service som prioriterar WebSocket
+            balances = fetch_balances_list()
+            
+            logger.info(f"✅ [Balances] Successfully retrieved {len(balances)} balance entries")
+            return jsonify(balances), 200
+            
         except Exception as e:
-            logging.exception("Fel vid hämtning av saldon i /api/balances:")
-            return jsonify({"error": str(e)}), 500
+            logger.error(f"❌ [Balances] Failed to fetch balances: {str(e)}")
+            return jsonify({
+                "error": "Failed to fetch balances", 
+                "details": str(e)
+            }), 500

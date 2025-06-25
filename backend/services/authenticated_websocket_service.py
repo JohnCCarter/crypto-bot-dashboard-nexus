@@ -1,6 +1,6 @@
 """
-Authenticated WebSocket service för Bitfinex med riktiga API-nycklar.
-Baserat på Bitfinex WebSocket dokumentation och WssClient exempel.
+Authenticated WebSocket service för Bitfinex enligt officiell dokumentation.
+Baserat på: https://bitfinex.readthedocs.io/en/latest/websocket.html
 """
 
 import os
@@ -18,40 +18,45 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 @dataclass
-class AuthenticatedMarketData:
-    """Container för autentiserad marknadsdata."""
-    symbol: str
-    price: float
-    volume: float
+class AuthenticatedData:
+    """Container för autentiserad account data."""
     timestamp: datetime
-    bid: Optional[float] = None
-    ask: Optional[float] = None
-    wallet_balance: Optional[Dict[str, float]] = None
-    positions: Optional[List[Dict]] = None
+    channel: str
+    data: Any
 
 class BitfinexAuthenticatedWebSocket:
     """
-    Authenticated WebSocket klient för Bitfinex med API-nycklar.
-    Följer https://bitfinex.readthedocs.io/en/latest/websocket.html
+    Authenticated WebSocket klient för Bitfinex med riktiga API-nycklar.
+    Implementerad enligt official Bitfinex WebSocket v2 dokumentation.
     """
     
     def __init__(self, api_key: str, api_secret: str):
         self.api_key = api_key
         self.api_secret = api_secret
-        self.uri = "wss://api.bitfinex.com/ws/2"  # Authenticated endpoint
+        self.uri = "wss://api.bitfinex.com/ws/2"
         self.websocket = None
-        self.subscriptions = {}
-        self.callbacks = {}
-        self.running = False
         self.authenticated = False
-        self.nonce_multiplier = 1.0
+        self.running = False
         
+        # Account data storage
+        self.wallets = {}
+        self.positions = []
+        self.orders = []
+        self.order_history = []
+        self.trade_history = []
+        
+        # Callbacks for real-time updates
+        self.wallet_callback = None
+        self.position_callback = None
+        self.order_callback = None
+        self.trade_callback = None
+
     async def connect(self):
         """Anslut till Bitfinex authenticated WebSocket."""
         try:
+            logger.info("🔐 Connecting to Bitfinex authenticated WebSocket...")
             self.websocket = await websockets.connect(self.uri)
             self.running = True
-            logger.info("✅ Authenticated WebSocket ansluten till Bitfinex")
             
             # Starta message handler
             asyncio.create_task(self._handle_messages())
@@ -59,320 +64,239 @@ class BitfinexAuthenticatedWebSocket:
             # Autentisera omedelbart
             await self.authenticate()
             
+            logger.info("✅ Connected to Bitfinex authenticated WebSocket")
+            
         except Exception as e:
-            logger.error(f"❌ Authenticated WebSocket anslutning misslyckades: {e}")
+            logger.error(f"❌ Failed to connect: {e}")
             raise
 
     async def authenticate(self):
         """
-        Autentiserar WebSocket sessionen med API-nycklar.
-        Följer Bitfinex dokumentation för authentication.
+        Autentiserar WebSocket enligt Bitfinex dokumentation.
+        Exakt som din Go-kod men i Python.
         """
         try:
-            nonce = str(int(time.time() * 1000000 * self.nonce_multiplier))
+            # Skapa nonce (timestamp i sekunder)
+            nonce = str(int(time.time()))
+            
+            # Skapa payload för signering
             auth_payload = f"AUTH{nonce}"
+            
+            # Skapa HMAC SHA384 signatur (samma som Go-koden)
             signature = hmac.new(
-                self.api_secret.encode(),
-                auth_payload.encode(),
+                self.api_secret.encode('utf-8'),
+                auth_payload.encode('utf-8'),
                 hashlib.sha384
             ).hexdigest()
             
+            # Skapa auth message (exakt som Go-koden)
             auth_message = {
                 "event": "auth",
                 "apiKey": self.api_key,
                 "authSig": signature,
                 "authPayload": auth_payload,
-                "authNonce": nonce,
-                "filter": ["trading", "wallet", "balance"]  # Begränsa till trading data
+                "authNonce": nonce
             }
             
             await self._send_message(auth_message)
-            logger.info("🔐 Skickar authentication request...")
+            logger.info("🔐 Sent authentication request...")
             
         except Exception as e:
-            logger.error(f"❌ Authentication fel: {e}")
+            logger.error(f"❌ Authentication failed: {e}")
             raise
-
-    async def subscribe_to_ticker(self, symbol: str, callback: Callable):
-        """
-        Prenumerera på ticker via authenticated channel.
-        Detta ger oss både public och private data för symbolen.
-        """
-        # Bitfinex format
-        if not symbol.startswith('t'):
-            symbol = f"t{symbol}"
-            
-        channel_id = f"ticker_{symbol}"
-        self.callbacks[channel_id] = callback
-        
-        subscribe_msg = {
-            "event": "subscribe",
-            "channel": "ticker",
-            "symbol": symbol
-        }
-        
-        await self._send_message(subscribe_msg)
-        logger.info(f"📡 Authenticated ticker subscription: {symbol}")
-
-    async def subscribe_to_trades(self, symbol: str, callback: Callable):
-        """Prenumerera på trades med authenticated access."""
-        if not symbol.startswith('t'):
-            symbol = f"t{symbol}"
-            
-        channel_id = f"trades_{symbol}"
-        self.callbacks[channel_id] = callback
-        
-        subscribe_msg = {
-            "event": "subscribe",
-            "channel": "trades",
-            "symbol": symbol
-        }
-        
-        await self._send_message(subscribe_msg)
-        logger.info(f"💱 Authenticated trades subscription: {symbol}")
-
-    async def subscribe_to_orderbook(self, symbol: str, callback: Callable, precision: str = "P0"):
-        """Prenumerera på orderbook med authenticated access."""
-        if not symbol.startswith('t'):
-            symbol = f"t{symbol}"
-            
-        channel_id = f"book_{symbol}"
-        self.callbacks[channel_id] = callback
-        
-        subscribe_msg = {
-            "event": "subscribe",
-            "channel": "book",
-            "symbol": symbol,
-            "prec": precision,
-            "freq": "F0",  # Real-time
-            "len": "25"    # 25 levels
-        }
-        
-        await self._send_message(subscribe_msg)
-        logger.info(f"📚 Authenticated orderbook subscription: {symbol}")
-
-    async def subscribe_to_candles(self, symbol: str, timeframe: str, callback: Callable):
-        """
-        Prenumerera på OHLC candles med authenticated access.
-        Timeframe: 1m, 5m, 15m, 30m, 1h, 3h, 6h, 12h, 1D, 7D, 14D, 1M
-        """
-        if not symbol.startswith('t'):
-            symbol = f"t{symbol}"
-            
-        key = f"trade:{timeframe}:{symbol}"
-        channel_id = f"candles_{symbol}_{timeframe}"
-        self.callbacks[channel_id] = callback
-        
-        subscribe_msg = {
-            "event": "subscribe",
-            "channel": "candles",
-            "key": key
-        }
-        
-        await self._send_message(subscribe_msg)
-        logger.info(f"🕯️ Authenticated candles subscription: {symbol} ({timeframe})")
-
-    async def new_order(self, order_type: str, symbol: str, amount: float, price: float = None):
-        """
-        Placera ny order via WebSocket.
-        Följer Bitfinex WssClient.new_order() exempel.
-        """
-        if not self.authenticated:
-            raise Exception("Must be authenticated to place orders")
-            
-        # Generate client ID (timestamp)
-        cid = int(time.time() * 1000)
-        
-        # Format symbol
-        if not symbol.startswith('t'):
-            symbol = f"t{symbol}"
-            
-        order_data = [
-            0,  # ID (0 for new orders)
-            None,  # Group ID
-            cid,  # Client ID
-            symbol,
-            int(time.time() * 1000),  # Timestamp
-            int(time.time() * 1000),  # Timestamp
-            float(amount),
-            float(price) if price else None,
-            order_type.upper(),
-            None,  # Type prev
-            None,  # Meta
-            None,  # Flags
-            None,  # Status
-            None,  # Price aux limit
-            None,  # Price trailing
-            None,  # Time in force
-        ]
-        
-        order_message = [0, "on", None, order_data]
-        
-        await self._send_message(order_message)
-        logger.info(f"📋 Placing authenticated order: {order_type} {amount} {symbol} @ {price}")
-        
-        return cid
-
-    async def cancel_order(self, order_id: int):
-        """Avbryt order via WebSocket."""
-        if not self.authenticated:
-            raise Exception("Must be authenticated to cancel orders")
-            
-        cancel_message = [0, "oc", None, {"id": order_id}]
-        
-        await self._send_message(cancel_message)
-        logger.info(f"❌ Cancelling authenticated order: {order_id}")
-
-    async def ping(self, channel: str = "auth"):
-        """Ping Bitfinex för connection test."""
-        ping_message = {
-            "event": "ping",
-            "cid": int(time.time() * 1000)
-        }
-        
-        await self._send_message(ping_message)
-        logger.debug(f"🏓 Ping sent on channel: {channel}")
-
-    async def calc(self, calculations: List[str]):
-        """
-        Begär specifika beräkningar från Bitfinex.
-        calculations kan vara: margin_sym_SYMBOL, funding_sym_SYMBOL, position_SYMBOL, wallet_WALLET_TYPE_CURRENCY
-        """
-        if not self.authenticated:
-            raise Exception("Must be authenticated for calculations")
-            
-        calc_message = [0, "calc", None, calculations]
-        
-        await self._send_message(calc_message)
-        logger.info(f"🧮 Requesting calculations: {calculations}")
 
     async def _send_message(self, message):
         """Skicka meddelande till WebSocket."""
         if self.websocket:
-            await self.websocket.send(json.dumps(message))
+            message_str = json.dumps(message)
+            await self.websocket.send(message_str)
+            logger.debug(f"📤 Sent: {message_str}")
 
     async def _handle_messages(self):
-        """Hantera inkommande meddelanden."""
+        """Hantera alla inkommande meddelanden."""
         try:
             async for message in self.websocket:
                 await self._process_message(json.loads(message))
         except Exception as e:
-            logger.error(f"❌ Authenticated WebSocket meddelande fel: {e}")
+            logger.error(f"❌ Message handling error: {e}")
             self.running = False
 
     async def _process_message(self, data):
-        """Processera inkommande meddelanden."""
+        """
+        Processera inkommande meddelanden enligt Bitfinex format.
+        Implementerat enligt officiell dokumentation.
+        """
         try:
+            logger.debug(f"📥 Received: {data}")
+            
+            # Hantera event meddelanden
             if isinstance(data, dict):
-                # Event meddelanden
                 if data.get("event") == "auth":
                     if data.get("status") == "OK":
                         self.authenticated = True
-                        logger.info("✅ Authentication framgångsrik!")
+                        logger.info("✅ Authentication successful!")
+                        
+                        # Efter autentisering, begär account data
+                        await self._request_account_data()
                     else:
-                        logger.error(f"❌ Authentication misslyckades: {data}")
+                        logger.error(f"❌ Authentication failed: {data}")
                         
-                elif data.get("event") == "subscribed":
-                    channel_id = f"{data['channel']}_{data.get('symbol', data.get('key', ''))}"
-                    self.subscriptions[data['chanId']] = channel_id
-                    logger.info(f"✅ Authenticated subscription aktiv: {channel_id}")
+                elif data.get("event") == "error":
+                    logger.error(f"❌ WebSocket error: {data}")
                     
-                elif data.get("event") == "pong":
-                    logger.debug("🏓 Pong received")
-                    
-            elif isinstance(data, list):
-                # Channel data meddelanden
-                if len(data) >= 2:
-                    channel_id_num = data[0]
-                    
-                    if channel_id_num == 0:
-                        # Authenticated channel (orders, wallets, positions)
-                        await self._handle_authenticated_data(data)
-                    elif channel_id_num in self.subscriptions:
-                        # Public data channels
-                        channel_id = self.subscriptions[channel_id_num]
-                        await self._handle_public_data(channel_id, data[1])
-                        
-        except Exception as e:
-            logger.error(f"❌ Fel vid processering av authenticated meddelande: {e}")
-
-    async def _handle_authenticated_data(self, data):
-        """Hantera authenticated data (orders, balances, positions)."""
-        try:
-            if len(data) >= 3:
-                msg_type = data[1]
-                
-                if msg_type == "ws":  # Wallet snapshot
-                    logger.info(f"💰 Wallet snapshot: {data[2]}")
-                elif msg_type == "wu":  # Wallet update
-                    logger.info(f"💰 Wallet update: {data[2]}")
-                elif msg_type == "ps":  # Position snapshot
-                    logger.info(f"📊 Position snapshot: {data[2]}")
-                elif msg_type == "pu":  # Position update
-                    logger.info(f"📊 Position update: {data[2]}")
-                elif msg_type == "os":  # Order snapshot
-                    logger.info(f"📋 Order snapshot: {data[2]}")
-                elif msg_type == "ou":  # Order update
-                    logger.info(f"📋 Order update: {data[2]}")
-                elif msg_type == "on":  # Order new
-                    logger.info(f"✅ New order: {data[2]}")
-                elif msg_type == "oc":  # Order cancelled
-                    logger.info(f"❌ Order cancelled: {data[2]}")
-                elif msg_type == "te":  # Trade executed
-                    logger.info(f"💱 Trade executed: {data[2]}")
-                elif msg_type == "tu":  # Trade update
-                    logger.info(f"💱 Trade update: {data[2]}")
-                    
-        except Exception as e:
-            logger.error(f"❌ Authenticated data fel: {e}")
-
-    async def _handle_public_data(self, channel_id: str, data):
-        """Hantera public market data."""
-        try:
-            # Ticker data
-            if channel_id.startswith('ticker_'):
-                if len(data) >= 10:
-                    symbol = channel_id.replace('ticker_t', '')
-                    
-                    market_data = AuthenticatedMarketData(
-                        symbol=symbol,
-                        price=float(data[6]),
-                        volume=float(data[7]),
-                        bid=float(data[0]),
-                        ask=float(data[2]),
-                        timestamp=datetime.now()
-                    )
-                    
-                    if channel_id in self.callbacks:
-                        await self._safe_callback(self.callbacks[channel_id], market_data)
+                return
             
-            # Orderbook data
-            elif channel_id.startswith('book_'):
-                # Same as before but with authenticated context
-                pass
+            # Hantera array meddelanden [CHANNEL_ID, MESSAGE_TYPE, DATA]
+            if isinstance(data, list) and len(data) >= 3:
+                channel_id = data[0]
                 
-            # Trades data  
-            elif channel_id.startswith('trades_'):
-                # Same as before but with authenticated context
-                pass
-                
-            # Candles data
-            elif channel_id.startswith('candles_'):
-                symbol = channel_id.split('_')[1]
-                timeframe = channel_id.split('_')[2]
-                
-                candle_data = {
-                    'symbol': symbol,
-                    'timeframe': timeframe,
-                    'data': data,
-                    'timestamp': datetime.now().isoformat()
-                }
-                
-                if channel_id in self.callbacks:
-                    await self._safe_callback(self.callbacks[channel_id], candle_data)
+                # Channel 0 = Authenticated channel
+                if channel_id == 0:
+                    await self._handle_authenticated_data(data[1], data[2])
                     
         except Exception as e:
-            logger.error(f"❌ Public data fel: {e}")
+            logger.error(f"❌ Error processing message: {e}")
+
+    async def _handle_authenticated_data(self, message_type: str, data):
+        """
+        Hantera authenticated data enligt Bitfinex dokumentation.
+        Implementerar alla account-specifika meddelanden.
+        """
+        try:
+            if message_type == "ws":  # Wallet snapshot
+                logger.info(f"💰 Wallet snapshot received: {len(data) if isinstance(data, list) else 'single'} wallets")
+                self.wallets = {}
+                
+                if isinstance(data, list):
+                    for wallet in data:
+                        if len(wallet) >= 4:
+                            wallet_type, currency, balance, available = wallet[:4]
+                            self.wallets[f"{wallet_type}_{currency}"] = {
+                                "type": wallet_type,
+                                "currency": currency,
+                                "balance": float(balance) if balance else 0.0,
+                                "available": float(available) if available else 0.0
+                            }
+                
+                if self.wallet_callback:
+                    await self._safe_callback(self.wallet_callback, self.wallets)
+                    
+            elif message_type == "wu":  # Wallet update
+                logger.info(f"� Wallet update: {data}")
+                if len(data) >= 4:
+                    wallet_type, currency, balance, available = data[:4]
+                    key = f"{wallet_type}_{currency}"
+                    self.wallets[key] = {
+                        "type": wallet_type,
+                        "currency": currency, 
+                        "balance": float(balance) if balance else 0.0,
+                        "available": float(available) if available else 0.0
+                    }
+                    
+                if self.wallet_callback:
+                    await self._safe_callback(self.wallet_callback, self.wallets)
+                    
+            elif message_type == "ps":  # Position snapshot
+                logger.info(f"📊 Position snapshot: {len(data) if isinstance(data, list) else 'single'} positions")
+                self.positions = []
+                
+                if isinstance(data, list):
+                    for position in data:
+                        if len(position) >= 11:
+                            self.positions.append({
+                                "symbol": position[0],
+                                "status": position[1],
+                                "amount": float(position[2]) if position[2] else 0.0,
+                                "base_price": float(position[3]) if position[3] else 0.0,
+                                "margin_funding": float(position[4]) if position[4] else 0.0,
+                                "margin_funding_type": position[5],
+                                "pl": float(position[6]) if position[6] else 0.0,
+                                "pl_perc": float(position[7]) if position[7] else 0.0,
+                                "price_liq": float(position[8]) if position[8] else 0.0,
+                                "leverage": float(position[9]) if position[9] else 0.0,
+                                "placeholder": position[10]
+                            })
+                
+                if self.position_callback:
+                    await self._safe_callback(self.position_callback, self.positions)
+                    
+            elif message_type == "pn" or message_type == "pu":  # Position new/update
+                logger.info(f"📊 Position {message_type}: {data}")
+                # Update individual position
+                if self.position_callback:
+                    await self._safe_callback(self.position_callback, self.positions)
+                    
+            elif message_type == "os":  # Order snapshot
+                logger.info(f"📋 Order snapshot: {len(data) if isinstance(data, list) else 'single'} orders")
+                self.orders = []
+                
+                if isinstance(data, list):
+                    for order in data:
+                        if len(order) >= 19:
+                            self.orders.append({
+                                "id": order[0],
+                                "gid": order[1], 
+                                "cid": order[2],
+                                "symbol": order[3],
+                                "mts_create": order[4],
+                                "mts_update": order[5],
+                                "amount": float(order[6]) if order[6] else 0.0,
+                                "amount_orig": float(order[7]) if order[7] else 0.0,
+                                "type": order[8],
+                                "type_prev": order[9],
+                                "flags": order[12],
+                                "status": order[13],
+                                "price": float(order[16]) if order[16] else 0.0,
+                                "price_avg": float(order[17]) if order[17] else 0.0,
+                                "price_trailing": float(order[18]) if order[18] else 0.0
+                            })
+                
+                if self.order_callback:
+                    await self._safe_callback(self.order_callback, self.orders)
+                    
+            elif message_type in ["on", "ou", "oc"]:  # Order new/update/cancel
+                logger.info(f"📋 Order {message_type}: {data}")
+                # Handle individual order updates
+                if self.order_callback:
+                    await self._safe_callback(self.order_callback, self.orders)
+                    
+            elif message_type == "te":  # Trade executed
+                logger.info(f"💱 Trade executed: {data}")
+                if len(data) >= 11:
+                    trade = {
+                        "id": data[0],
+                        "symbol": data[1],
+                        "mts_create": data[2],
+                        "order_id": data[3],
+                        "exec_amount": float(data[4]) if data[4] else 0.0,
+                        "exec_price": float(data[5]) if data[5] else 0.0,
+                        "order_type": data[6],
+                        "order_price": float(data[7]) if data[7] else 0.0,
+                        "maker": data[8],
+                        "fee": float(data[9]) if data[9] else 0.0,
+                        "fee_currency": data[10]
+                    }
+                    self.trade_history.append(trade)
+                    
+                if self.trade_callback:
+                    await self._safe_callback(self.trade_callback, self.trade_history)
+                    
+            else:
+                logger.debug(f"📥 Unhandled message type: {message_type}")
+                
+        except Exception as e:
+            logger.error(f"❌ Error handling authenticated data: {e}")
+
+    async def _request_account_data(self):
+        """Begär initial account data efter autentisering."""
+        try:
+            logger.info("📊 Requesting initial account data...")
+            
+            # Account data begärs automatiskt vid autentisering för authenticated channels
+            # Enligt dokumentationen kommer ws (wallet), ps (position), os (order) automatiskt
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to request account data: {e}")
 
     async def _safe_callback(self, callback, data):
         """Säker callback execution."""
@@ -382,7 +306,23 @@ class BitfinexAuthenticatedWebSocket:
             else:
                 callback(data)
         except Exception as e:
-            logger.error(f"❌ Callback fel: {e}")
+            logger.error(f"❌ Callback error: {e}")
+
+    def set_wallet_callback(self, callback: Callable):
+        """Sätt callback för wallet updates."""
+        self.wallet_callback = callback
+
+    def set_position_callback(self, callback: Callable):
+        """Sätt callback för position updates.""" 
+        self.position_callback = callback
+
+    def set_order_callback(self, callback: Callable):
+        """Sätt callback för order updates."""
+        self.order_callback = callback
+
+    def set_trade_callback(self, callback: Callable):
+        """Sätt callback för trade updates."""
+        self.trade_callback = callback
 
     async def disconnect(self):
         """Koppla från WebSocket."""
@@ -390,14 +330,31 @@ class BitfinexAuthenticatedWebSocket:
         self.authenticated = False
         if self.websocket:
             await self.websocket.close()
-            logger.info("🔌 Authenticated WebSocket frånkopplad")
+            logger.info("🔌 Disconnected from authenticated WebSocket")
+
+    # Public methods för att hämta data
+    def get_wallets(self) -> Dict:
+        """Hämta aktuella wallet balances."""
+        return self.wallets
+
+    def get_positions(self) -> List:
+        """Hämta aktuella positions."""
+        return self.positions
+
+    def get_orders(self) -> List:
+        """Hämta aktuella orders."""
+        return self.orders
+
+    def get_trade_history(self) -> List:
+        """Hämta trade history."""
+        return self.trade_history
 
 
-# Service management
+# Service management för integration med Flask app
 authenticated_ws_client = None
 
 async def start_authenticated_websocket_service():
-    """Starta authenticated WebSocket service med API-nycklar."""
+    """Starta authenticated WebSocket service."""
     global authenticated_ws_client
     
     api_key = os.getenv("BITFINEX_API_KEY")
@@ -405,6 +362,9 @@ async def start_authenticated_websocket_service():
     
     if not api_key or not api_secret:
         raise ValueError("Bitfinex API keys not configured")
+        
+    if "placeholder" in api_key or "your_" in api_key:
+        raise ValueError("Please configure real Bitfinex API keys")
         
     if not authenticated_ws_client:
         authenticated_ws_client = BitfinexAuthenticatedWebSocket(api_key, api_secret)
@@ -420,5 +380,5 @@ async def stop_authenticated_websocket_service():
         authenticated_ws_client = None
 
 def get_authenticated_websocket_client():
-    """Hämta aktiv authenticated WebSocket klient."""
+    """Hämta authenticated WebSocket klient."""
     return authenticated_ws_client

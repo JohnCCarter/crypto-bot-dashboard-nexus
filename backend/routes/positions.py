@@ -1,62 +1,43 @@
 """Positions API endpoints for fetching live positions from Bitfinex."""
 
-from flask import jsonify, current_app
+import logging
+from flask import jsonify, request
 
 from backend.services.positions_service import fetch_live_positions
 from backend.services.exchange import ExchangeError
 
+logger = logging.getLogger(__name__)
 
 def register(app):
     @app.route("/api/positions", methods=["GET"])
     def get_positions():
         """
-        Fetch current positions from Bitfinex.
+        Hämta live positions från Bitfinex via authenticated WebSocket (första prioritet)
+        eller REST API som fallback.
         
-        Returns live positions if API keys are configured,
-        otherwise returns empty list (no mock data for live trading).
-        
-        ---
-        responses:
-            200:
-                description: List of live positions from Bitfinex
-            500:
-                description: Server error
+        Query parameters:
+            symbols: Optional comma-separated list of symbols to filter by
+            
+        Returns:
+            200: List av positions från Bitfinex
+            500: Server error
         """
-        current_app.logger.info("📋 [Positions] Live positions request received")
+        logger.info("� [Positions] GET positions request")
         
         try:
-            # Attempt to fetch live positions from Bitfinex
-            positions = fetch_live_positions()
+            # Parse query parameters
+            symbols_param = request.args.get('symbols')
+            symbols = symbols_param.split(',') if symbols_param else None
             
-            current_app.logger.info(
-                f"✅ [Positions] Successfully fetched "
-                f"{len(positions)} positions"
-            )
+            # Använd den nya positions service som prioriterar WebSocket
+            positions = fetch_live_positions(symbols)
             
+            logger.info(f"✅ [Positions] Successfully retrieved {len(positions)} position entries")
             return jsonify(positions), 200
             
-        except ExchangeError as e:
-            current_app.logger.error(
-                f"❌ [Positions] Exchange error: {str(e)}"
-            )
-            
-            # For exchange errors, return empty list rather than mock data
-            # This prevents trading bot from using fake position data
-            current_app.logger.warning(
-                "⚠️ [Positions] Returning empty positions "
-                "due to exchange error"
-            )
-            return jsonify([]), 200
-            
         except Exception as e:
-            current_app.logger.error(
-                f"❌ [Positions] Failed to fetch positions: {str(e)}"
-            )
-            
-            # Log the full error for debugging
-            import traceback
-            current_app.logger.error(
-                f"❌ [Positions] Stack trace: {traceback.format_exc()}"
-            )
-            
-            return jsonify({"error": str(e)}), 500
+            logger.error(f"❌ [Positions] Failed to fetch positions: {str(e)}")
+            return jsonify({
+                "error": "Failed to fetch positions",
+                "details": str(e)
+            }), 500
