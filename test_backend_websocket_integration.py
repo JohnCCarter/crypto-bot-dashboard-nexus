@@ -46,7 +46,7 @@ class BackendWebSocketIntegrationTest:
         self.live_data_service = None
         self.websocket_client = None
         self.risk_manager = None
-        self.test_symbols = ['BTC/USD', 'ETH/USD']
+        self.test_symbols = ['tBTCUSD', 'tETHUSD']
         
     async def initialize_services(self):
         """Initialisera backend services"""
