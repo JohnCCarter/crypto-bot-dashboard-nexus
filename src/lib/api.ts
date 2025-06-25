@@ -5,6 +5,27 @@ import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, Or
 // In production: API requests will go to same origin
 const API_BASE_URL = '';
 
+/**
+ * Convert Bitfinex WebSocket symbols to paper trading API symbols
+ * WebSocket uses 'tBTCUSD' format, API uses 'TESTBTC/TESTUSD' format
+ */
+const convertToApiSymbol = (wsSymbol: string): string => {
+  const symbolMapping: Record<string, string> = {
+    'tBTCUSD': 'TESTBTC/TESTUSD',
+    'tETHUSD': 'TESTETH/TESTUSD', 
+    'tLTCUSD': 'TESTLTC/TESTUSD',
+    'BTCUSD': 'TESTBTC/TESTUSD',
+    'ETHUSD': 'TESTETH/TESTUSD',
+    'LTCUSD': 'TESTLTC/TESTUSD',
+    // Add mappings for paper trading symbols (pass through)
+    'TESTBTC/TESTUSD': 'TESTBTC/TESTUSD',
+    'TESTETH/TESTUSD': 'TESTETH/TESTUSD', 
+    'TESTLTC/TESTUSD': 'TESTLTC/TESTUSD'
+  };
+  
+  return symbolMapping[wsSymbol] || wsSymbol;
+};
+
 // Generate mock OHLCV data (fallback)
 const generateMockOHLCVData = (): OHLCVData[] => {
   const data: OHLCVData[] = [];
@@ -43,7 +64,10 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
+      body: JSON.stringify({
+        ...order,
+        symbol: convertToApiSymbol(order.symbol)
+      }),
     });
     
     if (!res.ok) throw new Error('Order failed');
@@ -86,9 +110,10 @@ export const api = {
     return await res.json();
   },
 
-  // Get Chart Data (Live Bitfinex)
+  // Get Chart Data (Live Bitfinex) - NOW WITH SYMBOL MAPPING
   async getChartData(symbol: string, timeframe: string = '5m', limit: number = 100): Promise<OHLCVData[]> {
-    const res = await fetch(`${API_BASE_URL}/api/market/ohlcv/${symbol}?timeframe=${timeframe}&limit=${limit}`);
+    const apiSymbol = convertToApiSymbol(symbol);
+    const res = await fetch(`${API_BASE_URL}/api/market/ohlcv/${apiSymbol}?timeframe=${timeframe}&limit=${limit}`);
     
     if (!res.ok) {
       return generateMockOHLCVData();
@@ -98,9 +123,10 @@ export const api = {
     return liveData;
   },
 
-  // Get Order Book (Live Bitfinex)
+  // Get Order Book (Live Bitfinex) - NOW WITH SYMBOL MAPPING
   async getOrderBook(symbol: string, limit: number = 20): Promise<OrderBook> {
-    const res = await fetch(`${API_BASE_URL}/api/market/orderbook/${symbol}?limit=${limit}`);
+    const apiSymbol = convertToApiSymbol(symbol);
+    const res = await fetch(`${API_BASE_URL}/api/market/orderbook/${apiSymbol}?limit=${limit}`);
     
     if (!res.ok) {
       return {
@@ -112,7 +138,7 @@ export const api = {
           { price: 45100, amount: 1.5 },
           { price: 45200, amount: 0.8 }
         ],
-        symbol
+        symbol: apiSymbol
       };
     }
     
@@ -120,9 +146,10 @@ export const api = {
     return liveOrderbook;
   },
 
-  // Get Market Ticker (Live Bitfinex)
+  // Get Market Ticker (Live Bitfinex) - NOW WITH SYMBOL MAPPING
   async getMarketTicker(symbol: string): Promise<any> {
-    const res = await fetch(`${API_BASE_URL}/api/market/ticker/${symbol}`);
+    const apiSymbol = convertToApiSymbol(symbol);
+    const res = await fetch(`${API_BASE_URL}/api/market/ticker/${apiSymbol}`);
     
     if (!res.ok) {
       throw new Error('Failed to fetch ticker');
