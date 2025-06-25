@@ -49,12 +49,16 @@ def fetch_balances():
         exchange = MyBitfinex({
             "apiKey": api_key,
             "secret": api_secret,
-            "enableRateLimit": True,
-            "sandbox": True  # Viktigt för paper trading
+            "enableRateLimit": True
+            # Bitfinex paper trading använder samma URL men olika API nycklar
+            # Sandbox mode krävs inte för Bitfinex paper accounts
         })
         balance = exchange.fetch_balance()
         print("✅ [PAPER] Successfully fetched balance from Bitfinex Paper Trading")
         return balance
     except Exception as e:
         print(f"❌ [PAPER] Failed to fetch balances: {str(e)}")
+        # Om det är ett autentiseringsfel, kan det vara att nycklarna är felaktiga
+        if "authentication" in str(e).lower() or "api" in str(e).lower():
+            print("🔧 [PAPER] API authentication failed - check if keys are from Paper Trading sub account")
         raise ValueError(f"Failed to fetch balances from Bitfinex Paper Trading: {str(e)}")
