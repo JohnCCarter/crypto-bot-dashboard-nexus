@@ -142,15 +142,14 @@ class BitfinexUserDataClient:
     async def _process_message(self, data):
         """Process incoming message and route to appropriate handler"""
         
-        if isinstance(data, dict):
-            # Handle authentication response
-            if data.get('event') == 'auth':
-                if data.get('status') == 'OK':
-                    self.authenticated = True
-                    logger.info("✅ WebSocket authentication successful")
-                else:
-                    logger.error(f"❌ Authentication failed: {data}")
-                return
+        if isinstance(data, dict) and data.get('event') == 'auth':
+            if data.get('status') == 'OK':
+                self.authenticated = True
+                logger.info("✅ WebSocket authentication successful")
+            else:
+                logger.error(f"❌ Authentication failed: {data}")
+            return
+
                 
         if isinstance(data, list) and len(data) >= 2:
             channel_id, message_data = data[0], data[1]
