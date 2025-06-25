@@ -35,8 +35,19 @@ export const UserDataStreamDemo: React.FC = () => {
     unsubscribeFromUserData();
   };
 
-  const formatTimestamp = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
+  const formatTimestamp = (timestamp: number | undefined | null) => {
+    if (
+      typeof timestamp !== 'number' ||
+      isNaN(timestamp) ||
+      !isFinite(timestamp)
+    ) {
+      return '';
+    }
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+    return date.toLocaleTimeString();
   };
 
   const formatCurrency = (amount: number, precision = 4) => {
