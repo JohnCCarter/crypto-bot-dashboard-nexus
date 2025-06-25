@@ -34,6 +34,7 @@ dist-ssr
 __pycache__/
 *.py[cod]
 venv/
+test_env*/
 backend/venv/
 backend/.venv/
 
