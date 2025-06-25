@@ -98,7 +98,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   const [lastHeartbeat, setLastHeartbeat] = useState<number | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   
-  // WebSocket refs - SINGLE CONNECTION
+  // WebSocket refs - SINGLE CONNECTION with better stability
   const ws = useRef<WebSocket | null>(null);
   const subscriptions = useRef<Map<number, ChannelSubscription>>(new Map());
   const subscribedSymbols = useRef<Set<string>>(new Set());
@@ -106,12 +106,18 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   const heartbeatTimeout = useRef<NodeJS.Timeout | null>(null);
   const pingInterval = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef<number>(0);
-  const maxReconnectAttempts = 3;
+  const maxReconnectAttempts = 5; // Increased attempts
   const pingCounter = useRef<number>(0);
+  const isUnmounting = useRef<boolean>(false);
+  const connectionLock = useRef<boolean>(false);
+
+  // Detect development mode and React Strict Mode
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isStrictMode = useRef(false);
 
   // Ping/Pong för latency measurement
   const sendPing = useCallback(() => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
+    if (ws.current?.readyState === WebSocket.OPEN && !isUnmounting.current) {
       const pingId = ++pingCounter.current;
       const pingTime = Date.now();
       
@@ -120,37 +126,51 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
         cid: pingId
       };
       
-      ws.current.send(JSON.stringify(pingMessage));
-      sessionStorage.setItem(`ping_${pingId}`, pingTime.toString());
+      try {
+        ws.current.send(JSON.stringify(pingMessage));
+        sessionStorage.setItem(`ping_${pingId}`, pingTime.toString());
+      } catch (error) {
+        // Silent error - connection might be closing
+      }
     }
   }, []);
 
   // Heartbeat timeout management
   const resetHeartbeatTimeout = useCallback(() => {
+    if (isUnmounting.current) return;
+    
     if (heartbeatTimeout.current) {
       clearTimeout(heartbeatTimeout.current);
     }
     
     heartbeatTimeout.current = setTimeout(() => {
-      setError('Heartbeat timeout');
-      connect();
-    }, 20000);
+      if (!isUnmounting.current) {
+        setError('Heartbeat timeout');
+        connect();
+      }
+    }, 25000); // Increased timeout for stability
   }, []);
 
   // Advanced features activation
   const enableAdvancedFeatures = useCallback(() => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
+    if (ws.current?.readyState === WebSocket.OPEN && !isUnmounting.current) {
       const confMessage = {
         event: 'conf',
         flags: 32768 + 131072
       };
       
-      ws.current.send(JSON.stringify(confMessage));
+      try {
+        ws.current.send(JSON.stringify(confMessage));
+      } catch (error) {
+        // Silent error - connection might be closing
+      }
     }
   }, []);
 
-  // Data handlers
+  // Data handlers with defensive programming
   const handleTickerUpdate = useCallback((data: BitfinexTickerData) => {
+    if (isUnmounting.current) return;
+    
     setTickers(prev => ({
       ...prev,
       [data.symbol]: {
@@ -165,6 +185,8 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   }, []);
 
   const handleOrderbookUpdate = useCallback((data: BitfinexOrderbookData) => {
+    if (isUnmounting.current) return;
+    
     setOrderbooks(prev => {
       if (data.update) {
         // Incremental update
@@ -223,186 +245,256 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   }, []);
 
   const handleTradeUpdate = useCallback((data: { symbol: string; trades: Trade[] }) => {
+    if (isUnmounting.current) return;
+    
     setTrades(prev => ({
       ...prev,
       [data.symbol]: [...data.trades, ...(prev[data.symbol] || [])].slice(0, 100)
     }));
   }, []);
 
-  // SINGLE WebSocket connection
+  // Enhanced WebSocket connection with stability improvements
   const connect = useCallback(() => {
+    // Prevent multiple simultaneous connections
+    if (connectionLock.current || isUnmounting.current) {
+      return;
+    }
+
     if (ws.current?.readyState === WebSocket.OPEN) {
       return;
     }
 
+    // Check if we're in Strict Mode (double useEffect calls)
+    if (isDevelopment && !isStrictMode.current) {
+      isStrictMode.current = true;
+      // Add delay in development to prevent double connections
+      setTimeout(() => connect(), 100);
+      return;
+    }
+
+    connectionLock.current = true;
     setConnecting(true);
     setError(null);
 
+    // Clean up any existing connection
+    if (ws.current) {
+      try {
+        ws.current.close(1000, 'Reconnecting');
+      } catch (error) {
+        // Silent cleanup
+      }
+      ws.current = null;
+    }
+
     try {
-      ws.current = new WebSocket('wss://api-pub.bitfinex.com/ws/2');
+      // Add small delay to prevent browser-specific connection issues
+      setTimeout(() => {
+        if (isUnmounting.current) {
+          connectionLock.current = false;
+          return;
+        }
 
-      ws.current.onopen = () => {
-        setConnected(true);
-        setConnecting(false);
-        setError(null);
-        reconnectAttempts.current = 0;
+        ws.current = new WebSocket('wss://api-pub.bitfinex.com/ws/2');
 
-        enableAdvancedFeatures();
-        pingInterval.current = setInterval(sendPing, 30000);
-        
-        // Re-subscribe to all previously subscribed symbols
-        subscribedSymbols.current.forEach(symbol => {
-          subscribeToSymbol(symbol);
-        });
-      };
-
-      ws.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+        ws.current.onopen = () => {
+          if (isUnmounting.current) return;
           
-          if (data.event === 'info') {
-            if (data.platform) {
-              setPlatformStatus(data.platform.status === 1 ? 'operative' : 'maintenance');
+          setConnected(true);
+          setConnecting(false);
+          setError(null);
+          reconnectAttempts.current = 0;
+          connectionLock.current = false;
+
+          enableAdvancedFeatures();
+          
+          // Start ping with delay to avoid immediate spam
+          setTimeout(() => {
+            if (!isUnmounting.current && ws.current?.readyState === WebSocket.OPEN) {
+              pingInterval.current = setInterval(sendPing, 30000);
             }
-            
-            if (data.code === 20051) {
-              connect();
-            } else if (data.code === 20060) {
-              setPlatformStatus('maintenance');
-            } else if (data.code === 20061) {
-              setPlatformStatus('operative');
+          }, 1000);
+          
+          // Re-subscribe to all previously subscribed symbols with delay
+          setTimeout(() => {
+            if (!isUnmounting.current) {
               subscribedSymbols.current.forEach(symbol => {
                 subscribeToSymbol(symbol);
               });
             }
-            return;
-          }
+          }, 500);
+        };
+
+        ws.current.onmessage = (event) => {
+          if (isUnmounting.current) return;
           
-          if (data.event === 'pong') {
-            const pingTime = sessionStorage.getItem(`ping_${data.cid}`);
-            if (pingTime) {
-              const latencyMs = Date.now() - parseInt(pingTime);
-              setLatency(latencyMs);
-              sessionStorage.removeItem(`ping_${data.cid}`);
-            }
-            return;
-          }
-          
-          if (data.event === 'subscribed') {
-            const subscription: ChannelSubscription = {
-              channelId: data.chanId,
-              channel: data.channel,
-              symbol: data.symbol
-            };
-            subscriptions.current.set(data.chanId, subscription);
-            return;
-          }
-          
-          if (data.event === 'error') {
-            setError(`${data.msg} (Code: ${data.code})`);
-            return;
-          }
-          
-          if (Array.isArray(data) && data.length >= 2) {
-            const [channelId, messageData] = data;
+          try {
+            const data = JSON.parse(event.data);
             
-            if (messageData === 'hb') {
-              setLastHeartbeat(Date.now());
-              resetHeartbeatTimeout();
+            if (data.event === 'info') {
+              if (data.platform) {
+                setPlatformStatus(data.platform.status === 1 ? 'operative' : 'maintenance');
+              }
+              
+              if (data.code === 20051) {
+                // Server restart - reconnect with delay
+                setTimeout(() => {
+                  if (!isUnmounting.current) {
+                    connect();
+                  }
+                }, 1000);
+              } else if (data.code === 20060) {
+                setPlatformStatus('maintenance');
+              } else if (data.code === 20061) {
+                setPlatformStatus('operative');
+                setTimeout(() => {
+                  if (!isUnmounting.current) {
+                    subscribedSymbols.current.forEach(symbol => {
+                      subscribeToSymbol(symbol);
+                    });
+                  }
+                }, 1000);
+              }
               return;
             }
             
-            const subscription = subscriptions.current.get(channelId);
-            if (!subscription) return;
+            if (data.event === 'pong') {
+              const pingTime = sessionStorage.getItem(`ping_${data.cid}`);
+              if (pingTime) {
+                const latencyMs = Date.now() - parseInt(pingTime);
+                setLatency(latencyMs);
+                sessionStorage.removeItem(`ping_${data.cid}`);
+              }
+              return;
+            }
             
-            if (subscription.channel === 'ticker' && Array.isArray(messageData) && messageData.length >= 10) {
-              handleTickerUpdate({
-                symbol: subscription.symbol,
-                price: messageData[6],
-                volume: messageData[7], 
-                bid: messageData[0],
-                ask: messageData[2],
-                timestamp: new Date().toISOString()
-              });
-            } else if (subscription.channel === 'book') {
-              if (Array.isArray(messageData) && Array.isArray(messageData[0])) {
-                const bids: Array<{ price: number; amount: number }> = [];
-                const asks: Array<{ price: number; amount: number }> = [];
-                
-                messageData.forEach((entry: number[]) => {
-                  const [price, count, amount] = entry;
-                  if (amount > 0) {
-                    bids.push({ price, amount });
-                  } else {
-                    asks.push({ price, amount: Math.abs(amount) });
-                  }
-                });
-                
-                handleOrderbookUpdate({
+            if (data.event === 'subscribed') {
+              const subscription: ChannelSubscription = {
+                channelId: data.chanId,
+                channel: data.channel,
+                symbol: data.symbol
+              };
+              subscriptions.current.set(data.chanId, subscription);
+              return;
+            }
+            
+            if (data.event === 'error') {
+              setError(`${data.msg} (Code: ${data.code})`);
+              return;
+            }
+            
+            if (Array.isArray(data) && data.length >= 2) {
+              const [channelId, messageData] = data;
+              
+              if (messageData === 'hb') {
+                setLastHeartbeat(Date.now());
+                resetHeartbeatTimeout();
+                return;
+              }
+              
+              const subscription = subscriptions.current.get(channelId);
+              if (!subscription) return;
+              
+              if (subscription.channel === 'ticker' && Array.isArray(messageData) && messageData.length >= 10) {
+                handleTickerUpdate({
                   symbol: subscription.symbol,
-                  bids,
-                  asks,
+                  price: messageData[6],
+                  volume: messageData[7], 
+                  bid: messageData[0],
+                  ask: messageData[2],
                   timestamp: new Date().toISOString()
                 });
-              } else if (Array.isArray(messageData) && messageData.length === 3) {
-                const [price, count, amount] = messageData;
-                
-                handleOrderbookUpdate({
-                  symbol: subscription.symbol,
-                  update: {
-                    price,
-                    amount: Math.abs(amount),
-                    side: amount > 0 ? 'bid' : 'ask'
-                  },
-                  timestamp: new Date().toISOString()
-                });
+              } else if (subscription.channel === 'book') {
+                if (Array.isArray(messageData) && Array.isArray(messageData[0])) {
+                  const bids: Array<{ price: number; amount: number }> = [];
+                  const asks: Array<{ price: number; amount: number }> = [];
+                  
+                  messageData.forEach((entry: number[]) => {
+                    const [price, count, amount] = entry;
+                    if (amount > 0) {
+                      bids.push({ price, amount });
+                    } else {
+                      asks.push({ price, amount: Math.abs(amount) });
+                    }
+                  });
+                  
+                  handleOrderbookUpdate({
+                    symbol: subscription.symbol,
+                    bids,
+                    asks,
+                    timestamp: new Date().toISOString()
+                  });
+                } else if (Array.isArray(messageData) && messageData.length === 3) {
+                  const [price, count, amount] = messageData;
+                  
+                  handleOrderbookUpdate({
+                    symbol: subscription.symbol,
+                    update: {
+                      price,
+                      amount: Math.abs(amount),
+                      side: amount > 0 ? 'bid' : 'ask'
+                    },
+                    timestamp: new Date().toISOString()
+                  });
+                }
               }
             }
+          } catch (e) {
+            // Silent error handling - prevent console spam
           }
-        } catch (e) {
-          // Silent error handling - no spam
-        }
-      };
+        };
 
-      ws.current.onclose = (event) => {
-        setConnected(false);
-        setConnecting(false);
-        setPlatformStatus('unknown');
-
-        if (heartbeatTimeout.current) {
-          clearTimeout(heartbeatTimeout.current);
-        }
-        if (pingInterval.current) {
-          clearInterval(pingInterval.current);
-        }
-
-        if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
-          const delay = Math.min(5000 * Math.pow(2, reconnectAttempts.current), 60000);
+        ws.current.onclose = (event) => {
+          if (isUnmounting.current) return;
           
-          reconnectTimeout.current = setTimeout(() => {
-            reconnectAttempts.current++;
-            connect();
-          }, delay);
-        } else if (reconnectAttempts.current >= maxReconnectAttempts) {
-          setError('Max reconnection attempts reached');
-        }
-      };
+          setConnected(false);
+          setConnecting(false);
+          setPlatformStatus('unknown');
+          connectionLock.current = false;
 
-      ws.current.onerror = () => {
-        // Silent error handling - no spam
-        setError('WebSocket connection failed');
-        setConnecting(false);
-      };
+          // Clean up intervals
+          if (heartbeatTimeout.current) {
+            clearTimeout(heartbeatTimeout.current);
+          }
+          if (pingInterval.current) {
+            clearInterval(pingInterval.current);
+          }
+
+          // Only attempt reconnection for unexpected closes
+          if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts && !isUnmounting.current) {
+            const delay = Math.min(3000 * Math.pow(1.5, reconnectAttempts.current), 30000);
+            
+            reconnectTimeout.current = setTimeout(() => {
+              if (!isUnmounting.current) {
+                reconnectAttempts.current++;
+                connect();
+              }
+            }, delay);
+          } else if (reconnectAttempts.current >= maxReconnectAttempts) {
+            setError('Max reconnection attempts reached - check internet connection');
+          }
+        };
+
+        ws.current.onerror = () => {
+          if (isUnmounting.current) return;
+          
+          // Silent error handling to prevent browser console spam
+          setError('WebSocket connection failed');
+          setConnecting(false);
+          connectionLock.current = false;
+        };
+
+      }, isDevelopment ? 200 : 50); // Delay in development mode
 
     } catch (error) {
       setError('Failed to create WebSocket connection');
       setConnecting(false);
+      connectionLock.current = false;
     }
-  }, [handleTickerUpdate, handleOrderbookUpdate, enableAdvancedFeatures, sendPing, resetHeartbeatTimeout]);
+  }, [handleTickerUpdate, handleOrderbookUpdate, enableAdvancedFeatures, sendPing, resetHeartbeatTimeout, isDevelopment]);
 
-  // Subscribe to symbol
+  // Subscribe to symbol with better error handling
   const subscribeToSymbol = useCallback((symbol: string) => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || isUnmounting.current) {
       return;
     }
 
@@ -428,7 +520,12 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
 
     try {
       ws.current.send(JSON.stringify(tickerMsg));
-      ws.current.send(JSON.stringify(bookMsg));
+      // Add small delay between subscriptions
+      setTimeout(() => {
+        if (ws.current?.readyState === WebSocket.OPEN && !isUnmounting.current) {
+          ws.current.send(JSON.stringify(bookMsg));
+        }
+      }, 100);
     } catch (error) {
       setError('Failed to subscribe to symbol');
     }
@@ -436,7 +533,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
 
   // Unsubscribe from symbol
   const unsubscribeFromSymbol = useCallback((symbol: string) => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || isUnmounting.current) {
       return;
     }
 
@@ -449,15 +546,20 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
       }
     });
 
-    channelsToUnsubscribe.forEach(channelId => {
+    channelsToUnsubscribe.forEach((channelId, index) => {
       const unsubMsg = {
         event: 'unsubscribe',
         chanId: channelId
       };
       
       try {
-        ws.current!.send(JSON.stringify(unsubMsg));
-        subscriptions.current.delete(channelId);
+        // Add small delays between unsubscriptions
+        setTimeout(() => {
+          if (ws.current?.readyState === WebSocket.OPEN && !isUnmounting.current) {
+            ws.current.send(JSON.stringify(unsubMsg));
+            subscriptions.current.delete(channelId);
+          }
+        }, index * 50);
       } catch (error) {
         // Silent error handling
       }
@@ -480,11 +582,22 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     return trades[bitfinexSymbol] || trades[symbol] || [];
   }, [trades]);
 
-  // Auto-connect on mount
+  // Auto-connect on mount with better cleanup
   useEffect(() => {
-    connect();
+    // Delay initial connection in development mode
+    const delay = isDevelopment ? 500 : 100;
+    
+    const connectTimer = setTimeout(() => {
+      if (!isUnmounting.current) {
+        connect();
+      }
+    }, delay);
 
     return () => {
+      isUnmounting.current = true;
+      clearTimeout(connectTimer);
+      
+      // Clean up all timers
       if (reconnectTimeout.current) {
         clearTimeout(reconnectTimeout.current);
       }
@@ -494,11 +607,22 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
       if (pingInterval.current) {
         clearInterval(pingInterval.current);
       }
+      
+      // Close WebSocket connection
       if (ws.current) {
-        ws.current.close(1000, 'Provider unmount');
+        try {
+          ws.current.close(1000, 'Provider unmount');
+        } catch (error) {
+          // Silent cleanup
+        }
+        ws.current = null;
       }
+      
+      // Clear subscriptions
+      subscriptions.current.clear();
+      subscribedSymbols.current.clear();
     };
-  }, [connect]);
+  }, [connect, isDevelopment]);
 
   const value: WebSocketMarketState = {
     tickers,
