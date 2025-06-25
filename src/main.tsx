@@ -12,14 +12,15 @@ import NotFound from '@/pages/NotFound';
 // Import global styles
 import './index.css';
 
-// Create a React Query client
+// Create a React Query client with trading-optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      retry: 1,
+      staleTime: 1000 * 60 * 5, // 5 minutes cache
+      refetchOnWindowFocus: false, // Avoid unnecessary requests
+      refetchOnReconnect: true, // Update on reconnect
+      retry: 1, // ⭐ CRITICAL: Reduced from 3 to 1 for faster error feedback
+      retryDelay: 1000, // 1 second between retries (faster than exponential backoff)
     },
   },
 });
