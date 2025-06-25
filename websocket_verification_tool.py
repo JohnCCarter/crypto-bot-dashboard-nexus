@@ -178,7 +178,7 @@ class BitfinexWebSocketVerifier:
                     # Orderbook update [PRICE, COUNT, AMOUNT]
                     price, count, amount = float(data[0]), int(data[1]), float(data[2])
                     # Process incremental update (simplified for verification)
-                    pass
+                    raise NotImplementedError("Incremental orderbook update logic is not implemented. Consider adding simplified update logic here.")
                     
         except Exception as e:
             logger.error(f"❌ Error processing orderbook data for {symbol}: {e}")
