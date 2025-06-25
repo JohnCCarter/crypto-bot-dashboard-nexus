@@ -12,16 +12,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from backend.routes.backtest import backtest_bp
-from backend.routes.balances import register as register_balances
-from backend.routes.bot_control import register as register_bot_control
-from backend.routes.config import register as register_config
-from backend.routes.orders import register as register_orders
-from backend.routes.positions import register as register_positions
-from backend.routes.status import status_bp
-from backend.routes.strategy_analysis import strategy_analysis_bp
-from backend.routes.live_portfolio import live_portfolio_bp
-from backend.routes import market_data
+from backend.routes import register_all_routes
 from backend.services.exchange import ExchangeService
 from backend.services.monitor import Monitor
 from backend.services.order_service import OrderService
@@ -49,13 +40,8 @@ CORS(
     origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"],
 )
 
-# Registrera routes som inte använder blueprint
-register_balances(app)
-register_bot_control(app)
-register_orders(app)
-register_positions(app)
-register_config(app)
-market_data.register(app)
+# Register all routes using centralized factory
+register_all_routes(app)
 
 
 def load_config() -> Dict[str, Any]:
@@ -191,16 +177,7 @@ app._services = services
 app._order_metadata = {}
 
 
-def register_routes():
-    """Register all API routes."""
-    app.register_blueprint(status_bp)
-    app.register_blueprint(backtest_bp)
-    app.register_blueprint(strategy_analysis_bp)
-    app.register_blueprint(live_portfolio_bp)
-
-
-# Register routes
-register_routes()
+# Routes already registered via register_all_routes() above
 
 
 # Root route for API documentation
