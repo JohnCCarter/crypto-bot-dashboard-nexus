@@ -88,19 +88,28 @@ class ExchangeService:
 
             # Configure for margin vs spot trading on Bitfinex
             if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
-                if position_type == "margin":
-                    # Bitfinex margin trading parameters
-                    params["type"] = "EXCHANGE MARGIN"
-                    params["hidden"] = False
-                    params["postonly"] = False
+                # Check if this is paper trading
+                is_paper = self.is_paper_trading()
+                
+                if is_paper:
+                    # Paper trading: Use simple parameters
+                    # Don't use EXCHANGE prefixes or complex params
+                    params = {}  # Keep it simple for paper trading
                 else:
-                    # Bitfinex spot trading parameters (default)
-                    if order_type == "limit":
-                        params["type"] = "EXCHANGE LIMIT"
+                    # Live trading: Use full Bitfinex parameters
+                    if position_type == "margin":
+                        # Bitfinex margin trading parameters
+                        params["type"] = "EXCHANGE MARGIN"
+                        params["hidden"] = False
+                        params["postonly"] = False
                     else:
-                        params["type"] = "EXCHANGE MARKET"
-                    params["hidden"] = False
-                    params["postonly"] = False
+                        # Bitfinex spot trading parameters (default)
+                        if order_type == "limit":
+                            params["type"] = "EXCHANGE LIMIT"
+                        else:
+                            params["type"] = "EXCHANGE MARKET"
+                        params["hidden"] = False
+                        params["postonly"] = False
 
             order = self.exchange.create_order(
                 symbol=symbol,
@@ -449,6 +458,78 @@ class ExchangeService:
 
         except Exception as e:
             raise ExchangeError(f"Failed to fetch positions: {str(e)}")
+
+    def is_paper_trading(self) -> bool:
+        """
+        Detect if this is a paper trading account.
+        
+        Returns:
+            True if paper trading, False if live trading
+        """
+        try:
+            # For Bitfinex, check account info to determine if it's paper trading
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
+                balance = self.exchange.fetch_balance()
+                info = balance.get('info', [])
+                
+                # Primary check: Look for TEST currency prefixes in balance
+                # Paper trading accounts use TESTUSD, TESTBTC, etc.
+                if isinstance(info, list) and len(info) > 0:
+                    for account_info in info:
+                        if isinstance(account_info, list) and len(account_info) >= 2:
+                            currency = str(account_info[1])
+                            if currency.startswith('TEST'):
+                                return True
+                
+                # Secondary check: Look for TEST currencies in balance currencies
+                for currency in balance.keys():
+                    if isinstance(currency, str) and currency.startswith('TEST'):
+                        return True
+                
+                # Fallback check: limited markets available in paper trading
+                markets = self.exchange.load_markets()
+                spot_pairs = sum(1 for market in markets.values() 
+                               if market.get('spot', False) and market.get('active', False))
+                
+                # Live Bitfinex typically has 300+ spot pairs, paper has ~18
+                if spot_pairs <= 50:  # Conservative threshold
+                    return True
+                    
+            return False
+            
+        except Exception:
+            # If detection fails, assume live trading for safety
+            return False
+
+    def get_trading_limitations(self) -> Dict[str, Any]:
+        """
+        Get trading limitations for current account type.
+        
+        Returns:
+            Dict containing account limitations
+        """
+        is_paper = self.is_paper_trading()
+        
+        if is_paper:
+            return {
+                "is_paper_trading": True,
+                "margin_trading_available": False,
+                "margin_conversion_note": "Margin orders automatically converted to spot",
+                "supported_order_types": ["spot", "perpetual"],
+                "limitations": [
+                    "18 spot trading pairs available",
+                    "16 perpetual contract pairs available",
+                    "Full margin trading not supported",
+                    "Complex derivatives not available"
+                ]
+            }
+        else:
+            return {
+                "is_paper_trading": False,
+                "margin_trading_available": True,
+                "supported_order_types": ["spot", "margin", "perpetual", "futures"],
+                "limitations": []
+            }
 
     def get_markets(self) -> Dict[str, Any]:
         """

@@ -302,3 +302,41 @@ def register(app):
         except Exception as e:
             current_app.logger.error(f"❌ [Orders] Unexpected error: {e}")
             return jsonify({"error": "Failed to fetch order status"}), 500
+
+    @app.route("/api/trading-limitations", methods=["GET"])
+    def get_trading_limitations():
+        """
+        Get trading limitations for current account type.
+
+        Returns:
+            200: Trading limitations info
+            500: Server error
+        """
+        current_app.logger.info("📋 [Limitations] GET trading limitations request")
+
+        try:
+            exchange_service = get_shared_exchange_service()
+            if not exchange_service:
+                current_app.logger.warning("⚠️ [Limitations] No exchange service available")
+                # Return safe defaults on error
+                return jsonify({
+                    "is_paper_trading": False,
+                    "margin_trading_available": True,
+                    "supported_order_types": ["spot", "margin"],
+                    "limitations": []
+                }), 200
+
+            limitations = exchange_service.get_trading_limitations()
+            
+            current_app.logger.info(f"✅ [Limitations] Retrieved limitations: {limitations['is_paper_trading']}")
+            return jsonify(limitations), 200
+
+        except Exception as e:
+            current_app.logger.error(f"❌ [Limitations] Unexpected error: {e}")
+            # Return safe defaults on error
+            return jsonify({
+                "is_paper_trading": False,
+                "margin_trading_available": True,
+                "supported_order_types": ["spot", "margin"],
+                "limitations": []
+            }), 200
