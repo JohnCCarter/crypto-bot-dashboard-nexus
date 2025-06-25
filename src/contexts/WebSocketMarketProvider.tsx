@@ -50,6 +50,36 @@ interface ChannelSubscription {
   symbol: string;
 }
 
+interface OrderFill {
+  id: string;
+  orderId: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  amount: number;
+  price: number;
+  fee: number;
+  timestamp: number;
+}
+
+interface LiveOrder {
+  id: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  amount: number;
+  price: number;
+  filled: number;
+  remaining: number;
+  status: 'open' | 'filled' | 'cancelled' | 'partial';
+  timestamp: number;
+}
+
+interface LiveBalance {
+  currency: string;
+  available: number;
+  total: number;
+  timestamp: number;
+}
+
 interface WebSocketMarketState {
   // Data for all symbols
   tickers: Record<string, MarketData>;
@@ -72,6 +102,15 @@ interface WebSocketMarketState {
   getTickerForSymbol: (symbol: string) => MarketData | null;
   getOrderbookForSymbol: (symbol: string) => OrderBook | null;
   getTradesForSymbol: (symbol: string) => Trade[];
+  
+  // Add user data streams
+  userFills: OrderFill[];
+  liveOrders: Record<string, LiveOrder>;
+  liveBalances: Record<string, LiveBalance>;
+  
+  // Add user data subscriptions
+  subscribeToUserData: () => void;
+  unsubscribeFromUserData: () => void;
 }
 
 const WebSocketMarketContext = createContext<WebSocketMarketState | null>(null);
@@ -532,7 +571,12 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     unsubscribeFromSymbol,
     getTickerForSymbol,
     getOrderbookForSymbol,
-    getTradesForSymbol
+    getTradesForSymbol,
+    userFills: [],
+    liveOrders: {},
+    liveBalances: {},
+    subscribeToUserData: () => {},
+    unsubscribeFromUserData: () => {}
   };
 
   return (
