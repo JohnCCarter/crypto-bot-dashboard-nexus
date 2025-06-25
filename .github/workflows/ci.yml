@@ -64,8 +64,8 @@ jobs:
       - name: 🎨 Code formatting check (Black)
         run: |
           source venv/bin/activate
-          black --check --diff backend/ || {
-            echo "❌ Code formatting issues found. Run 'black backend/' to fix."
+          black --check --diff . || {
+            echo "❌ Code formatting issues found. Run 'black .' to fix."
             exit 1
           }
           
