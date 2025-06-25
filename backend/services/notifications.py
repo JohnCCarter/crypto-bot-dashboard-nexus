@@ -11,7 +11,7 @@ class Notifier:
         smtp_port: int,
         sender: str,
         receiver: str,
-        password: Optional[str] = None
+        password: Optional[str] = None,
     ):
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port
@@ -31,10 +31,6 @@ class Notifier:
         try:
             with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
                 server.login(self.sender, str(self.password))
-                server.sendmail(
-                    self.sender,
-                    [self.receiver],
-                    msg.as_string()
-                )
+                server.sendmail(self.sender, [self.receiver], msg.as_string())
         except Exception as e:
-            print(f"Notifieringsfel: {e}") 
+            print(f"Notifieringsfel: {e}")

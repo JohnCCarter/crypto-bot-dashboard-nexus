@@ -27,19 +27,15 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
         TradeSignal: Signalobjekt med action, confidence, position_size och
         metadata.
     """
-    fast_period = params.get('ema_fast') or params.get('fast_period')
-    slow_period = params.get('ema_slow') or params.get('slow_period')
-    min_gap = params.get('min_gap')
-    direction = params.get('direction', 'both')
-    lookback = params.get('lookback', 3)
-    if 'close' not in data:
-        raise ValueError(
-            "Data måste innehålla kolumnen 'close'"
-        )
+    fast_period = params.get("ema_fast") or params.get("fast_period")
+    slow_period = params.get("ema_slow") or params.get("slow_period")
+    min_gap = params.get("min_gap")
+    direction = params.get("direction", "both")
+    lookback = params.get("lookback", 3)
+    if "close" not in data:
+        raise ValueError("Data måste innehålla kolumnen 'close'")
     if fast_period is None or slow_period is None:
-        raise ValueError(
-            "Både fast_period och slow_period måste anges i config"
-        )
+        raise ValueError("Både fast_period och slow_period måste anges i config")
     if fast_period >= slow_period:
         raise ValueError("fast_period måste vara mindre än slow_period")
     if len(data) < slow_period + 2:
@@ -47,19 +43,15 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
             action="hold",
             confidence=0.0,
             position_size=0.0,
-            metadata={
-                'ema_fast': [],
-                'ema_slow': [],
-                'signals': []
-            }
+            metadata={"ema_fast": [], "ema_slow": [], "signals": []},
         )
-    close = data['close']
+    close = data["close"]
     ema_fast = ema(close, fast_period)
     ema_slow = ema(close, slow_period)
     signals = []
     for i in range(1, len(data)):
-        prev_fast = float(ema_fast.iloc[i-1])
-        prev_slow = float(ema_slow.iloc[i-1])
+        prev_fast = float(ema_fast.iloc[i - 1])
+        prev_slow = float(ema_slow.iloc[i - 1])
         curr_fast = float(ema_fast.iloc[i])
         curr_slow = float(ema_slow.iloc[i])
         gap = abs(curr_fast - curr_slow)
@@ -79,16 +71,12 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
     if last_signal:
         action = str(last_signal["type"])
         gap = abs(float(ema_fast.iloc[-1]) - float(ema_slow.iloc[-1]))
-        confidence = min(
-            1.0,
-            gap /
-            (abs(float(ema_slow.iloc[-1])) + 1e-9)
-        )
-        position_size = params.get('position_size', 1.0)
+        confidence = min(1.0, gap / (abs(float(ema_slow.iloc[-1])) + 1e-9))
+        position_size = params.get("position_size", 1.0)
         # Beräkna sannolikheter baserat på gap och tröskelvärden
         gap_value = float(ema_fast.iloc[-1]) - float(ema_slow.iloc[-1])
-        buy_threshold = params.get('buy_threshold', 0.0)
-        sell_threshold = params.get('sell_threshold', 0.0)
+        buy_threshold = params.get("buy_threshold", 0.0)
+        sell_threshold = params.get("sell_threshold", 0.0)
         prob_buy, prob_sell, prob_hold = calculate_signal_probabilities(
             gap_value, buy_threshold, sell_threshold
         )
@@ -109,6 +97,6 @@ def run_strategy(data: pd.DataFrame, params: Dict[str, Any]) -> TradeSignal:
             "gap": gap_value,
             "probability_buy": prob_buy,
             "probability_sell": prob_sell,
-            "probability_hold": prob_hold
-        }
+            "probability_hold": prob_hold,
+        },
     )

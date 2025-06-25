@@ -1,34 +1,41 @@
-import os
-import time
+"""Balance service using shared exchange service to avoid nonce conflicts."""
 
-import ccxt
-from dotenv import load_dotenv
-
-load_dotenv()
+from flask import current_app
 
 
-class MyBitfinex(ccxt.bitfinex):
-    _last_nonce = int(time.time() * 1000)
-    def nonce(self):
-        now = int(time.time() * 1000)
-        self._last_nonce = max(self._last_nonce + 1, now)
-        return self._last_nonce
+def get_shared_exchange_service():
+    """Get shared exchange service from app context to avoid nonce conflicts."""
+    try:
+        if hasattr(current_app, "_services") and current_app._services:
+            return current_app._services.get("exchange")
+
+        current_app.logger.warning("Exchange service not available in app context")
+        return None
+    except Exception as e:
+        current_app.logger.error(f"Failed to get shared exchange service: {e}")
+        return None
 
 
 def fetch_balances():
     """
-    Hämtar saldon från Bitfinex via ccxt och returnerar hela balance-objektet.
-    Kastar ValueError om API-nycklar saknas.
-    :return: dict med balansdata från ccxt
-    :raises: ValueError, ccxt.BaseError
+    Hämtar saldon från Bitfinex via shared exchange service.
+    Använder thread-safe shared connection för att undvika nonce conflicts.
+    :return: dict med balansdata från exchange
+    :raises: ValueError, ExchangeError
     """
-    api_key = os.getenv("BITFINEX_API_KEY")
-    api_secret = os.getenv("BITFINEX_API_SECRET")
-    if not api_key or not api_secret:
-        raise ValueError("API keys not configured properly")
-    exchange = MyBitfinex({
-        "apiKey": api_key,
-        "secret": api_secret,
-        "enableRateLimit": True,
-    })
-    return exchange.fetch_balance()
+    exchange_service = get_shared_exchange_service()
+    if not exchange_service:
+        raise ValueError("Exchange service not available - check API configuration")
+
+    try:
+        # Use shared exchange service for thread-safe nonce handling
+        # But call raw ccxt method to get full balance structure
+        raw_balance = exchange_service.exchange.fetch_balance()
+
+        # Return raw ccxt format with ["total"] and ["free"] keys
+        # This is what balances.py route expects
+        return raw_balance
+
+    except Exception as e:
+        current_app.logger.error(f"Failed to fetch balances: {e}")
+        raise

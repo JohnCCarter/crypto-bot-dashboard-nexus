@@ -20,7 +20,7 @@ interface StrategySignal {
     probability_buy: number;
     probability_sell: number;
     probability_hold: number;
-    [key: string]: any;
+    [key: string]: number | string | boolean;
   };
 }
 
@@ -32,7 +32,7 @@ interface CombinedSignal {
   metadata: {
     strategies_used: string[];
     combination_method: string;
-    [key: string]: any;
+    [key: string]: string[] | string | number | boolean;
   };
 }
 

@@ -51,7 +51,10 @@ class BacktestEngine:
     def run_backtest(
         self,
         data: pd.DataFrame,
-        strategy: Union[Callable[[pd.DataFrame], TradeSignal], Callable[[pd.DataFrame, Dict[str, Any]], TradeSignal]],
+        strategy: Union[
+            Callable[[pd.DataFrame], TradeSignal],
+            Callable[[pd.DataFrame, Dict[str, Any]], TradeSignal],
+        ],
         risk_params: Optional[Dict[str, Any]] = None,
     ) -> BacktestResult:
         """
@@ -66,7 +69,7 @@ class BacktestEngine:
             BacktestResult containing performance metrics
         """
         import inspect
-        
+
         # Kontrollera att data inte är tom
         if data is None or len(data) < 2:
             raise ValueError("Data for backtest must contain at least 2 rows.")
@@ -244,7 +247,10 @@ class BacktestEngine:
     def optimize_parameters(
         self,
         data: pd.DataFrame,
-        strategy: Union[Callable[[pd.DataFrame], TradeSignal], Callable[[pd.DataFrame, Dict[str, Any]], TradeSignal]],
+        strategy: Union[
+            Callable[[pd.DataFrame], TradeSignal],
+            Callable[[pd.DataFrame, Dict[str, Any]], TradeSignal],
+        ],
         param_grid: Dict[str, List[Any]],
     ) -> Dict[str, Any]:
         """
@@ -280,8 +286,9 @@ class BacktestEngine:
                 def create_strategy_wrapper(p):
                     def strategy_wrapper(df):
                         return strategy(df, p)
+
                     return strategy_wrapper
-                
+
                 strategy_func = create_strategy_wrapper(params)
 
             else:

@@ -42,7 +42,8 @@ export function OrderHistory({ orders, isLoading = false, onOrderCancelled }: Or
     switch (status) {
       case 'filled': return 'bg-green-500';
       case 'cancelled': return 'bg-red-500';
-      case 'pending': return 'bg-yellow-500';
+      case 'pending':
+      case 'open': return 'bg-yellow-500';
       default: return 'bg-gray-500';
     }
   };
@@ -95,12 +96,12 @@ export function OrderHistory({ orders, isLoading = false, onOrderCancelled }: Or
                   <Badge variant={order.side === 'buy' ? 'default' : 'destructive'} className="w-fit text-xs">
                     {order.side.toUpperCase()}
                   </Badge>
-                  <span>{order.amount}</span>
-                  <span>${order.price.toLocaleString()}</span>
-                  <span>${order.fee.toFixed(2)}</span>
+                  <span>{order.amount || 0}</span>
+                  <span>${(order.price || 0).toLocaleString()}</span>
+                  <span>${(order.fee || 0).toFixed(2)}</span>
                   <div className="flex items-center gap-2">
                     <Badge className={`w-fit text-xs ${getStatusColor(order.status)}`}>{order.status}</Badge>
-                    {order.status === 'pending' && (
+                    {(order.status === 'pending' || order.status === 'open') && (
                       <Button
                         variant="destructive"
                         size="sm"

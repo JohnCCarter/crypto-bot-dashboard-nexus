@@ -8,7 +8,8 @@ import { HybridPriceChart } from '@/components/HybridPriceChart';
 import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { HybridTradeTable } from '@/components/HybridTradeTable';
+import { ActivePositionsCard } from '@/components/ActivePositionsCard';
+import { PortfolioSummaryCard } from '@/components/PortfolioSummaryCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -259,9 +260,9 @@ const Index: FC = () => {
               </div>
               
               <div className="col-span-12 lg:col-span-3">
-                <HybridTradeTable 
-                  symbol={selectedSymbol} 
-                  maxTrades={5}
+                <ActivePositionsCard 
+                  showOnlySymbol={false}
+                  maxPositions={5}
                 />
               </div>
 
@@ -282,12 +283,16 @@ const Index: FC = () => {
                 />
               </div>
 
-              {/* Third Row - Tables */}
-              <div className="col-span-12 lg:col-span-6">
+              {/* Third Row - Portfolio Summary and History */}
+              <div className="col-span-12 lg:col-span-4">
+                <PortfolioSummaryCard />
+              </div>
+              
+              <div className="col-span-12 lg:col-span-4">
                 <OrderHistory orders={orderHistory} isLoading={isLoading} onOrderCancelled={handleRefresh} />
               </div>
               
-              <div className="col-span-12 lg:col-span-6">
+              <div className="col-span-12 lg:col-span-4">
                 <LogViewer logs={logs} isLoading={isLoading} />
               </div>
             </div>

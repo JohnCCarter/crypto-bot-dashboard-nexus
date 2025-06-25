@@ -31,41 +31,45 @@ def test_ema_invalid_length():
 
 
 def test_find_fvg_zones_bullish_and_bearish():
-    data = pd.DataFrame({
-        'open': [100, 110, 120, 130, 140],
-        'high': [110, 120, 130, 140, 150],
-        'low': [90, 100, 110, 120, 130],
-        'close': [105, 115, 125, 135, 145],
-    })
+    data = pd.DataFrame(
+        {
+            "open": [100, 110, 120, 130, 140],
+            "high": [110, 120, 130, 140, 150],
+            "low": [90, 100, 110, 120, 130],
+            "close": [105, 115, 125, 135, 145],
+        }
+    )
     # Skapa en bullish FVG mellan index 0 och 2 (prev_high < next_low)
-    data.loc[0, 'high'] = 110
-    data.loc[2, 'low'] = 125  # next_low
+    data.loc[0, "high"] = 110
+    data.loc[2, "low"] = 125  # next_low
     # Skapa en bearish FVG mellan index 1 och 3 (prev_low > next_high)
-    data.loc[1, 'low'] = 120
-    data.loc[3, 'high'] = 115  # next_high
+    data.loc[1, "low"] = 120
+    data.loc[3, "high"] = 115  # next_high
 
     # Testa bullish
     bullish = find_fvg_zones(data, direction="bullish")
-    assert any(z['direction'] == 'bullish' for z in bullish)
+    assert any(z["direction"] == "bullish" for z in bullish)
     # Testa bearish
     bearish = find_fvg_zones(data, direction="bearish")
-    assert any(z['direction'] == 'bearish' for z in bearish)
+    assert any(z["direction"] == "bearish" for z in bearish)
     # Testa both
     both = find_fvg_zones(data, direction="both")
-    assert any(z['direction'] == 'bullish' for z in both)
-    assert any(z['direction'] == 'bearish' for z in both)
+    assert any(z["direction"] == "bullish" for z in both)
+    assert any(z["direction"] == "bearish" for z in both)
 
 
 def test_find_fvg_zones_min_gap_size():
-    data = pd.DataFrame({
-        'open': [100, 110, 120],
-        'high': [110, 120, 130],
-        'low': [90, 100, 120],
-        'close': [105, 115, 125],
-    })
+    data = pd.DataFrame(
+        {
+            "open": [100, 110, 120],
+            "high": [110, 120, 130],
+            "low": [90, 100, 120],
+            "close": [105, 115, 125],
+        }
+    )
     # Skapa en bullish FVG med gap 10
-    data.loc[0, 'high'] = 110
-    data.loc[2, 'low'] = 120  # next_low
+    data.loc[0, "high"] = 110
+    data.loc[2, "low"] = 120  # next_low
     # min_gap_size större än gapet
     result = find_fvg_zones(data, min_gap_size=15)
     assert len(result) == 0
@@ -75,12 +79,14 @@ def test_find_fvg_zones_min_gap_size():
 
 
 def test_find_fvg_zones_no_gaps():
-    data = pd.DataFrame({
-        'open': [100, 110, 120],
-        'high': [110, 120, 130],
-        'low': [90, 100, 110],
-        'close': [105, 115, 125],
-    })
+    data = pd.DataFrame(
+        {
+            "open": [100, 110, 120],
+            "high": [110, 120, 130],
+            "low": [90, 100, 110],
+            "close": [105, 115, 125],
+        }
+    )
     # Inga FVG ska hittas
     result = find_fvg_zones(data)
     assert result == []

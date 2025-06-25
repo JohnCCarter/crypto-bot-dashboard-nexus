@@ -1,26 +1,26 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Select, SelectContent, SelectItem, SelectTrigger } from './select';
 
 // Mocka Radix UI Select för testmiljön (jsdom saknar hasPointerCapture)
 vi.mock('@radix-ui/react-select', () => {
   return {
     __esModule: true,
-    Root: ({ children }: any) => <div data-testid="mock-select">{children}</div>,
-    Group: ({ children }: any) => <div>{children}</div>,
-    Value: ({ children }: any) => <span>{children}</span>,
-    Trigger: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-    Content: ({ children }: any) => <div>{children}</div>,
-    Item: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    Label: ({ children }: any) => <label>{children}</label>,
+    Root: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-select">{children}</div>,
+    Group: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Value: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+    Trigger: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <button {...props}>{children}</button>,
+    Content: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Item: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+    Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
     Separator: () => <hr />,
-    ScrollUpButton: ({ children }: any) => <div>{children}</div>,
-    ScrollDownButton: ({ children }: any) => <div>{children}</div>,
-    Icon: ({ children }: any) => <span data-testid="mock-icon">{children}</span>,
-    Portal: ({ children }: any) => <div data-testid="mock-portal">{children}</div>,
-    Viewport: ({ children }: any) => <div data-testid="mock-viewport">{children}</div>,
-    ItemIndicator: ({ children }: any) => <span data-testid="mock-item-indicator">{children}</span>,
+    ScrollUpButton: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    ScrollDownButton: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Icon: ({ children }: { children: React.ReactNode }) => <span data-testid="mock-icon">{children}</span>,
+    Portal: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-portal">{children}</div>,
+    Viewport: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-viewport">{children}</div>,
+    ItemIndicator: ({ children }: { children: React.ReactNode }) => <span data-testid="mock-item-indicator">{children}</span>,
   };
 });
 

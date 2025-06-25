@@ -2,8 +2,26 @@
 
 from datetime import datetime
 from typing import Any, Dict, Optional
+import time
+import threading
 
 import ccxt
+
+
+class CustomBitfinex(ccxt.bitfinex):
+    """Custom Bitfinex class with thread-safe nonce handling."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_nonce = int(time.time() * 1000)
+        self._nonce_lock = threading.Lock()
+
+    def nonce(self):
+        """Generate thread-safe monotonically increasing nonce for Bitfinex API."""
+        with self._nonce_lock:
+            now = int(time.time() * 1000)
+            self._last_nonce = max(self._last_nonce + 1, now)
+            return self._last_nonce
 
 
 class ExchangeError(Exception):
@@ -25,7 +43,12 @@ class ExchangeService:
             api_secret: Exchange API secret
         """
         try:
-            exchange_class = getattr(ccxt, exchange_id)
+            # Use custom Bitfinex class for proper nonce handling
+            if exchange_id == "bitfinex":
+                exchange_class = CustomBitfinex
+            else:
+                exchange_class = getattr(ccxt, exchange_id)
+                
             self.exchange = exchange_class(
                 {"apiKey": api_key, "secret": api_secret, "enableRateLimit": True}
             )
@@ -39,6 +62,7 @@ class ExchangeService:
         side: str,
         amount: float,
         price: Optional[float] = None,
+        position_type: str = "spot",
     ) -> Dict[str, Any]:
         """
         Create a new order on the exchange.
@@ -49,6 +73,7 @@ class ExchangeService:
             side: 'buy' or 'sell'
             amount: Order size
             price: Required for limit orders
+            position_type: 'margin' or 'spot'
 
         Returns:
             Dict containing order details
@@ -60,6 +85,22 @@ class ExchangeService:
             params = {}
             if order_type == "limit" and price is None:
                 raise ValueError("Price is required for limit orders")
+
+            # Configure for margin vs spot trading on Bitfinex
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
+                if position_type == "margin":
+                    # Bitfinex margin trading parameters
+                    params["type"] = "EXCHANGE MARGIN"
+                    params["hidden"] = False
+                    params["postonly"] = False
+                else:
+                    # Bitfinex spot trading parameters (default)
+                    if order_type == "limit":
+                        params["type"] = "EXCHANGE LIMIT"
+                    else:
+                        params["type"] = "EXCHANGE MARKET"
+                    params["hidden"] = False
+                    params["postonly"] = False
 
             order = self.exchange.create_order(
                 symbol=symbol,
@@ -80,6 +121,7 @@ class ExchangeService:
                 "status": order["status"],
                 "filled": float(order.get("filled", 0)),
                 "remaining": float(order.get("remaining", amount)),
+                "position_type": position_type,  # Include position type
                 "timestamp": order.get(
                     "timestamp", int(datetime.utcnow().timestamp() * 1000)
                 ),
@@ -104,16 +146,22 @@ class ExchangeService:
         """
         try:
             order = self.exchange.fetch_order(order_id, symbol)
+            # Safe float conversion with None checks
+            amount = float(order["amount"]) if order.get("amount") else 0.0
+            price = float(order["price"]) if order.get("price") else 0.0
+            filled = float(order["filled"]) if order.get("filled") else 0.0
+            remaining = float(order["remaining"]) if order.get("remaining") else 0.0
+            
             return {
                 "id": order["id"],
                 "symbol": order["symbol"],
                 "type": order["type"],
                 "side": order["side"],
-                "amount": float(order["amount"]),
-                "price": float(order.get("price", 0)),
+                "amount": amount,
+                "price": price,
                 "status": order["status"],
-                "filled": float(order.get("filled", 0)),
-                "remaining": float(order.get("remaining", 0)),
+                "filled": filled,
+                "remaining": remaining,
                 "timestamp": order.get(
                     "timestamp", int(datetime.utcnow().timestamp() * 1000)
                 ),
@@ -121,11 +169,7 @@ class ExchangeService:
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order: {str(e)}")
 
-    def cancel_order(
-        self, 
-        order_id: str, 
-        symbol: Optional[str] = None
-    ) -> bool:
+    def cancel_order(self, order_id: str, symbol: Optional[str] = None) -> bool:
         """
         Cancel an existing order.
 
@@ -183,15 +227,44 @@ class ExchangeService:
         """
         try:
             balance = self.exchange.fetch_balance()
-            return {
-                currency: float(data["free"])
-                for currency, data in balance["total"].items()
-                if float(data["free"]) > 0
-            }
+            result = {}
+            
+            # Handle different balance structure formats
+            if 'total' in balance and isinstance(balance['total'], dict):
+                # Standard CCXT format with nested structure
+                for currency, amount in balance['total'].items():
+                    if isinstance(amount, dict) and 'free' in amount:
+                        free_amount = float(amount['free'])
+                    else:
+                        free_amount = float(amount)
+                    
+                    if free_amount > 0:
+                        result[currency] = free_amount
+            else:
+                # Direct format or other structures
+                for currency, data in balance.items():
+                    if currency in ['info', 'datetime', 'timestamp']:
+                        continue
+                        
+                    if isinstance(data, dict):
+                        if 'free' in data:
+                            free_amount = float(data['free'])
+                        elif 'total' in data:
+                            free_amount = float(data['total'])
+                        else:
+                            free_amount = float(data.get('available', 0))
+                    else:
+                        free_amount = float(data)
+                    
+                    if free_amount > 0:
+                        result[currency] = free_amount
+            
+            return result
+            
         except Exception as e:
             raise ExchangeError(f"Failed to fetch balance: {str(e)}")
 
-    def fetch_ohlcv(self, symbol: str, timeframe: str = '5m', limit: int = 100) -> list:
+    def fetch_ohlcv(self, symbol: str, timeframe: str = "5m", limit: int = 100) -> list:
         """
         Fetch OHLCV (candlestick) data from exchange.
 
@@ -212,10 +285,10 @@ class ExchangeService:
                 {
                     "timestamp": candle[0],
                     "open": float(candle[1]),
-                    "high": float(candle[2]), 
+                    "high": float(candle[2]),
                     "low": float(candle[3]),
                     "close": float(candle[4]),
-                    "volume": float(candle[5])
+                    "volume": float(candle[5]),
                 }
                 for candle in ohlcv
             ]
@@ -238,18 +311,18 @@ class ExchangeService:
         """
         try:
             # Special handling for Bitfinex orderbook
-            if hasattr(self.exchange, 'id') and self.exchange.id == 'bitfinex':
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
                 # Bitfinex requires different limit handling
                 # Try without limit first, then apply client-side limiting
                 orderbook = self.exchange.fetch_order_book(symbol)
             else:
                 # Standard CCXT implementation for other exchanges
                 orderbook = self.exchange.fetch_order_book(symbol, limit)
-            
+
             # Apply limit on client side to ensure consistency
             limited_bids = orderbook["bids"][:limit] if orderbook["bids"] else []
             limited_asks = orderbook["asks"][:limit] if orderbook["asks"] else []
-            
+
             return {
                 "symbol": symbol,
                 "bids": [
@@ -260,7 +333,9 @@ class ExchangeService:
                     {"price": float(ask[0]), "amount": float(ask[1])}
                     for ask in limited_asks
                 ],
-                "timestamp": orderbook.get("timestamp", int(datetime.utcnow().timestamp() * 1000))
+                "timestamp": orderbook.get(
+                    "timestamp", int(datetime.utcnow().timestamp() * 1000)
+                ),
             }
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order book: {str(e)}")
@@ -288,7 +363,7 @@ class ExchangeService:
                     "side": trade["side"],
                     "amount": float(trade["amount"]),
                     "price": float(trade["price"]),
-                    "timestamp": trade["timestamp"]
+                    "timestamp": trade["timestamp"],
                 }
                 for trade in trades
             ]
@@ -310,35 +385,68 @@ class ExchangeService:
         """
         try:
             positions = self.exchange.fetch_positions(symbols)
-            
-            # Filter out positions with no size
+
+            # Process all positions (including Bitfinex margin positions)
             active_positions = []
             for position in positions:
-                if float(position.get('size', 0)) != 0:
-                    active_positions.append({
-                        "id": position.get("id", ""),
-                        "symbol": position["symbol"],
-                        "side": position["side"],  # 'long' or 'short'
-                        "amount": float(position["size"]),
-                        "entry_price": float(position.get("entryPrice", 0)),
-                        "mark_price": float(position.get("markPrice", 0)),
-                        "pnl": float(position.get("unrealizedPnl", 0)),
-                        "pnl_percentage": float(position.get("percentage", 0)),
-                        "timestamp": position.get(
-                            "timestamp", 
-                            int(datetime.utcnow().timestamp() * 1000)
-                        ),
-                        "contracts": float(position.get("contracts", 0)),
-                        "notional": float(position.get("notional", 0)),
-                        "collateral": float(position.get("collateral", 0)),
-                        "margin_mode": position.get("marginMode", "isolated"),
-                        "maintenance_margin": float(
-                            position.get("maintenanceMargin", 0)
-                        )
-                    })
-            
+                # Get position size - handle different exchange formats
+                size = position.get("size")
+                amount = position.get("amount") 
+                notional = position.get("notional", 0)
+                
+                # For Bitfinex: sometimes size is None but notional contains amount
+                if size is None and amount is None:
+                    # Check if this is a Bitfinex margin position with notional
+                    if notional != 0:
+                        # Use notional as amount for Bitfinex margin positions
+                        actual_amount = float(notional)
+                    else:
+                        # Try to extract from info array for Bitfinex
+                        info = position.get("info", [])
+                        if isinstance(info, list) and len(info) > 2:
+                            try:
+                                actual_amount = float(info[2])  # Amount is at index 2
+                            except (ValueError, IndexError):
+                                actual_amount = 0
+                        else:
+                            actual_amount = 0
+                else:
+                    actual_amount = float(size or amount or 0)
+
+                # Only include positions with non-zero amounts
+                if actual_amount != 0:
+                    # Get mark price - try different sources
+                    mark_price = position.get("markPrice")
+                    if mark_price is None:
+                        mark_price = position.get("lastPrice", 0)
+                    
+                    active_positions.append(
+                        {
+                            "id": position.get("id", ""),
+                            "symbol": position["symbol"],
+                            "side": position["side"],  # 'long' or 'short'
+                            "amount": actual_amount,
+                            "entry_price": float(position.get("entryPrice", 0)),
+                            "mark_price": float(mark_price or 0),
+                            "pnl": float(position.get("unrealizedPnl", 0)),
+                            "pnl_percentage": float(position.get("percentage", 0)),
+                            "timestamp": position.get(
+                                "timestamp", int(datetime.utcnow().timestamp() * 1000)
+                            ),
+                            "contracts": float(position.get("contracts") or 0),
+                            "notional": float(position.get("notional") or 0),
+                            "collateral": float(position.get("collateral") or 0),
+                            "margin_mode": position.get("marginMode", "isolated"),
+                            "maintenance_margin": float(
+                                position.get("maintenanceMargin") or 0
+                            ),
+                            "position_type": "margin",  # Mark as real margin position
+                            "leverage": float(position.get("leverage") or 1.0),
+                        }
+                    )
+
             return active_positions
-            
+
         except Exception as e:
             raise ExchangeError(f"Failed to fetch positions: {str(e)}")
 
@@ -364,7 +472,7 @@ class ExchangeService:
                     "margin": market.get("margin", False),
                     "future": market.get("future", False),
                     "option": market.get("option", False),
-                    "contract": market.get("contract", False)
+                    "contract": market.get("contract", False),
                 }
                 for symbol, market in markets.items()
                 if market["active"]
@@ -373,10 +481,10 @@ class ExchangeService:
             raise ExchangeError(f"Failed to fetch markets: {str(e)}")
 
     def fetch_order_history(
-        self, 
-        symbols: Optional[list] = None, 
-        since: Optional[int] = None, 
-        limit: int = 100
+        self,
+        symbols: Optional[list] = None,
+        since: Optional[int] = None,
+        limit: int = 100,
     ) -> list:
         """
         Fetch order history from exchange.
@@ -403,7 +511,7 @@ class ExchangeService:
             else:
                 # Fetch all order history (may require multiple calls)
                 all_orders = self.exchange.fetch_orders(None, since, limit)
-            
+
             # Transform to standardized format
             standardized_orders = []
             for order in all_orders:
@@ -421,18 +529,15 @@ class ExchangeService:
                     "filled": float(order["filled"]),
                     "remaining": float(order["remaining"]),
                     "cost": float(order["cost"] or 0),
-                    "trades": order.get("trades", [])
+                    "trades": order.get("trades", []),
                 }
                 standardized_orders.append(standardized_order)
-            
+
             # Sort by timestamp (newest first)
-            standardized_orders.sort(
-                key=lambda x: x["timestamp"] or 0, 
-                reverse=True
-            )
-            
+            standardized_orders.sort(key=lambda x: x["timestamp"] or 0, reverse=True)
+
             return standardized_orders
-            
+
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order history: {str(e)}")
 
@@ -452,7 +557,7 @@ class ExchangeService:
         try:
             # Fetch open orders from exchange
             open_orders = self.exchange.fetch_open_orders(symbol)
-            
+
             # Transform to standardized format
             standardized_orders = []
             for order in open_orders:
@@ -467,11 +572,11 @@ class ExchangeService:
                     "filled": float(order["filled"]),
                     "remaining": float(order["remaining"]),
                     "timestamp": order["timestamp"],
-                    "datetime": order["datetime"]
+                    "datetime": order["datetime"],
                 }
                 standardized_orders.append(standardized_order)
-            
+
             return standardized_orders
-            
+
         except Exception as e:
             raise ExchangeError(f"Failed to fetch open orders: {str(e)}")

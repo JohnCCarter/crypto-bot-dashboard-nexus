@@ -43,11 +43,11 @@ def run_strategy(data: pd.DataFrame, params: Optional[dict] = None) -> TradeSign
     """
     if params is None:
         params = {}
-    position_size = params.get('position_size', 1.0)
+    position_size = params.get("position_size", 1.0)
     # Dummy-värde och trösklar
-    indicator_value = params.get('indicator_value', 0.0)
-    buy_threshold = params.get('buy_threshold', 1.0)
-    sell_threshold = params.get('sell_threshold', -1.0)
+    indicator_value = params.get("indicator_value", 0.0)
+    buy_threshold = params.get("buy_threshold", 1.0)
+    sell_threshold = params.get("sell_threshold", -1.0)
     prob_buy, prob_sell, prob_hold = calculate_signal_probabilities(
         indicator_value, buy_threshold, sell_threshold
     )
@@ -60,6 +60,6 @@ def run_strategy(data: pd.DataFrame, params: Optional[dict] = None) -> TradeSign
             "indicator_value": indicator_value,
             "probability_buy": prob_buy,
             "probability_sell": prob_sell,
-            "probability_hold": prob_hold
-        }
+            "probability_hold": prob_hold,
+        },
     )

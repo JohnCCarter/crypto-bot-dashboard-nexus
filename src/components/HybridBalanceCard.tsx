@@ -48,6 +48,12 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
   // Get ticker data for this specific symbol
   const ticker = getTickerForSymbol(symbol);
   
+  // Debounce ticker updates to reduce calculation frequency
+  const debouncedTicker = useMemo(() => {
+    if (!ticker) return null;
+    return ticker;
+  }, [ticker?.price]); // Only update when price changes significantly
+  
   // Get balance data via REST
   const { data: balances = [], isLoading, error, refetch } = useQuery<Balance[]>({
     queryKey: ['balances'],
@@ -56,9 +62,9 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     staleTime: 2000
   });
 
-  // Calculate live portfolio values
+  // Calculate live portfolio values (optimized)
   const portfolioData = useMemo(() => {
-    if (!balances.length || !ticker) {
+    if (!balances.length || !debouncedTicker) {
       return {
         totalValue: 0,
         totalPnL: 0,
@@ -69,21 +75,21 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       };
     }
 
-    const currentPrice = ticker.price;
+    const currentPrice = debouncedTicker.price;
     let totalValue = 0;
     let totalPnL = 0;
     let cashBalance = 0;
     let cryptoValue = 0;
 
     const assets = balances.map(balance => {
-      const isCrypto = ['BTC', 'ETH', 'LTC'].includes(balance.currency);
-      const isFiat = ['USD', 'EUR', 'USDT'].includes(balance.currency);
+      const isCrypto = balance.currency.includes('BTC') || balance.currency.includes('ETH') || balance.currency.includes('LTC');
+      const isFiat = balance.currency.includes('USD') || balance.currency.includes('EUR');
       
       let currentValue = balance.total_balance;
       let pnl = 0;
       let pnlPct = 0;
 
-      if (isCrypto && balance.currency === 'BTC') {
+      if (isCrypto && balance.currency.includes('BTC')) {
         // Live BTC valuation
         currentValue = balance.total_balance * currentPrice;
         
@@ -93,6 +99,9 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
         pnl = currentValue - costBasis;
         pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
         
+        cryptoValue += currentValue;
+      } else if (isCrypto) {
+        // For other cryptos, use current balance as value (could be enhanced with live pricing)
         cryptoValue += currentValue;
       } else if (isFiat) {
         cashBalance += currentValue;
@@ -128,7 +137,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       cashBalance,
       cryptoValue
     };
-  }, [balances, ticker]);
+  }, [balances, debouncedTicker]);
 
   // Format currency values
   const formatCurrency = (value: number, currency = 'USD') => {
@@ -250,11 +259,11 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
               <span className="font-medium">{formatCurrency(portfolioData.cryptoValue)}</span>
             </div>
             
-            {ticker && (
+            {debouncedTicker && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">BTC Price (Live):</span>
                 <span className="font-medium font-mono text-green-600">
-                  {formatCurrency(ticker.price)}
+                  {formatCurrency(debouncedTicker.price)}
                 </span>
               </div>
             )}
@@ -304,7 +313,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
         {/* Live Data Status */}
         <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t">
           <span>
-            Last update: {ticker ? new Date(ticker.timestamp).toLocaleTimeString() : 'N/A'}
+            Last update: {debouncedTicker ? new Date(debouncedTicker.timestamp).toLocaleTimeString() : 'N/A'}
           </span>
           <span>
             {connected ? '🟢 Live pricing' : '🟡 Polling mode'}

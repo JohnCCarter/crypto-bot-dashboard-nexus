@@ -26,4 +26,4 @@ class TradingWindow:
         if self._last_trade_date != today:
             self._trades_today = 0
             self._last_trade_date = today
-        self._trades_today += 1 
+        self._trades_today += 1
