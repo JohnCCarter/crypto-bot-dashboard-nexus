@@ -6,9 +6,8 @@ import pytest
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 from backend.persistence.models import Base
-from backend.persistence.utils import engine
 from backend.persistence.utils import load_bot_state  # noqa: E402
-from backend.persistence.utils import save_bot_state
+from backend.persistence.utils import engine, save_bot_state
 
 
 @pytest.mark.persistence

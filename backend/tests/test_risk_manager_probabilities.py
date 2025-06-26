@@ -177,8 +177,13 @@ class TestRiskManagerProbabilities:
 
         base_stop = self.risk_manager.calculate_stop_loss(50000, "buy")
 
-        assert stop_loss < base_stop
-        assert metadata["adjusted_stop_pct"] < self.risk_params.stop_loss_pct
+        # High risk signals should have tighter (closer to entry) stop loss
+        assert (
+            stop_loss > base_stop
+        )  # Closer to entry price for buy orders means higher value
+        assert (
+            metadata["adjusted_stop_pct"] < self.risk_params.stop_loss_pct
+        )  # Smaller percentage for tighter stop
 
     def test_dynamic_take_profit_high_confidence(self):
         """Test dynamic take profit for high confidence signals."""

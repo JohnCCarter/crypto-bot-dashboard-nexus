@@ -1,10 +1,10 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from backend.app import app
-from backend.services.order_service import OrderService
 from backend.services.exchange import ExchangeError
+from backend.services.order_service import OrderService
 
 
 @pytest.fixture
@@ -130,4 +130,5 @@ def test_place_order_server_error(client):
         }
         response = client.post("/api/orders", json=order_data)
         # This now correctly tests the error handling in the route
-        assert response.status_code == 500
+        # Service unavailable (503) is the correct response when exchange service is missing
+        assert response.status_code == 503

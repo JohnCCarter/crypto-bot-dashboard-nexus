@@ -41,7 +41,6 @@ def test_bitfinex_connection():
             {
                 "apiKey": api_key,
                 "secret": api_secret,
-                "sandbox": False,  # Sätt till True för testmiljö
                 "enableRateLimit": True,
             }
         )
@@ -85,7 +84,7 @@ def test_bitfinex_connection():
 
     print("\n🎉 BITFINEX ANSLUTNING LYCKAD!")
     print("Du kan nu använda dashboard med riktig data från Bitfinex")
-    return True
+    return None
 
 
 if __name__ == "__main__":

@@ -309,11 +309,12 @@ class RiskManager:
         base_stop_loss = self.calculate_stop_loss(entry_price, side)
 
         if probability_data:
-            # Tighter stop loss for low confidence signals
+            # Tighter stop loss for high risk signals
             confidence_factor = probability_data.confidence
             risk_score = probability_data.get_risk_score()
 
             # Adjust stop loss based on risk - higher risk = tighter stop
+            # For high risk, we want SMALLER stop loss percentage (closer to entry)
             risk_adjustment_factor = 1.0 - (risk_score * self.params.probability_weight)
 
             adjusted_stop_pct = self.params.stop_loss_pct * risk_adjustment_factor
