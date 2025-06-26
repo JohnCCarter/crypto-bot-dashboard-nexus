@@ -1,9 +1,9 @@
 """Positions API endpoints for fetching live positions from Bitfinex."""
 
-from flask import jsonify, current_app
+from flask import current_app, jsonify
 
-from backend.services.positions_service import fetch_live_positions
 from backend.services.exchange import ExchangeError
+from backend.services.positions_service import fetch_live_positions
 
 
 def register(app):

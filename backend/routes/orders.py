@@ -1,13 +1,11 @@
 """Order management API endpoints with real Bitfinex integration."""
 
 import time
-import logging
-from typing import Optional
 
 from flask import current_app, jsonify, request
 
-from backend.services.validation import validate_order_data
 from backend.services.exchange import ExchangeError
+from backend.services.validation import validate_order_data
 
 try:
     from dotenv import load_dotenv
@@ -269,6 +267,9 @@ def register(app):
         Args:
             order_id: Bitfinex order ID
 
+        Query Parameters:
+            symbol: The trading pair symbol (e.g., 'BTC/USD'), required by the exchange.
+
         Returns:
             200: Order details
             404: Order not found
@@ -277,12 +278,19 @@ def register(app):
         current_app.logger.info(f"📋 [Orders] GET order status: {order_id}")
 
         try:
+            symbol = request.args.get("symbol")
+            if not symbol:
+                return (
+                    jsonify({"error": "Missing required 'symbol' query parameter"}),
+                    400,
+                )
+
             exchange_service = get_shared_exchange_service()
             if not exchange_service:
                 return jsonify({"error": "Order service not available"}), 503
 
             # Fetch order status from Bitfinex using shared service
-            order = exchange_service.fetch_order(order_id)
+            order = exchange_service.fetch_order(order_id, symbol)
 
             current_app.logger.info(f"✅ [Orders] Order status retrieved: {order_id}")
 

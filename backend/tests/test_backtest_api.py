@@ -1,7 +1,7 @@
 """Integration tests for backtesting API endpoints."""
 
 import json
-from datetime import datetime, timedelta
+
 
 import pandas as pd
 import pytest

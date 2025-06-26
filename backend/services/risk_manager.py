@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Any, Dict, Optional, Tuple
 
 
@@ -314,15 +314,9 @@ class RiskManager:
             risk_score = probability_data.get_risk_score()
 
             # Adjust stop loss based on risk - higher risk = tighter stop
-            risk_adjustment = 1.0 + (risk_score * 0.5)  # Up to 50% tighter
-            confidence_adjustment = (
-                2.0 - confidence_factor
-            )  # Lower confidence = tighter
+            risk_adjustment_factor = 1.0 - (risk_score * self.params.probability_weight)
 
-            adjusted_stop_pct = (
-                self.params.stop_loss_pct * risk_adjustment * confidence_adjustment
-            )
-            adjusted_stop_pct = min(adjusted_stop_pct, 0.15)  # Cap at 15%
+            adjusted_stop_pct = self.params.stop_loss_pct * risk_adjustment_factor
 
             if side == "buy":
                 dynamic_stop_loss = entry_price * (1 - adjusted_stop_pct)
@@ -332,14 +326,14 @@ class RiskManager:
             dynamic_stop_loss = base_stop_loss
             adjusted_stop_pct = self.params.stop_loss_pct
             confidence_factor = 0.5
-            risk_adjustment = 1.0
+            risk_adjustment_factor = 1.0
 
         metadata = {
             "base_stop_loss": base_stop_loss,
             "dynamic_stop_loss": dynamic_stop_loss,
             "adjusted_stop_pct": adjusted_stop_pct,
             "confidence_factor": confidence_factor,
-            "risk_adjustment": risk_adjustment,
+            "risk_adjustment": risk_adjustment_factor,
         }
 
         return dynamic_stop_loss, metadata

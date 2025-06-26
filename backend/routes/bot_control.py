@@ -1,6 +1,6 @@
-from flask import jsonify, current_app
+from flask import current_app, jsonify
 
-from backend.services.bot_service import get_bot_status, start_bot, stop_bot
+from backend.services.bot_manager import get_bot_status, start_bot, stop_bot
 
 # Intern statusflagga
 bot_status = {"running": False}

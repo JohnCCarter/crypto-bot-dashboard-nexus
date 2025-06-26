@@ -3,12 +3,12 @@ Live Portfolio Service - Kopplar live marknadsdata till portfolio management
 """
 
 import logging
-from typing import Dict, List, Optional
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Dict, List
 
-from backend.services.live_data_service import LiveDataService
 from backend.services.balance_service import fetch_balances
+from backend.services.live_data_service import LiveDataService
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +182,7 @@ class LivePortfolioService:
                 market_data_quality=market_data_quality,
             )
 
-            logger.info(f"✅ [LivePortfolio] Portfolio snapshot generated:")
+            logger.info("✅ [LivePortfolio] Portfolio snapshot generated:")
             logger.info(f"   Total Value: ${total_value:.2f}")
             logger.info(f"   Cash Balance: ${cash_balance:.2f}")
             logger.info(f"   Positions Value: ${total_position_value:.2f}")
@@ -252,10 +252,7 @@ class LivePortfolioService:
             Dict with validation results
         """
         try:
-            logger.info(
-                f"🔍 [LivePortfolio] Validating {trade_type} of {trade_amount:.6f} {symbol}"
-            )
-
+            logger.info("🛡️ [LivePortfolio] Validating trading capacity...")
             # Get current portfolio
             snapshot = self.get_live_portfolio_snapshot([symbol])
 
@@ -284,7 +281,6 @@ class LivePortfolioService:
 
             elif trade_type.lower() == "sell":
                 # Check if we have enough of the asset
-                base_currency = symbol.split("/")[0]
                 current_position = 0
 
                 for pos in snapshot.positions:

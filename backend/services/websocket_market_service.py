@@ -1,12 +1,13 @@
 """WebSocket service för live marknadsdata från Bitfinex."""
 
-import json
 import asyncio
-import websockets
+import json
 import logging
-from typing import Callable, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Callable, Dict, Optional
+
+import websockets
 
 logger = logging.getLogger(__name__)
 

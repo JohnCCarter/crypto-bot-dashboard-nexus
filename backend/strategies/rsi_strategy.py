@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from backend.strategies.indicators import rsi, calculate_signal_probabilities
+from backend.strategies.indicators import calculate_signal_probabilities, rsi
 from backend.strategies.sample_strategy import TradeSignal
 
 

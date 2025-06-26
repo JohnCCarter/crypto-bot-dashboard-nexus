@@ -7,15 +7,16 @@ Detta kompletterar websocket_market_service.py med user-specifik data.
 """
 
 import asyncio
-import websockets
+import hashlib
+import hmac
 import json
 import logging
-import hmac
-import hashlib
 import time
-from typing import Dict, List, Callable, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Callable
+
+import websockets
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,7 @@ class BitfinexUserDataClient:
             return
 
         if isinstance(data, list) and len(data) >= 2:
-            channel_id, message_data = data[0], data[1]
+            message_data = data[0], data[1]
 
             # Handle different message types
             if message_data == "hb":

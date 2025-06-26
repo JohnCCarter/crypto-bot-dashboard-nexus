@@ -1,12 +1,14 @@
 import os
+
 import pytest
 
 # Force SQLite memory DB for test isolation
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
-from backend.persistence import Base, engine, SessionLocal  # noqa: E402
-from backend.persistence.models import BotStatus  # noqa: E402
-from backend.persistence.utils import save_bot_state, load_bot_state  # noqa: E402
+from backend.persistence.models import Base
+from backend.persistence.utils import engine
+from backend.persistence.utils import load_bot_state  # noqa: E402
+from backend.persistence.utils import save_bot_state
 
 
 @pytest.mark.persistence

@@ -1,6 +1,6 @@
 """Unit tests for backtesting functionality."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -77,8 +77,6 @@ def test_optimize_parameters(backtest_engine, sample_data):
 
 def always_trade_strategy(data):
     """Teststrategi som alltid genererar en trade (köp)."""
-    from backend.strategies.sample_strategy import TradeSignal
-
     return TradeSignal(action="buy", confidence=1.0, position_size=1.0, metadata={})
 
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Simple backend starter script."""
 
-import sys
 import os
+import sys
 
 # Add the workspace to Python path
 workspace_path = os.path.dirname(os.path.abspath(__file__))

@@ -11,24 +11,24 @@ Detta verktyg testar:
 5. Integration med trading bot logic
 """
 
-import sys
-import os
 import asyncio
-import logging
-from datetime import datetime
 import json
+import logging
+import os
+import sys
+from datetime import datetime
 
 # Add backend to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
 
 # Import backend services
 try:
+    from backend.services.config_service import ConfigService
     from backend.services.live_data_service import LiveDataService
+    from backend.services.risk_manager import RiskManager, RiskParameters
     from backend.services.websocket_market_service import BitfinexWebSocketClient
     from backend.strategies.ema_crossover_strategy import run_strategy as run_ema
     from backend.strategies.rsi_strategy import run_strategy as run_rsi
-    from backend.services.risk_manager import RiskManager, RiskParameters
-    from backend.services.config_service import ConfigService
 except ImportError as e:
     print(f"❌ Failed to import backend modules: {e}")
     print("Make sure you're running from the project root directory")

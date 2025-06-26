@@ -1,9 +1,9 @@
 """Exchange service for cryptocurrency trading."""
 
+import threading
+import time
 from datetime import datetime
 from typing import Any, Dict, Optional
-import time
-import threading
 
 import ccxt
 
@@ -89,9 +89,7 @@ class ExchangeService:
             # Configure for margin vs spot trading on Bitfinex
             if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
                 # Check if this is paper trading
-                is_paper = self.is_paper_trading()
-
-                if is_paper:
+                if self.is_paper_trading():
                     # Paper trading: Use simple parameters
                     # Don't use EXCHANGE prefixes or complex params
                     params = {}  # Keep it simple for paper trading
@@ -505,31 +503,41 @@ class ExchangeService:
 
     def get_trading_limitations(self) -> Dict[str, Any]:
         """
-        Get trading limitations for current account type.
-
-        Returns:
-            Dict containing account limitations
+        Hämta trading limitations för Bitfinex (t.ex. minsta orderstorlek)
         """
-        if is_paper := self.is_paper_trading():
-            return {
-                "is_paper_trading": True,
-                "margin_trading_available": False,
-                "margin_conversion_note": "Margin orders automatically converted to spot",
-                "supported_order_types": ["spot", "perpetual"],
-                "limitations": [
-                    "18 spot trading pairs available",
-                    "16 perpetual contract pairs available",
-                    "Full margin trading not supported",
-                    "Complex derivatives not available",
-                ],
-            }
-        else:
-            return {
-                "is_paper_trading": False,
-                "margin_trading_available": True,
-                "supported_order_types": ["spot", "margin", "perpetual", "futures"],
-                "limitations": [],
-            }
+        try:
+            self.exchange.load_markets()
+
+            # Kolla om vi är i paper trading-läge
+            # Beroende på exchange kan detta behöva anpassas
+            if "paper" in self.exchange.options.get("urls", {}).get("api", ""):
+                # Sätt manuella begränsningar för paper trading
+                return {
+                    "min_order_size": {"BTC/USD": 0.0002, "ETH/USD": 0.005},
+                    "max_leverage": 10.0,
+                    "supported_position_types": ["spot", "margin"],
+                }
+
+            # Hämta live-begränsningar för riktig trading
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
+                # Bitfinex specific limitations
+                return {
+                    "is_paper_trading": False,
+                    "margin_trading_available": True,
+                    "supported_order_types": ["spot", "margin", "perpetual", "futures"],
+                    "limitations": [],
+                }
+            else:
+                # Standard CCXT implementation for other exchanges
+                return {
+                    "is_paper_trading": False,
+                    "margin_trading_available": True,
+                    "supported_order_types": ["spot", "margin", "perpetual", "futures"],
+                    "limitations": [],
+                }
+
+        except Exception as e:
+            raise ExchangeError(f"Failed to get trading limitations: {str(e)}")
 
     def get_markets(self) -> Dict[str, Any]:
         """

@@ -3,8 +3,8 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 from backend.services.portfolio_manager import StrategyWeight
 

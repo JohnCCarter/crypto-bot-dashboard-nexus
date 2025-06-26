@@ -12,14 +12,15 @@ Detta verktyg testar:
 """
 
 import asyncio
-import websockets
 import json
-import time
 import logging
+import signal
 import sys
+import time
 from datetime import datetime
 from typing import Dict, List, Optional
-import signal
+
+import websockets
 
 # Setup logging
 logging.basicConfig(

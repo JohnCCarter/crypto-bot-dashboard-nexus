@@ -1,7 +1,8 @@
 """Live market data API endpoints using Bitfinex - NO MOCK DATA."""
 
-from flask import jsonify, request, current_app
-from backend.services.exchange import ExchangeService, ExchangeError
+from flask import current_app, jsonify, request
+
+from backend.services.exchange import ExchangeError
 
 
 def register(app):

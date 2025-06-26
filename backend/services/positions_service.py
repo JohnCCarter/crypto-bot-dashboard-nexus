@@ -1,8 +1,8 @@
 """Positions service for fetching real positions from Bitfinex."""
 
-import time
 import logging
-from typing import List, Dict, Any, Optional
+import time
+from typing import Any, Dict, List, Optional
 
 from flask import current_app
 

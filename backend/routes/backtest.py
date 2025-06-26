@@ -1,19 +1,15 @@
 """Backtesting API endpoints."""
 
-from typing import Any, Dict
-
 import numpy as np
 import pandas as pd
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, current_app, jsonify, request
+from datetime import datetime
 
 from backend.services.backtest import BacktestEngine
 from backend.services.monitor import AlertLevel, Monitor
+from backend.strategies.fvg_strategy import run_strategy_with_params
 from backend.strategies.rsi_strategy import run_rsi_strategy
 from backend.strategies.sample_strategy import run_strategy
-from backend.strategies.fvg_strategy import run_strategy_with_params
-from backend.strategies.ema_crossover_strategy import (
-    run_strategy as run_ema_crossover_strategy,
-)
 
 # Create blueprint
 backtest_bp = Blueprint("backtest", __name__)
@@ -94,7 +90,7 @@ def run_backtest():
             current_app.logger.info(
                 f"🔍 DEBUG: Received data keys: {list(data.keys()) if data else 'None'}"
             )
-            current_app.logger.info(f"🔍 DEBUG: Full request data structure:")
+            current_app.logger.info("🔍 DEBUG: Full request data structure:")
             current_app.logger.info(f"  - strategy: {data.get('strategy', 'MISSING')}")
             current_app.logger.info(
                 f"  - data keys: {list(data.get('data', {}).keys()) if data and 'data' in data else 'MISSING'}"
@@ -393,3 +389,42 @@ def optimize_parameters():
             AlertLevel.ERROR, f"Parameter optimization failed: {str(e)}"
         )
         return jsonify({"error": str(e)}), 500
+
+
+@backtest_bp.route("/api/v1/backtest/analysis", methods=["POST"])
+def analyze_backtest_results():
+    """Analyze backtest results for risk and performance."""
+    try:
+        # Get request data
+        data = request.get_json()
+
+        # Validate required fields
+        if not all(k in data for k in ["strategy", "data", "results"]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Get strategy
+        strategy_name = data["strategy"]
+        if strategy_name not in STRATEGIES:
+            return jsonify({"error": f"Unknown strategy: {strategy_name}"}), 400
+
+        strategy = STRATEGIES[strategy_name]
+
+        # Convert data to DataFrame
+        df = pd.DataFrame(data["data"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df.set_index("timestamp", inplace=True)
+
+        # Get results
+        results = data["results"]
+
+        # Prepare response data
+        response_data = {
+            "strategy": strategy_name,
+            "results": results,
+            "analysis_timestamp": datetime.now().isoformat(),
+        }
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        monitor.create_alert(AlertLevel.ERROR, f"Backtest analysis failed: {str(e)}")
+        return jsonify({"error": "Backtest analysis failed", "details": str(e)}), 500

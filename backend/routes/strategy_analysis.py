@@ -1,19 +1,20 @@
 """API routes for strategy analysis and probability data."""
 
-from flask import Blueprint, jsonify, request, current_app
-from typing import Dict, Any
-import pandas as pd
 from datetime import datetime
+
+import pandas as pd
+from flask import Blueprint, current_app, jsonify, request
+
+from backend.services.portfolio_manager import PortfolioManager, StrategyWeight
+from backend.services.risk_manager import RiskManager, RiskParameters
 
 # Import strategies
 from backend.strategies import (
     ema_crossover_strategy,
-    rsi_strategy,
     fvg_strategy,
+    rsi_strategy,
     sample_strategy,
 )
-from backend.services.portfolio_manager import PortfolioManager, StrategyWeight
-from backend.services.risk_manager import RiskManager, RiskParameters
 
 strategy_analysis_bp = Blueprint("strategy_analysis", __name__)
 

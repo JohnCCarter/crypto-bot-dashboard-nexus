@@ -1,5 +1,6 @@
-from flask import jsonify
 import logging
+
+from flask import jsonify
 
 from backend.services.balance_service import fetch_balances
 

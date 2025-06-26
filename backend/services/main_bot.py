@@ -1,16 +1,17 @@
-from dotenv import load_dotenv
-import traceback
-import os
 import logging
+import os
+import traceback
+
+from dotenv import load_dotenv
 
 from backend.services.config_service import ConfigService
-from backend.strategies.ema_crossover_strategy import run_strategy as run_ema
-from backend.strategies.rsi_strategy import run_strategy as run_rsi
-from backend.strategies.fvg_strategy import run_strategy as run_fvg
+from backend.services.live_data_service import LiveDataService
+from backend.services.notifications import Notifier
 from backend.services.risk_manager import RiskManager, RiskParameters
 from backend.services.trading_window import TradingWindow
-from backend.services.notifications import Notifier
-from backend.services.live_data_service import LiveDataService
+from backend.strategies.ema_crossover_strategy import run_strategy as run_ema
+from backend.strategies.fvg_strategy import run_strategy as run_fvg
+from backend.strategies.rsi_strategy import run_strategy as run_rsi
 
 load_dotenv()
 
@@ -120,7 +121,7 @@ def main():
             spread = market_context["spread"]
             volume_24h = market_context["volume_24h"]
 
-            logger.info(f"📊 [TradingBot] LIVE market snapshot:")
+            logger.info("📊 [TradingBot] LIVE market snapshot:")
             logger.info(f"   Current price: ${current_price:.2f}")
             logger.info(f"   24h volume: {volume_24h:.4f}")
             logger.info(f"   Spread: ${spread:.2f}")
@@ -134,7 +135,7 @@ def main():
             rsi_signal = run_rsi(live_data_df, rsi_params)
             fvg_signal = run_fvg(live_data_df, fvg_params)
 
-            logger.info(f"📊 [TradingBot] Strategy signals generated:")
+            logger.info("📊 [TradingBot] Strategy signals generated:")
             logger.info(
                 f"   EMA strategy: {ema_signal.action} (confidence: {ema_signal.confidence:.2f})"
             )
@@ -162,7 +163,7 @@ def main():
                 fvg_signal.confidence, portfolio_value, current_positions
             )
 
-            logger.info(f"💰 [TradingBot] Position sizes calculated:")
+            logger.info("💰 [TradingBot] Position sizes calculated:")
             logger.info(
                 f"   EMA position: {ema_position_size:.6f} {symbol.split('/')[0]}"
             )
@@ -248,7 +249,7 @@ def main():
 
         except Exception as e:
             logger.error(f"❌ [TradingBot] Error during live trading execution: {e}")
-            logger.error(f"❌ [TradingBot] Stack trace:", exc_info=True)
+            logger.error("❌ [TradingBot] Stack trace:", exc_info=True)
             notifier.send(f"Trading bot error: {e}")
             raise
 

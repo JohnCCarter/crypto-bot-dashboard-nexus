@@ -4,16 +4,17 @@ Demonstration of the Probability-Based Trading System
 Shows how the system analyzes multiple strategies and combines their signals.
 """
 
-import sys
 import os
+import sys
 
 sys.path.append(".")
 sys.path.append("backend")
 
-import pandas as pd
-import numpy as np
 import json
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 
 def create_sample_data(length=100):
@@ -155,9 +156,9 @@ def test_risk_manager():
 
     try:
         from backend.services.risk_manager import (
+            ProbabilityData,
             RiskManager,
             RiskParameters,
-            ProbabilityData,
         )
 
         # Create risk parameters

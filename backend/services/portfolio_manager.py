@@ -2,10 +2,10 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
-from backend.services.risk_manager import RiskManager, ProbabilityData
+from backend.services.risk_manager import ProbabilityData, RiskManager
 from backend.strategies.sample_strategy import TradeSignal
 
 

@@ -3,6 +3,7 @@
 from typing import Any, Dict, NamedTuple, Optional
 
 import pandas as pd
+
 from backend.strategies.indicators import calculate_signal_probabilities
 
 

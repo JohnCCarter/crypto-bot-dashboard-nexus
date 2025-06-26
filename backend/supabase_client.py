@@ -1,7 +1,8 @@
-from supabase import create_client, Client
 import os
-from dotenv import load_dotenv
 from pathlib import Path
+
+from dotenv import load_dotenv
+from supabase import Client, create_client
 
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)

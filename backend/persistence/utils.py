@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Dict, Any, Optional
+
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from . import SessionLocal, Base, engine
+from . import Base, SessionLocal, engine
 from .models import BotStatus
 
 # Ensure tables exist (safe to call multiple times)

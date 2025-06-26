@@ -2,12 +2,13 @@
 Live Portfolio API Routes - Exponerar live portfolio data med marknadsinfo
 """
 
-import os
 import logging
+import os
+
 from flask import Blueprint, jsonify, request
 
-from backend.services.live_portfolio_service import LivePortfolioService
 from backend.services.live_data_service import LiveDataService
+from backend.services.live_portfolio_service import LivePortfolioService
 
 logger = logging.getLogger(__name__)
 

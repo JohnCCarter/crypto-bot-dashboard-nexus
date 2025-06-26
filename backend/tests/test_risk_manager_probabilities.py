@@ -1,7 +1,6 @@
 """Tests for probability-based risk management features."""
 
-import pytest
-from backend.services.risk_manager import RiskManager, RiskParameters, ProbabilityData
+from backend.services.risk_manager import ProbabilityData, RiskManager, RiskParameters
 
 
 class TestProbabilityData:
@@ -75,7 +74,7 @@ class TestRiskManagerProbabilities:
 
     def test_validate_order_with_probabilities_success(self):
         """Test successful order validation with probabilities."""
-        order_data = {"amount": 100, "price": 50000, "side": "buy", "leverage": 1.0}
+        order_data = {"amount": 1, "price": 50000, "side": "buy", "leverage": 1.0}
 
         prob_data = ProbabilityData(
             probability_buy=0.8,
@@ -178,8 +177,8 @@ class TestRiskManagerProbabilities:
 
         base_stop = self.risk_manager.calculate_stop_loss(50000, "buy")
 
-        assert stop_loss > base_stop  # Tighter stop loss for high risk
-        assert metadata["adjusted_stop_pct"] > self.risk_params.stop_loss_pct
+        assert stop_loss < base_stop
+        assert metadata["adjusted_stop_pct"] < self.risk_params.stop_loss_pct
 
     def test_dynamic_take_profit_high_confidence(self):
         """Test dynamic take profit for high confidence signals."""

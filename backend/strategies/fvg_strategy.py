@@ -1,7 +1,9 @@
 """FVG (Fair Value Gap) trading strategy implementation."""
 
 from typing import Any, Dict, Optional
+
 import pandas as pd
+
 from backend.strategies.indicators import find_fvg_zones
 from backend.strategies.sample_strategy import TradeSignal
 

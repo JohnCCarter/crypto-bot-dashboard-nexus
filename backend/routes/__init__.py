@@ -7,16 +7,17 @@ backend.routes package.
 """Route factory for centralized blueprint registration."""
 
 from flask import Flask
+
+from backend.routes import market_data
 from backend.routes.backtest import backtest_bp
 from backend.routes.balances import register as register_balances
 from backend.routes.bot_control import register as register_bot_control
 from backend.routes.config import register as register_config
+from backend.routes.live_portfolio import live_portfolio_bp
 from backend.routes.orders import register as register_orders
 from backend.routes.positions import register as register_positions
 from backend.routes.status import status_bp
 from backend.routes.strategy_analysis import strategy_analysis_bp
-from backend.routes.live_portfolio import live_portfolio_bp
-from backend.routes import market_data
 
 
 def register_all_routes(app: Flask) -> None:

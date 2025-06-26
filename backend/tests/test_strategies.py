@@ -6,8 +6,8 @@ import os
 import pandas as pd
 import pytest
 
-from backend.strategies.fvg_strategy import FVGStrategy
 from backend.strategies import ema_crossover_strategy
+from backend.strategies.fvg_strategy import FVGStrategy
 
 STRATEGY_DIR = os.path.join(os.path.dirname(__file__), "..", "strategies")
 STRATEGY_MODULES = [

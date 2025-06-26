@@ -1,9 +1,9 @@
 """Orderbook API endpoints with live Bitfinex data - NO MOCK DATA."""
 
-from flask import jsonify, request, current_app
 import pandas as pd
+from flask import current_app, jsonify, request
 
-from backend.services.exchange import ExchangeService, ExchangeError
+from backend.services.exchange import ExchangeError
 from backend.strategies.indicators import find_fvg_zones
 
 

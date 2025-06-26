@@ -1,6 +1,7 @@
 # Logs
 logs/
 *.log
+log/
 # Codex backups
 .codex_backups/
 
@@ -36,6 +37,11 @@ __pycache__/
 venv/
 backend/venv/
 backend/.venv/
+.coverage
+.pytest_cache/
+
+# Temporary files
+flake8_errors.txt
 
 # OS
 .DS_Store

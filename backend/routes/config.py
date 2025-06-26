@@ -1,6 +1,7 @@
 """API routes for configuration management."""
 
-from flask import Blueprint, jsonify, request
+from flask import jsonify, request
+
 from backend.services.config_service import ConfigService
 
 
@@ -237,7 +238,7 @@ def register(app):
     def reload_config():
         """Force reload configuration from file."""
         try:
-            config = config_service.load_config(force_reload=True)
+            config_service.load_config(force_reload=True)
             validation_errors = config_service.validate_config()
 
             return (

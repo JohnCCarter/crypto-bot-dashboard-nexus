@@ -1,8 +1,10 @@
 """EMA crossover strategy stub implementation."""
 
 from typing import Any, Dict
+
 import pandas as pd
-from backend.strategies.indicators import ema, calculate_signal_probabilities
+
+from backend.strategies.indicators import calculate_signal_probabilities, ema
 from backend.strategies.sample_strategy import TradeSignal
 
 

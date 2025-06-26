@@ -3,13 +3,12 @@ Live Market Data Service för Trading Bot Automation
 Använder ccxt för att hämta real-time data från Bitfinex
 """
 
+import logging
+from datetime import datetime
+from typing import Dict, Tuple
+
 import ccxt
 import pandas as pd
-import logging
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
-import asyncio
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -228,7 +227,7 @@ class LiveDataService:
                 },
             }
 
-            logger.info(f"✅ [LiveData] Market context compiled successfully")
+            logger.info("✅ [LiveData] Market context compiled successfully")
             logger.info(
                 f"✅ [LiveData] Price: ${latest_close:.2f}, Volume: {volume_24h:.4f}, Volatility: {price_std:.2f}%"
             )
@@ -249,24 +248,22 @@ class LiveDataService:
             market_context: Market data from get_live_market_context
 
         Returns:
-            Tuple of (is_valid, reason)
+            Tuple with validation status and reason
         """
         try:
-            # Check data quality
-            quality = market_context["data_quality"]
+            logger.info("✅ [LiveData] Validating market conditions")
 
-            if quality["ohlcv_rows"] < 50:
-                return False, f"Insufficient OHLCV data: {quality['ohlcv_rows']} rows"
+            # Example validation: check for extreme volatility
+            if market_context["volatility_pct"] > 10.0:  # 10% volatility is very high
+                return (
+                    False,
+                    f"High volatility detected ({market_context['volatility_pct']:.2f}%) - pausing trading",
+                )
 
-            if quality["orderbook_levels"] < 10:
-                return False, f"Thin orderbook: {quality['orderbook_levels']} levels"
-
-            if not quality["ticker_complete"]:
-                return False, "Incomplete ticker data"
-
-            # Check spread (shouldn't be too wide)
+            # Example validation: check spread
             spread_pct = (
-                market_context["spread"] / market_context["current_price"]
+                (market_context["best_ask"] - market_context["best_bid"])
+                / market_context["best_ask"]
             ) * 100
             if spread_pct > 1.0:  # 1% spread threshold
                 return False, f"Wide spread: {spread_pct:.2f}%"
@@ -278,15 +275,15 @@ class LiveDataService:
                     f"High volatility: {market_context['volatility_pct']:.2f}%",
                 )
 
-            logger.info(f"✅ [LiveData] Market conditions validated - safe to trade")
+            logger.info("✅ [LiveData] Market conditions validated - safe to trade")
             return True, "Market conditions are suitable for trading"
 
         except Exception as e:
-            logger.error(f"❌ [LiveData] Market validation failed: {e}")
-            return False, f"Validation error: {e}"
+            logger.error(f"❌ [LiveData] Failed to validate market conditions: {e}")
+            raise
 
     def __str__(self):
-        return f"LiveDataService(exchange={self.exchange_id})"
+        return "Live Market Data Service"
 
     def __repr__(self):
-        return self.__str__()
+        return f"<LiveDataService exchange='{self.exchange_id}'>"
