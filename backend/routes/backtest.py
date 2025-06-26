@@ -22,9 +22,8 @@ monitor = Monitor()
 
 def run_ema_crossover_with_params(data, params):
     """Wrapper för EMA crossover strategi som accepterar parametrar."""
-    from backend.strategies.ema_crossover_strategy import (
-        run_strategy as run_ema_strategy,
-    )
+    from backend.strategies.ema_crossover_strategy import \
+        run_strategy as run_ema_strategy
 
     # Handle both risk_params and strategy params
     if "fast_period" in params or "slow_period" in params:
@@ -287,7 +286,7 @@ def run_backtest():
         error_msg = f"Backtest failed: {str(e)}"
         current_app.logger.error(f"❌ {error_msg}")
         current_app.logger.error(f"❌ Error type: {type(e).__name__}")
-        current_app.logger.error(f"❌ Full traceback:")
+        current_app.logger.error("❌ Full traceback:")
         import traceback
 
         current_app.logger.error(traceback.format_exc())
@@ -407,8 +406,6 @@ def analyze_backtest_results():
         strategy_name = data["strategy"]
         if strategy_name not in STRATEGIES:
             return jsonify({"error": f"Unknown strategy: {strategy_name}"}), 400
-
-        strategy = STRATEGIES[strategy_name]
 
         # Convert data to DataFrame
         df = pd.DataFrame(data["data"])

@@ -8,30 +8,31 @@
  * - Enhanced order validation med live spread checks
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  AlertTriangle, 
-  CheckCircle, 
-  Wifi,
-  Activity,
-  Zap,
-  Target,
-  Layers,
-  Coins
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+    Activity,
+    AlertTriangle,
+    CheckCircle,
+    Coins,
+    DollarSign,
+    Layers,
+    Target,
+    TrendingDown,
+    TrendingUp,
+    Wifi,
+    Zap
 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 type OrderType = 'market' | 'limit';
 type OrderSide = 'buy' | 'sell';
@@ -63,6 +64,7 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
   );
 
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Get global WebSocket data (shared single connection)
   const { 
@@ -75,13 +77,16 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
   
   // Subscribe to symbol on mount
   useEffect(() => {
+    console.log(`📈 [ManualTrade] Component mounted - subscribing to ${currentSymbol}`);
+    console.log(`📈 [ManualTrade] WebSocket connected: ${connected}`);
     subscribeToSymbol(currentSymbol);
     
     return () => {
+      console.log(`📈 [ManualTrade] Component unmounting from ${currentSymbol}`);
       // Note: Don't unsubscribe automatically as other components might use the same symbol
       // unsubscribeFromSymbol(currentSymbol);
     };
-  }, [currentSymbol, subscribeToSymbol]);
+  }, [currentSymbol, subscribeToSymbol, connected]);
   
   // Get live market data for this symbol
   const ticker = getTickerForSymbol(currentSymbol);
@@ -119,7 +124,17 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       // Note: Backend may not support position_type yet, but we include it for future enhancement
       ...(orderData.positionType && { position_type: orderData.positionType })
     }),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log(`✅ [ManualTrade] Order submitted successfully!`);
+      console.log(`✅ [ManualTrade] API Response:`, data);
+      console.log(`✅ [ManualTrade] Order was: ${variables.side} ${variables.amount} ${variables.symbol} @ ${variables.type}`);
+      console.log(`✅ [ManualTrade] Refreshing portfolio data...`);
+      
+      toast({
+        title: 'Order Submitted',
+        description: `${variables.side.toUpperCase()} order for ${variables.amount} ${variables.symbol} submitted successfully.`
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['balances'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['positions'] });
@@ -129,8 +144,24 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       setAmount('');
       setPrice('');
       
+      console.log(`✅ [ManualTrade] Form reset completed`);
+      
       // Call callback if provided
       onOrderPlaced?.();
+    },
+    onError: (error, variables) => {
+      console.error(`❌ [ManualTrade] Order submission failed!`);
+      console.error(`❌ [ManualTrade] Error:`, error);
+      console.error(`❌ [ManualTrade] Failed order was: ${variables.side} ${variables.amount} ${variables.symbol} @ ${variables.type}`);
+      console.error(`❌ [ManualTrade] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [ManualTrade] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`❌ [ManualTrade] Timestamp: ${new Date().toISOString()}`);
+      
+      toast({
+        title: 'Order Failed',
+        description: `Failed to submit ${variables.side} order. Please try again.`,
+        variant: 'destructive'
+      });
     }
   });
 
@@ -208,21 +239,38 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
 
   // Auto-fill functions
   const fillMarketPrice = () => {
-    if (!ticker) return;
+    console.log(`📈 [ManualTrade] User clicked 'Fill Market Price' button`);
+    
+    if (!ticker) {
+      console.warn(`⚠️ [ManualTrade] Cannot fill price - no ticker data available`);
+      return;
+    }
     
     if (orderType === 'limit') {
       // Use best bid/ask for better execution probability
       const targetPrice = side === 'buy' ? marketInfo.bestBid : marketInfo.bestAsk;
-      setPrice(targetPrice.toFixed(2));
+      const formattedPrice = targetPrice.toFixed(2);
+      
+      console.log(`📈 [ManualTrade] Auto-filling price: ${formattedPrice} (${side === 'buy' ? 'best bid' : 'best ask'})`);
+      setPrice(formattedPrice);
+    } else {
+      console.log(`📈 [ManualTrade] Price auto-fill not applicable for market orders`);
     }
   };
 
   const fillMaxAmount = () => {
+    console.log(`📈 [ManualTrade] User clicked 'Max Amount' button`);
+    console.log(`📈 [ManualTrade] Trading capacity: ${side === 'buy' ? tradingCapacity.maxBuyCrypto : tradingCapacity.maxSellCrypto} ${tradingCapacity.baseCurrency}`);
+    
     if (side === 'buy') {
       const maxCrypto = tradingCapacity.maxBuyCrypto;
-      setAmount(maxCrypto.toFixed(6));
+      const formattedAmount = maxCrypto.toFixed(6);
+      console.log(`📈 [ManualTrade] Auto-filling max buy amount: ${formattedAmount} ${tradingCapacity.baseCurrency}`);
+      setAmount(formattedAmount);
     } else {
-      setAmount(tradingCapacity.maxSellCrypto.toFixed(6));
+      const formattedAmount = tradingCapacity.maxSellCrypto.toFixed(6);
+      console.log(`📈 [ManualTrade] Auto-filling max sell amount: ${formattedAmount} ${tradingCapacity.baseCurrency}`);
+      setAmount(formattedAmount);
     }
   };
 
@@ -239,7 +287,16 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
   }, [amount, price, orderType, tradingCapacity.hasCapacity]);
 
   const handleSubmit = () => {
-    if (!canSubmit) return;
+    console.log(`📈 [ManualTrade] User initiated ${side.toUpperCase()} order for ${currentSymbol}`);
+    console.log(`📈 [ManualTrade] Order details: ${orderType} ${side} ${amount} ${currentSymbol.split('/')[0]} @ ${orderType === 'limit' ? price : 'market price'}`);
+    console.log(`📈 [ManualTrade] Position type: ${positionType}`);
+    console.log(`📈 [ManualTrade] Timestamp: ${new Date().toISOString()}`);
+    
+    if (!canSubmit) {
+      console.warn(`⚠️ [ManualTrade] Order blocked - validation failed`);
+      console.warn(`⚠️ [ManualTrade] Current validation state: canSubmit=${canSubmit}`);
+      return;
+    }
 
     const orderData = {
       symbol: currentSymbol,
@@ -249,6 +306,9 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       positionType,
       ...(orderType === 'limit' && { price: parseFloat(price) })
     };
+
+    console.log(`📈 [ManualTrade] Order validation passed - submitting to API`);
+    console.log(`📈 [ManualTrade] Final order data:`, orderData);
 
     submitOrderMutation.mutate(orderData);
   };

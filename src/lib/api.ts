@@ -3,7 +3,7 @@ import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, Or
 // Use Vite proxy instead of direct backend connection
 // In development: requests go to '/api/*' which Vite proxies to http://127.0.0.1:5000
 // In production: API requests will go to same origin
-const API_BASE_URL = '';
+const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:5000' : '';
 
 // Generate mock OHLCV data (fallback)
 const generateMockOHLCVData = (): OHLCVData[] => {

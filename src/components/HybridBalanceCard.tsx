@@ -8,15 +8,15 @@
  * - Live asset allocation display
  */
 
-import React, { useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
-import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Balance } from '@/types/trading';
-import { TrendingUp, TrendingDown, Wallet, RefreshCw, Wifi, Activity } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Activity, RefreshCw, TrendingDown, TrendingUp, Wallet, Wifi } from 'lucide-react';
+import React, { useEffect, useMemo } from 'react';
 
 interface HybridBalanceCardProps {
   symbol?: string;
@@ -37,34 +37,64 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
   
   // Subscribe to symbol on mount
   useEffect(() => {
+    console.log(`💰 [Balance] Component mounted - tracking ${symbol}`);
+    console.log(`💰 [Balance] WebSocket connected: ${connected}`);
+    console.log(`💰 [Balance] Show details: ${showDetails}`);
     subscribeToSymbol(symbol);
     
     return () => {
+      console.log(`💰 [Balance] Component unmounting from ${symbol}`);
       // Note: Don't unsubscribe automatically as other components might use the same symbol
       // unsubscribeFromSymbol(symbol);
     };
-  }, [symbol, subscribeToSymbol]);
+  }, [symbol, subscribeToSymbol, connected, showDetails]);
   
   // Get ticker data for this specific symbol
   const ticker = getTickerForSymbol(symbol);
   
   // Debounce ticker updates to reduce calculation frequency
   const debouncedTicker = useMemo(() => {
-    if (!ticker) return null;
+    if (!ticker) {
+      console.log(`💰 [Balance] No ticker data available for ${symbol}`);
+      return null;
+    }
+    
+    console.log(`💰 [Balance] WebSocket ticker update: ${symbol} = $${ticker.price.toFixed(2)}`);
+    console.log(`💰 [Balance] Ticker data:`, { price: ticker.price, volume: ticker.volume });
     return ticker;
-  }, [ticker?.price]); // Only update when price changes significantly
+  }, [ticker?.price, symbol]); // Only update when price changes significantly
   
   // Get balance data via REST
   const { data: balances = [], isLoading, error, refetch } = useQuery<Balance[]>({
     queryKey: ['balances'],
-    queryFn: api.getBalances,
+    queryFn: async () => {
+      console.log(`💰 [Balance] Fetching balance data from API...`);
+      try {
+        const result = await api.getBalances();
+        console.log(`✅ [Balance] Balance data received: ${result.length} currencies`);
+        console.log(`💰 [Balance] Currencies: ${result.map(b => b.currency).join(', ')}`);
+        return result;
+      } catch (error) {
+        console.error(`❌ [Balance] Failed to fetch balance data:`, error);
+        throw error;
+      }
+    },
     refetchInterval: 5000, // Fallback polling
-    staleTime: 2000
+    staleTime: 2000,
+    onError: (error) => {
+      console.error(`❌ [Balance] Balance query error:`, error);
+      console.error(`❌ [Balance] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+    }
   });
 
   // Calculate live portfolio values (optimized)
   const portfolioData = useMemo(() => {
+    console.log(`💰 [Balance] Calculating portfolio data...`);
+    console.log(`💰 [Balance] Balances available: ${balances.length}`);
+    console.log(`💰 [Balance] Ticker available: ${!!debouncedTicker}`);
+    
     if (!balances.length || !debouncedTicker) {
+      console.log(`💰 [Balance] Insufficient data for portfolio calculation`);
       return {
         totalValue: 0,
         totalPnL: 0,
@@ -76,6 +106,8 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     }
 
     const currentPrice = debouncedTicker.price;
+    console.log(`💰 [Balance] Using current price: $${currentPrice.toFixed(2)}`);
+    
     let totalValue = 0;
     let totalPnL = 0;
     let cashBalance = 0;
@@ -129,7 +161,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
 
     const totalPnLPct = (totalValue - totalPnL) > 0 ? (totalPnL / (totalValue - totalPnL)) * 100 : 0;
 
-    return {
+    const result = {
       totalValue,
       totalPnL,
       totalPnLPct,
@@ -137,6 +169,14 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       cashBalance,
       cryptoValue
     };
+    
+    console.log(`✅ [Balance] Portfolio calculation complete:`);
+    console.log(`💰 [Balance] Total Value: $${totalValue.toFixed(2)}`);
+    console.log(`💰 [Balance] Total P&L: $${totalPnL.toFixed(2)} (${totalPnLPct.toFixed(2)}%)`);
+    console.log(`💰 [Balance] Cash: $${cashBalance.toFixed(2)} | Crypto: $${cryptoValue.toFixed(2)}`);
+    console.log(`💰 [Balance] Assets: ${assetsWithAllocation.length} currencies`);
+
+    return result;
   }, [balances, debouncedTicker]);
 
   // Format currency values

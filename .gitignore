@@ -2,6 +2,9 @@
 logs/
 *.log
 log/
+trading.log
+backend/trading.log
+
 # Codex backups
 .codex_backups/
 
@@ -34,15 +37,44 @@ dist-ssr
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
 venv/
 backend/venv/
 backend/.venv/
 .coverage
 .pytest_cache/
+backend/__pycache__/
 
-# Temporary files
+# Temporary files and test outputs
+temp/
 flake8_errors.txt
+test_output.txt
+test_orders_output.txt
+test_backtest.json
+user_test_data.json
+warnings.txt
+npm-ls.json
+current_requirements.txt
+npm_deps.txt
+
+# Coverage reports
+htmlcov/
+coverage/
+*.coverage
+coverage.xml
+
+# Build artifacts
+build/
+*.egg-info/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# IDE specific
+*.swp
+*.swo
+*~
+
+# CI/CD specific
+.github/coverage_reports/

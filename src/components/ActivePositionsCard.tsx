@@ -8,24 +8,20 @@
  * - Klar visuell hierarki och UX
  */
 
-import React, { useMemo, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGlobalWebSocketMarket } from '@/contexts/WebSocketMarketProvider';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  RefreshCw, 
-  DollarSign, 
-  Target,
-  Layers,
-  Coins,
-  Activity,
-  AlertTriangle
+import {
+    Activity,
+    AlertTriangle,
+    Coins,
+    Layers,
+    RefreshCw,
+    Target
 } from 'lucide-react';
+import React, { useEffect, useMemo } from 'react';
 
 interface Position {
   id: string;
@@ -62,32 +58,65 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
   
   // Subscribe to symbols for live pricing
   useEffect(() => {
+    console.log(`🎯 [Positions] Component mounted`);
+    console.log(`🎯 [Positions] Symbol filter: ${symbol || 'all'}`);
+    console.log(`🎯 [Positions] Show only symbol: ${showOnlySymbol}`);
+    console.log(`🎯 [Positions] Max positions: ${maxPositions}`);
+    console.log(`🎯 [Positions] WebSocket connected: ${connected}`);
+    
     if (symbol) {
+      console.log(`🎯 [Positions] Subscribing to specific symbol: ${symbol}`);
       subscribeToSymbol(symbol);
     } else {
-      // Subscribe to common symbols for portfolio-wide pricing
-      ['BTCUSD', 'ETHUSD', 'LTCUSD'].forEach(s => subscribeToSymbol(s));
+      console.log(`🎯 [Positions] Subscribing to common symbols for portfolio-wide pricing`);
+      ['BTCUSD', 'ETHUSD', 'LTCUSD'].forEach(s => {
+        console.log(`🎯 [Positions] Subscribing to ${s}`);
+        subscribeToSymbol(s);
+      });
     }
-  }, [symbol, subscribeToSymbol]);
+    
+    return () => {
+      console.log(`🎯 [Positions] Component unmounting`);
+    };
+  }, [symbol, subscribeToSymbol, showOnlySymbol, maxPositions, connected]);
   
   // Fetch active positions from correct API endpoint
   const { data: positions = [], isLoading, error, refetch } = useQuery<Position[]>({
     queryKey: ['active-positions'],
     queryFn: async () => {
-      const res = await fetch('/api/positions');
-      if (!res.ok) throw new Error('Failed to fetch positions');
-      return await res.json();
+      console.log(`🎯 [Positions] Fetching positions from API...`);
+      try {
+        const res = await fetch('/api/positions');
+        if (!res.ok) {
+          console.error(`❌ [Positions] API request failed: ${res.status} ${res.statusText}`);
+          throw new Error('Failed to fetch positions');
+        }
+        const data = await res.json();
+        console.log(`✅ [Positions] Received ${data.length} positions from API`);
+        console.log(`🎯 [Positions] Position data:`, data);
+        return data;
+      } catch (error) {
+        console.error(`❌ [Positions] Failed to fetch positions:`, error);
+        throw error;
+      }
     },
     refetchInterval: connected ? 5000 : 10000, // Faster when connected
     staleTime: 1000, // Shorter stale time for faster updates
     refetchOnMount: true, // Always fetch on mount
     refetchOnWindowFocus: true, // Fetch when window gets focus
-    retry: 1 // Only retry once to avoid delays
+    retry: 1, // Only retry once to avoid delays
+    onError: (error) => {
+      console.error(`❌ [Positions] Query error:`, error);
+      console.error(`❌ [Positions] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+    }
   });
 
   // Process positions med live pricing
   const processedPositions = useMemo(() => {
+    console.log(`🎯 [Positions] Processing ${positions.length} positions...`);
+    
     if (!positions || positions.length === 0) {
+      console.log(`🎯 [Positions] No positions to process`);
       return {
         marginPositions: [],
         spotPositions: [],
@@ -98,16 +127,21 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
     }
 
     let filteredPositions = positions;
+    console.log(`🎯 [Positions] Starting with ${filteredPositions.length} positions`);
     
     // Filter by symbol if specified
     if (showOnlySymbol && symbol) {
       const symbolFilter = symbol.replace('USD', '/USD');
+      console.log(`🎯 [Positions] Filtering by symbol: ${symbolFilter}`);
       filteredPositions = positions.filter(pos => pos.symbol === symbolFilter);
+      console.log(`🎯 [Positions] After symbol filter: ${filteredPositions.length} positions`);
     }
 
     // Limit number of positions
     if (maxPositions) {
+      console.log(`🎯 [Positions] Limiting to max ${maxPositions} positions`);
       filteredPositions = filteredPositions.slice(0, maxPositions);
+      console.log(`🎯 [Positions] After limit: ${filteredPositions.length} positions`);
     }
 
     // Separate margin and spot positions med live pricing
@@ -142,13 +176,21 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
     const totalSpotValue = spotPositions.reduce((sum, pos) => sum + (pos.amount * (pos.currentPrice || pos.mark_price)), 0);
     const totalPositions = marginPositions.length + spotPositions.length;
 
-    return {
+    const result = {
       marginPositions,
       spotPositions,
       totalMarginPnL,
       totalSpotValue,
       totalPositions
     };
+    
+    console.log(`✅ [Positions] Processing complete:`);
+    console.log(`🎯 [Positions] Total positions: ${totalPositions}`);
+    console.log(`🎯 [Positions] Margin positions: ${marginPositions.length} (PnL: $${totalMarginPnL.toFixed(2)})`);
+    console.log(`🎯 [Positions] Spot holdings: ${spotPositions.length} (Value: $${totalSpotValue.toFixed(2)})`);
+    console.log(`🎯 [Positions] WebSocket pricing active: ${connected}`);
+
+    return result;
   }, [positions, symbol, showOnlySymbol, maxPositions, getTickerForSymbol, connected]);
 
   const formatPrice = (price: number) => {

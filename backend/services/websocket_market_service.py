@@ -63,9 +63,15 @@ class BitfinexWebSocketClient:
             symbol: Trading pair (t.ex. 'BTCUSD')
             callback: Funktion som anropas när data kommer
         """
-        # Bitfinex använder tBTCUSD format
-        if not symbol.startswith("t"):
-            symbol = f"t{symbol}"
+        # Convert UI format to Bitfinex WebSocket format using symbol converter
+        from backend.services.symbol_converter import (
+            convert_ui_to_websocket,
+            log_symbol_conversion,
+        )
+
+        original_symbol = symbol
+        symbol = convert_ui_to_websocket(symbol)
+        log_symbol_conversion(original_symbol, symbol, "websocket_ticker")
 
         channel_id = f"ticker_{symbol}"
         self.callbacks[channel_id] = callback
@@ -86,8 +92,10 @@ class BitfinexWebSocketClient:
             callback: Funktion som anropas när data kommer
             precision: Precision level (P0, P1, P2, P3, P4)
         """
-        if not symbol.startswith("t"):
-            symbol = f"t{symbol}"
+        # Use symbol converter for consistent conversion
+        from backend.services.symbol_converter import convert_ui_to_websocket
+
+        symbol = convert_ui_to_websocket(symbol)
 
         channel_id = f"book_{symbol}"
         self.callbacks[channel_id] = callback
@@ -106,8 +114,10 @@ class BitfinexWebSocketClient:
 
     async def subscribe_trades(self, symbol: str, callback: Callable):
         """Prenumerera på trades data."""
-        if not symbol.startswith("t"):
-            symbol = f"t{symbol}"
+        # Use symbol converter for consistent conversion
+        from backend.services.symbol_converter import convert_ui_to_websocket
+
+        symbol = convert_ui_to_websocket(symbol)
 
         channel_id = f"trades_{symbol}"
         self.callbacks[channel_id] = callback

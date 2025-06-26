@@ -13,6 +13,7 @@ vi.mock('@radix-ui/react-select', () => {
     Trigger: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <button {...props}>{children}</button>,
     Content: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     Item: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+    ItemText: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
     Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
     Separator: () => <hr />,
     ScrollUpButton: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

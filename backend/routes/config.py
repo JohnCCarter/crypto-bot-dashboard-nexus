@@ -28,7 +28,8 @@ def register(app):
             if not data:
                 return jsonify({"error": "Missing JSON body"}), 400
 
-            # For now, just return success - in real implementation this would update config
+            # For now, just return success - in real implementation this would
+            # update config
             return (
                 jsonify(
                     {

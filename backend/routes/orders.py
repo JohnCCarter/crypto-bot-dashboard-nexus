@@ -5,6 +5,10 @@ import time
 from flask import current_app, jsonify, request
 
 from backend.services.exchange import ExchangeError
+from backend.services.symbol_converter import (
+    convert_ui_to_trading,
+    log_symbol_conversion,
+)
 from backend.services.validation import validate_order_data
 
 try:
@@ -123,11 +127,24 @@ def register(app):
                     503,
                 )
 
+            # Convert symbol to Bitfinex format before sending to API
+            ui_symbol = data["symbol"]  # e.g., 'TESTBTC/TESTUSD'
+            bitfinex_symbol = convert_ui_to_trading(
+                ui_symbol
+            )  # e.g., 'tTESTBTC:TESTUSD'
+
+            # Log the symbol conversion for debugging
+            log_symbol_conversion(ui_symbol, bitfinex_symbol, "order_placement")
+
+            current_app.logger.info(
+                f"📋 [Orders] Symbol converted: {ui_symbol} → {bitfinex_symbol}"
+            )
+
             # Place order on Bitfinex using shared service (thread-safe nonce)
             # Include position_type for margin/spot differentiation
             position_type = data.get("position_type", "spot")  # Default to spot
             order = exchange_service.create_order(
-                symbol=data["symbol"],
+                symbol=bitfinex_symbol,  # Use converted symbol
                 order_type=data["order_type"],
                 side=data["side"],
                 amount=float(data["amount"]),
@@ -289,8 +306,21 @@ def register(app):
             if not exchange_service:
                 return jsonify({"error": "Order service not available"}), 503
 
+            # Convert symbol to Bitfinex format before API call
+            ui_symbol = symbol  # e.g., 'TESTBTC/TESTUSD'
+            bitfinex_symbol = convert_ui_to_trading(
+                ui_symbol
+            )  # e.g., 'tTESTBTC:TESTUSD'
+
+            # Log the symbol conversion for debugging
+            log_symbol_conversion(ui_symbol, bitfinex_symbol, "order_status")
+
+            current_app.logger.info(
+                f"📋 [Orders] Symbol converted for status check: {ui_symbol} → {bitfinex_symbol}"
+            )
+
             # Fetch order status from Bitfinex using shared service
-            order = exchange_service.fetch_order(order_id, symbol)
+            order = exchange_service.fetch_order(order_id, bitfinex_symbol)
 
             current_app.logger.info(f"✅ [Orders] Order status retrieved: {order_id}")
 

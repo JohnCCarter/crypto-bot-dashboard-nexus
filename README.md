@@ -39,7 +39,7 @@
 - ⚡ **Real-time Dashboard**: React-based interface with live charts and data
 - 🛡️ **Risk Management**: Stop-loss, take-profit, daily loss limits
 - 🔔 **Smart Notifications**: Email alerts and system monitoring
-- 🧪 **Comprehensive Testing**: 21+ automated tests with 100% coverage
+- 🧪 **Comprehensive Testing**: 94+ automated tests with 99% coverage
 - 🐳 **Docker Ready**: Complete containerization support
 
 ### 🎯 **Supported Exchanges**
@@ -70,7 +70,7 @@ cp .env.example .env
 # Edit .env with your Bitfinex credentials
 
 # 5. Start the application
-./start-dev.sh
+./scripts/deployment/start-dev.sh
 ```
 
 Open **http://localhost:8080** for the dashboard and **http://localhost:5000** for API docs.
@@ -112,7 +112,8 @@ crypto-bot-dashboard-nexus/
 │   ├── routes/                # API endpoint definitions
 │   ├── services/              # Business logic & external APIs
 │   ├── strategies/            # Trading strategy implementations
-│   ├── tests/                 # Backend test suite (21+ tests)
+│   ├── tests/                 # Backend test suite (62+ tests)
+│   │   └── integration/       # Real API integration tests (9 tests)
 │   ├── app.py                 # Flask application entry point
 │   └── requirements.txt       # Python dependencies
 ├── src/                       # ⚛️ React Frontend
@@ -121,10 +122,19 @@ crypto-bot-dashboard-nexus/
 │   ├── pages/                 # Application pages/views
 │   ├── types/                 # TypeScript type definitions
 │   └── __tests__/             # Frontend test suite
+├── docs/                      # 📚 Documentation
+│   ├── development/           # Development guides and roadmaps
+│   ├── guides/                # Implementation and usage guides
+│   ├── reports/               # Analysis and status reports
+│   └── solutions/             # Problem solutions and fixes
+├── scripts/                   # 🛠️ Development & Deployment Scripts
+│   ├── deployment/            # Server startup scripts
+│   ├── development/           # Code formatting and utilities
+│   └── testing/               # Test automation tools
+├── temp/                      # 🗂️ Temporary files (Git ignored)
 ├── public/                    # Static assets
 ├── docker-compose.yml         # 🐳 Multi-container setup
-├── start-dev.sh              # 🚀 Development startup script
-└── README.md                 # 📖 This file
+└── README.md                  # 📖 This file
 ```
 
 ---
@@ -199,19 +209,53 @@ DEBUG=true
 
 ## 🚀 **Running the Application**
 
-### **Option A: Development Mode (Recommended)**
+### **Option A: Quick Development Start (Recommended)**
 
 ```bash
-# Start both backend and frontend
-./start-dev.sh
+# ⚡ Fast start - runs from project root
+./scripts/deployment/start-dev.sh
+```
 
-# Or manually:
+### **Option B: Flexible Server Management**
+
+```bash
+# Start both servers with health checks
+./scripts/deployment/start-servers.sh
+
+# Start only backend
+./scripts/deployment/start-servers.sh backend
+
+# Start only frontend
+./scripts/deployment/start-servers.sh frontend
+```
+
+### **Option C: Windows PowerShell**
+
+```powershell
+# Windows users with PowerShell
+.\scripts\deployment\start-servers.ps1
+
+# With specific mode
+.\scripts\deployment\start-servers.ps1 backend
+```
+
+### **Option D: Manual Start (For Debugging)**
+
+```bash
+# ⚠️ CRITICAL: Always run from project root!
+cd crypto-bot-dashboard-nexus-1
+
 # Terminal 1 - Backend
-cd backend && flask run --host=0.0.0.0 --port=5000
+export FLASK_APP=backend/app.py
+export FLASK_ENV=development
+source backend/venv/Scripts/activate  # Windows Git Bash
+python -m flask run --host=0.0.0.0 --port=5000
 
 # Terminal 2 - Frontend  
 npm run dev
 ```
+
+> **🚨 Important:** Flask must run from project root for SQLite database path resolution!
 
 ### **Option B: Docker Deployment**
 
@@ -247,12 +291,15 @@ pytest backend/tests/test_indicators.py -v    # Technical indicators
 pytest backend/tests/test_routes.py -v        # API endpoints
 ```
 
-**Test Coverage:** 21+ tests covering:
+**Test Coverage:** 62+ tests covering:
 - ✅ Trading strategies and signals
 - ✅ Technical indicators (EMA, RSI, FVG)
 - ✅ API endpoints and responses
 - ✅ Risk management logic
 - ✅ Database connections
+- ✅ WebSocket user data handlers
+- ✅ Probability analysis systems
+- ✅ Backtest engine and optimization
 
 ### **Frontend Testing**
 
@@ -424,6 +471,27 @@ def run_strategy(data: pd.DataFrame) -> TradeSignal:
 
 ### **Common Issues**
 
+#### 🔴 **Server Start Issues (SOLVED)**
+
+```bash
+# Problem: Flask SQLite database errors
+# Error: "sqlalchemy.exc.OperationalError: unable to open database file"
+# Solution: Always run Flask from project root!
+
+# ❌ WRONG: This fails
+cd backend && flask run
+
+# ✅ CORRECT: This works  
+cd crypto-bot-dashboard-nexus-1  # Project root
+export FLASK_APP=backend/app.py
+flask run --host=0.0.0.0 --port=5000
+
+# Problem: Frontend proxy errors (ECONNREFUSED)
+# Error: "http proxy error: /api/balances"
+# Solution: Ensure backend runs on port 5000 from project root
+./start-servers.sh backend  # Use our start scripts!
+```
+
 #### 🔴 **Virtual Environment Issues**
 
 ```bash
@@ -499,6 +567,35 @@ tail -f backend/logs/*.log
 - **Frontend**: Implement React.memo for expensive components
 - **Database**: Index frequently queried columns
 - **WebSocket**: Implement connection pooling
+
+---
+
+## 📚 **Documentation**
+
+All project documentation is now organized in the `docs/` folder with comprehensive indexing:
+
+### 📁 **[docs/](./docs/)** - Complete Documentation Index
+
+- **📋 [decisions/](./docs/decisions/)** - Architecture Decision Records (ADRs)
+- **🚀 [development/](./docs/development/)** - Development roadmaps and plans
+- **📖 [guides/](./docs/guides/)** - Implementation guides and how-tos (7 guides)
+- **📊 [reports/](./docs/reports/)** - Status reports and analysis (16 reports)
+- **🔧 [solutions/](./docs/solutions/)** - Technical solutions and fixes (9 solutions)
+
+#### 🔥 **Key Documents**
+- **[Development Roadmap](./docs/development/DEVELOPMENT_ROADMAP.md)** - Complete plan to production
+- **[Quick Deployment Guide](./docs/guides/QUICK_DEPLOYMENT_GUIDE.md)** - Fast deployment procedures
+- **[Debug Guide](./docs/guides/DEBUG_GUIDE.md)** - Troubleshooting procedures
+- **[API Authentication Report](./docs/reports/API_AUTH_VERIFICATION.md)** - API verification status
+- **[Server Start Solution](./docs/solutions/SERVER_START_SOLUTION.md)** - Startup troubleshooting
+
+### 🛠️ **[scripts/](./scripts/)** - Tools & Utilities
+
+- **🚀 [deployment/](./scripts/deployment/)** - Server startup scripts (3 scripts)
+- **🧪 [testing/](./scripts/testing/)** - Test and verification tools (7 tools)
+- **🛠️ [development/](./scripts/development/)** - Development utilities (2 tools)
+
+See **[Scripts Documentation](./scripts/README.md)** for complete usage guide with examples.
 
 ---
 

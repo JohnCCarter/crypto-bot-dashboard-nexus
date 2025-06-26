@@ -118,7 +118,7 @@ def test_get_order_history(client):
 
 def test_place_order_server_error(client):
     with patch(
-        "backend.services.order_service.OrderService.place_order",
+        "backend.routes.orders.get_shared_exchange_service",
         side_effect=Exception("DB error"),
     ):
         order_data = {
@@ -130,5 +130,5 @@ def test_place_order_server_error(client):
         }
         response = client.post("/api/orders", json=order_data)
         # This now correctly tests the error handling in the route
-        # Service unavailable (503) is the correct response when exchange service is missing
-        assert response.status_code == 503
+        # Generic exception should return 500 (internal server error)
+        assert response.status_code == 500

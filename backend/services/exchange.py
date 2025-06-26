@@ -9,18 +9,33 @@ import ccxt
 
 
 class CustomBitfinex(ccxt.bitfinex):
-    """Custom Bitfinex class with thread-safe nonce handling."""
+    """Custom Bitfinex class with enhanced thread-safe nonce handling."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._last_nonce = int(time.time() * 1000)
+        # Start with millisecond precision as per Bitfinex official docs
+        self._last_nonce = round(datetime.now().timestamp() * 1000)
         self._nonce_lock = threading.Lock()
 
     def nonce(self):
-        """Generate thread-safe monotonically increasing nonce for Bitfinex API."""
+        """
+        Generate thread-safe monotonically increasing nonce for Bitfinex API.
+
+        Uses Bitfinex official method: round(datetime.now().timestamp() * 1000)
+        This ensures millisecond precision as required by Bitfinex API.
+        """
         with self._nonce_lock:
-            now = int(time.time() * 1000)
-            self._last_nonce = max(self._last_nonce + 1, now)
+            # Use Bitfinex official nonce method: milliseconds since Unix epoch
+            now_milliseconds = round(datetime.now().timestamp() * 1000)
+
+            # Ensure nonce always increments with minimum gap
+            if now_milliseconds <= self._last_nonce:
+                # If current time is not ahead, add minimum increment (1ms)
+                self._last_nonce += 1
+            else:
+                # Use current time but ensure increment from last nonce
+                self._last_nonce = max(now_milliseconds, self._last_nonce + 1)
+
             return self._last_nonce
 
 
@@ -50,7 +65,15 @@ class ExchangeService:
                 exchange_class = getattr(ccxt, exchange_id)
 
             self.exchange = exchange_class(
-                {"apiKey": api_key, "secret": api_secret, "enableRateLimit": True}
+                {
+                    "apiKey": api_key,
+                    "secret": api_secret,
+                    "enableRateLimit": True,
+                    "rateLimit": 2000,  # 2 seconds between requests
+                    "options": {
+                        "adjustForTimeDifference": True,
+                    },
+                }
             )
         except Exception as e:
             raise ExchangeError(f"Failed to initialize exchange: {str(e)}")
@@ -224,52 +247,68 @@ class ExchangeService:
 
     def fetch_balance(self) -> Dict[str, float]:
         """
-        Fetch account balance.
+        Fetch account balance with retry mechanism for nonce issues.
 
         Returns:
             Dict mapping currency to balance
 
         Raises:
-            ExchangeError: If balance fetch fails
+            ExchangeError: If balance fetch fails after retries
         """
-        try:
-            balance = self.exchange.fetch_balance()
-            result = {}
+        max_retries = 3
+        base_delay = 0.5  # Start with 500ms delay
 
-            # Handle different balance structure formats
-            if "total" in balance and isinstance(balance["total"], dict):
-                # Standard CCXT format with nested structure
-                for currency, amount in balance["total"].items():
-                    if isinstance(amount, dict) and "free" in amount:
-                        free_amount = float(amount["free"])
-                    else:
-                        free_amount = float(amount)
+        for attempt in range(max_retries):
+            try:
+                balance = self.exchange.fetch_balance()
+                result = {}
 
-                    if free_amount > 0:
-                        result[currency] = free_amount
-            else:
-                # Direct format or other structures
-                for currency, data in balance.items():
-                    if currency in ["info", "datetime", "timestamp"]:
-                        continue
-
-                    if isinstance(data, dict):
-                        if "free" in data:
-                            free_amount = float(data["free"])
-                        elif "total" in data:
-                            free_amount = float(data["total"])
+                # Handle different balance structure formats
+                if "total" in balance and isinstance(balance["total"], dict):
+                    # Standard CCXT format with nested structure
+                    for currency, amount in balance["total"].items():
+                        if isinstance(amount, dict) and "free" in amount:
+                            free_amount = float(amount["free"])
                         else:
-                            free_amount = float(data.get("available", 0))
-                    else:
-                        free_amount = float(data)
+                            free_amount = float(amount)
 
-                    if free_amount > 0:
-                        result[currency] = free_amount
+                        if free_amount > 0:
+                            result[currency] = free_amount
+                else:
+                    # Direct format or other structures
+                    for currency, data in balance.items():
+                        if currency in ["info", "datetime", "timestamp"]:
+                            continue
 
-            return result
+                        if isinstance(data, dict):
+                            if "free" in data:
+                                free_amount = float(data["free"])
+                            elif "total" in data:
+                                free_amount = float(data["total"])
+                            else:
+                                free_amount = float(data.get("available", 0))
+                        else:
+                            free_amount = float(data)
 
-        except Exception as e:
-            raise ExchangeError(f"Failed to fetch balance: {str(e)}")
+                        if free_amount > 0:
+                            result[currency] = free_amount
+
+                return result
+
+            except Exception as e:
+                error_msg = str(e).lower()
+
+                # Check if it's a nonce error
+                if "nonce" in error_msg and attempt < max_retries - 1:
+                    delay = base_delay * (2**attempt)  # Exponential backoff
+                    print(
+                        f"🔄 Nonce error on attempt {attempt + 1}, retrying in {delay}s..."
+                    )
+                    time.sleep(delay)
+                    continue
+
+                # If not a nonce error or max retries reached, raise the error
+                raise ExchangeError(f"Failed to fetch balance: {str(e)}")
 
     def fetch_ohlcv(self, symbol: str, timeframe: str = "5m", limit: int = 100) -> list:
         """
@@ -576,7 +615,7 @@ class ExchangeService:
         limit: int = 100,
     ) -> list:
         """
-        Fetch order history from exchange.
+        Fetch order history from exchange using supported methods.
 
         Args:
             symbols: Optional list of symbols to filter by
@@ -590,34 +629,57 @@ class ExchangeService:
             ExchangeError: If order history fetch fails
         """
         try:
-            # Fetch order history from exchange
-            if symbols:
-                # If specific symbols requested, fetch for each
+            # Bitfinex doesn't support fetchOrders(), use fetchClosedOrders() instead
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
+                # Use fetchClosedOrders() for Bitfinex (supported method)
                 all_orders = []
-                for symbol in symbols:
-                    orders = self.exchange.fetch_orders(symbol, since, limit)
-                    all_orders.extend(orders)
+
+                if symbols:
+                    # Fetch closed orders for each symbol
+                    for symbol in symbols:
+                        try:
+                            orders = self.exchange.fetch_closed_orders(
+                                symbol, since, limit
+                            )
+                            all_orders.extend(orders)
+                        except Exception as e:
+                            # Log error but continue with other symbols
+                            print(f"Warning: Could not fetch orders for {symbol}: {e}")
+                            continue
+                else:
+                    # Fetch all closed orders
+                    all_orders = self.exchange.fetch_closed_orders(None, since, limit)
             else:
-                # Fetch all order history (may require multiple calls)
-                all_orders = self.exchange.fetch_orders(None, since, limit)
+                # Use standard fetchOrders for other exchanges
+                if symbols:
+                    all_orders = []
+                    for symbol in symbols:
+                        orders = self.exchange.fetch_orders(symbol, since, limit)
+                        all_orders.extend(orders)
+                else:
+                    all_orders = self.exchange.fetch_orders(None, since, limit)
 
             # Transform to standardized format
             standardized_orders = []
             for order in all_orders:
+                # Safely handle None values in order data
+                fee_data = order.get("fee") or {}
                 standardized_order = {
-                    "id": order["id"],
-                    "symbol": order["symbol"],
-                    "order_type": order["type"],
-                    "side": order["side"],
-                    "amount": float(order["amount"]),
-                    "price": float(order["price"] or 0),
-                    "fee": float(order.get("fee", {}).get("cost", 0)),
-                    "timestamp": order["timestamp"],
-                    "datetime": order["datetime"],
-                    "status": order["status"],
-                    "filled": float(order["filled"]),
-                    "remaining": float(order["remaining"]),
-                    "cost": float(order["cost"] or 0),
+                    "id": order.get("id", ""),
+                    "symbol": order.get("symbol", ""),
+                    "order_type": order.get("type", ""),
+                    "side": order.get("side", ""),
+                    "amount": float(order.get("amount") or 0),
+                    "price": float(order.get("price") or 0),
+                    "fee": float(
+                        fee_data.get("cost") if isinstance(fee_data, dict) else 0
+                    ),
+                    "timestamp": order.get("timestamp") or 0,
+                    "datetime": order.get("datetime") or "",
+                    "status": order.get("status", ""),
+                    "filled": float(order.get("filled") or 0),
+                    "remaining": float(order.get("remaining") or 0),
+                    "cost": float(order.get("cost") or 0),
                     "trades": order.get("trades", []),
                 }
                 standardized_orders.append(standardized_order)
@@ -668,4 +730,11 @@ class ExchangeService:
             return standardized_orders
 
         except Exception as e:
-            raise ExchangeError(f"Failed to fetch open orders: {str(e)}")
+            error_msg = str(e)
+            # Handle nonce-specific errors with retry suggestion
+            if "nonce" in error_msg.lower() and "small" in error_msg.lower():
+                raise ExchangeError(
+                    f"Bitfinex nonce error: {error_msg}. "
+                    "Try waiting a few seconds before retrying."
+                )
+            raise ExchangeError(f"Failed to fetch open orders: {error_msg}")

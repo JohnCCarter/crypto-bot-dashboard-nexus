@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { BotStatus } from '@/types/trading';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { api } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+import { BotStatus } from '@/types/trading';
 import { logger } from '@/utils/logger';
+import { useState } from 'react';
 
 interface BotControlProps {
   status: BotStatus;
@@ -32,16 +32,28 @@ export function BotControl({ status, onStatusChange }: BotControlProps) {
   };
 
   const handleToggleBot = async () => {
+    const action = status.status === 'running' ? 'stop' : 'start';
+    
+    console.log(`🤖 [BotControl] User clicked ${action.toUpperCase()} button`);
+    console.log(`🤖 [BotControl] Current bot status: ${status.status}`);
+    console.log(`🤖 [BotControl] Bot uptime: ${status.uptime}s`);
+    console.log(`🤖 [BotControl] Timestamp: ${new Date().toISOString()}`);
+    
     setIsLoading(true);
     
     try {
-      const action = status.status === 'running' ? 'stop' : 'start';
+      console.log(`🤖 [BotControl] Sending ${action} request to API...`);
       
       const response = status.status === 'running' 
         ? await api.stopBot()
         : await api.startBot();
       
+      console.log(`🤖 [BotControl] API Response received:`, response);
+      
       if (response.success) {
+        console.log(`✅ [BotControl] Bot ${action} operation successful!`);
+        console.log(`✅ [BotControl] Server message: ${response.message}`);
+        
         // Log bot status change using trading logger
         if (action === 'start') {
           logger.botActivated();
@@ -53,14 +65,26 @@ export function BotControl({ status, onStatusChange }: BotControlProps) {
           title: "Success",
           description: response.message,
         });
+        
+        console.log(`🤖 [BotControl] Triggering status refresh...`);
         onStatusChange();
       } else {
+        console.error(`❌ [BotControl] Bot ${action} failed - response.success = false`);
+        console.error(`❌ [BotControl] Server message: ${response.message || 'No message provided'}`);
+        
         logger.botError(action, response.message);
         throw new Error(response.message);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      logger.botError(status.status === 'running' ? 'stop' : 'start', errorMessage);
+      
+      console.error(`❌ [BotControl] Bot ${action} operation failed!`);
+      console.error(`❌ [BotControl] Error:`, error);
+      console.error(`❌ [BotControl] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`❌ [BotControl] Error message: ${errorMessage}`);
+      console.error(`❌ [BotControl] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
+      
+      logger.botError(action, errorMessage);
       
       toast({
         title: "Bot Control Error",
@@ -68,6 +92,7 @@ export function BotControl({ status, onStatusChange }: BotControlProps) {
         variant: "destructive",
       });
     } finally {
+      console.log(`🤖 [BotControl] Bot ${action} operation completed (loading=false)`);
       setIsLoading(false);
     }
   };

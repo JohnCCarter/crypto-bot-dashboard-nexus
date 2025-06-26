@@ -4,28 +4,21 @@
 Säkerställer att alla message types hanteras korrekt
 """
 
-import asyncio
 import os
 import sys
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from backend.services.websocket_user_data_service import (
-    BalanceInfo,
     BitfinexUserDataClient,
-    FundingCredit,
-    FundingInfo,
-    FundingLoan,
-    FundingOffer,
-    FundingTrade,
     MarginInfo,
     Notification,
     Position,
 )
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class TestWebSocketUserDataHandlers:

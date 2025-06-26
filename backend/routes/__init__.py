@@ -1,10 +1,10 @@
 """
 backend.routes package.
+
+Route factory for centralized blueprint registration.
 """
 
 # This file makes backend/routes a Python package
-
-"""Route factory for centralized blueprint registration."""
 
 from flask import Flask
 

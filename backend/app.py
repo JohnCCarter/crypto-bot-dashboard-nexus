@@ -5,12 +5,45 @@ from flask import Flask
 from flask_cors import CORS
 
 from backend.routes import register_all_routes
+from backend.services.exchange import ExchangeService
 
 # Ladda miljövariabler från .env fil
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 app = Flask(__name__)
 CORS(app)
+
+
+# Initialize shared exchange service with API keys from .env
+def init_services(app):
+    """Initialize shared services that routes can use."""
+    api_key = os.getenv("BITFINEX_API_KEY")
+    api_secret = os.getenv("BITFINEX_API_SECRET")
+    exchange_id = os.getenv("EXCHANGE_ID", "bitfinex")
+
+    print("🔑 Initializing exchange service...")
+    print(f"📊 Exchange: {exchange_id}")
+    print(f"🔐 API Key: {'***' + api_key[-4:] if api_key else 'MISSING'}")
+    print(f"🔒 Secret: {'***' + api_secret[-4:] if api_secret else 'MISSING'}")
+
+    if not api_key or not api_secret:
+        print(
+            "⚠️ WARNING: Exchange service will run in DEMO mode "
+            "(no real API keys)"
+        )
+        app._services = {"exchange": None}
+    else:
+        try:
+            exchange_service = ExchangeService(exchange_id, api_key, api_secret)
+            app._services = {"exchange": exchange_service}
+            print("✅ Exchange service initialized successfully")
+        except Exception as e:
+            print(f"❌ Failed to initialize exchange service: {e}")
+            app._services = {"exchange": None}
+
+
+# Initialize services before registering routes
+init_services(app)
 
 # Använd den nya centraliserade route-registreringen
 register_all_routes(app)
