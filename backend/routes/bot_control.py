@@ -1,6 +1,9 @@
-from flask import current_app, jsonify
+from flask import jsonify
 
 from backend.services.bot_manager import get_bot_status, start_bot, stop_bot
+from backend.services.event_logger import (
+    event_logger, should_suppress_routine_log, EventType
+)
 
 # Intern statusflagga
 bot_status = {"running": False}
@@ -10,29 +13,23 @@ def register(app):
     @app.route("/api/start-bot", methods=["POST"])
     def start_bot_route():
         """Startar tradingboten."""
-        current_app.logger.info("🤖 [Backend] START bot request received")
-        current_app.logger.info(
-            f"🤖 [Backend] Current bot status before start: {bot_status}"
-        )
-
+        # BOT START är en VERKLIG användaraktion - alltid loggas!
+        
         try:
-            current_app.logger.info("🤖 [Backend] Calling start_bot() service...")
             result = start_bot()
-
-            current_app.logger.info(f"✅ [Backend] Bot started successfully: {result}")
-            current_app.logger.info(f"✅ [Backend] New bot status: {bot_status}")
+            
+            # Logga framgångsrik bot start
+            event_logger.log_bot_action("start", {
+                "success": True,
+                "result": str(result)
+            })
 
             return jsonify(result), 200
         except Exception as e:
-            current_app.logger.error(f"❌ [Backend] Start bot failed: {str(e)}")
-            current_app.logger.error(f"❌ [Backend] Exception type: {type(e).__name__}")
-            current_app.logger.error(
-                f"❌ [Backend] Bot status after error: {bot_status}"
-            )
-            import traceback
-
-            current_app.logger.error(
-                f"❌ [Backend] Stack trace: {traceback.format_exc()}"
+            # Fel vid bot start ska alltid loggas
+            event_logger.log_event(
+                EventType.BOT_ERROR,
+                f"Failed to start bot: {str(e)}"
             )
 
             return (
@@ -43,29 +40,23 @@ def register(app):
     @app.route("/api/stop-bot", methods=["POST"])
     def stop_bot_route():
         """Stoppar tradingboten."""
-        current_app.logger.info("🤖 [Backend] STOP bot request received")
-        current_app.logger.info(
-            f"🤖 [Backend] Current bot status before stop: {bot_status}"
-        )
-
+        # BOT STOP är en VERKLIG användaraktion - alltid loggas!
+        
         try:
-            current_app.logger.info("🤖 [Backend] Calling stop_bot() service...")
             result = stop_bot()
-
-            current_app.logger.info(f"✅ [Backend] Bot stopped successfully: {result}")
-            current_app.logger.info(f"✅ [Backend] New bot status: {bot_status}")
+            
+            # Logga framgångsrik bot stop
+            event_logger.log_bot_action("stop", {
+                "success": True,
+                "result": str(result)
+            })
 
             return jsonify(result), 200
         except Exception as e:
-            current_app.logger.error(f"❌ [Backend] Stop bot failed: {str(e)}")
-            current_app.logger.error(f"❌ [Backend] Exception type: {type(e).__name__}")
-            current_app.logger.error(
-                f"❌ [Backend] Bot status after error: {bot_status}"
-            )
-            import traceback
-
-            current_app.logger.error(
-                f"❌ [Backend] Stack trace: {traceback.format_exc()}"
+            # Fel vid bot stop ska alltid loggas
+            event_logger.log_event(
+                EventType.BOT_ERROR,
+                f"Failed to stop bot: {str(e)}"
             )
 
             return (
@@ -76,20 +67,20 @@ def register(app):
     @app.route("/api/bot-status", methods=["GET"])
     def get_bot_status_route():
         """Returnerar nuvarande status för tradingboten."""
-        current_app.logger.info("🤖 [Backend] Bot status request received")
-
+        # Detta är routine polling - supprimeras enligt event_logger
+        
         try:
             status = get_bot_status()
-            current_app.logger.info(f"✅ [Backend] Bot status retrieved: {status}")
+            
+            # Endast logga om det INTE är routine polling
+            if not should_suppress_routine_log("/api/bot-status", "GET"):
+                event_logger.log_event(
+                    EventType.API_ERROR,  # Using available type
+                    f"Bot status retrieved: {status.get('status', 'unknown')}"
+                )
 
             return jsonify(status), 200
         except Exception as e:
-            current_app.logger.error(f"❌ [Backend] Get bot status failed: {str(e)}")
-            current_app.logger.error(f"❌ [Backend] Exception type: {type(e).__name__}")
-            import traceback
-
-            current_app.logger.error(
-                f"❌ [Backend] Stack trace: {traceback.format_exc()}"
-            )
-
+            # Fel ska alltid loggas
+            event_logger.log_api_error("/api/bot-status", str(e))
             return jsonify({"error": f"Failed to get bot status: {str(e)}"}), 500

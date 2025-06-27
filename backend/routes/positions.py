@@ -1,9 +1,12 @@
 """Positions API endpoints for fetching live positions from Bitfinex."""
 
-from flask import current_app, jsonify
+from flask import jsonify
 
 from backend.services.exchange import ExchangeError
 from backend.services.positions_service import fetch_live_positions
+from backend.services.event_logger import (
+    event_logger, should_suppress_routine_log, EventType
+)
 
 
 def register(app):
@@ -22,38 +25,29 @@ def register(app):
             500:
                 description: Server error
         """
-        current_app.logger.info("📋 [Positions] Live positions request received")
-
+        # Detta är routine polling - supprimerias enligt event_logger
+        
         try:
             # Attempt to fetch live positions from Bitfinex
             positions = fetch_live_positions()
 
-            current_app.logger.info(
-                f"✅ [Positions] Successfully fetched " f"{len(positions)} positions"
-            )
+            # Endast logga om det INTE är routine polling
+            if not should_suppress_routine_log("/api/positions", "GET"):
+                event_logger.log_event(
+                    EventType.API_ERROR,  # Using available type
+                    f"Positions fetched: {len(positions)} positions"
+                )
 
             return jsonify(positions), 200
 
         except ExchangeError as e:
-            current_app.logger.error(f"❌ [Positions] Exchange error: {str(e)}")
-
-            # For exchange errors, return empty list rather than mock data
-            # This prevents trading bot from using fake position data
-            current_app.logger.warning(
-                "⚠️ [Positions] Returning empty positions " "due to exchange error"
-            )
+            # FEL ska alltid loggas - de är meningsfulla
+            event_logger.log_exchange_error("fetch_positions", str(e))
+            
+            # Return empty list rather than mock data for safety
             return jsonify([]), 200
 
         except Exception as e:
-            current_app.logger.error(
-                f"❌ [Positions] Failed to fetch positions: {str(e)}"
-            )
-
-            # Log the full error for debugging
-            import traceback
-
-            current_app.logger.error(
-                f"❌ [Positions] Stack trace: {traceback.format_exc()}"
-            )
-
+            # Kritiska fel ska alltid loggas
+            event_logger.log_api_error("/api/positions", str(e))
             return jsonify({"error": str(e)}), 500
