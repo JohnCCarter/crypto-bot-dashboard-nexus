@@ -10,6 +10,9 @@ from backend.services.symbol_converter import (
     log_symbol_conversion,
 )
 from backend.services.validation import validate_order_data
+from backend.services.event_logger import (
+    event_logger, should_suppress_routine_log, EventType
+)
 
 try:
     from dotenv import load_dotenv
@@ -45,28 +48,34 @@ def register(app):
             200: List of open orders from Bitfinex
             500: Server error
         """
-        current_app.logger.info("📋 [Orders] GET open orders request")
-
+        # Detta är routine polling - supprimeras enligt event_logger
+        
         try:
             exchange_service = get_shared_exchange_service()
             if not exchange_service:
-                current_app.logger.warning("⚠️ [Orders] No exchange service available")
+                # Varning ska loggas även om supprimerat
+                event_logger.log_api_error("/api/orders", "No exchange service available")
                 return jsonify({"orders": []}), 200
 
             # Fetch open orders from Bitfinex
             open_orders = exchange_service.fetch_open_orders()
 
-            current_app.logger.info(
-                f"✅ [Orders] Retrieved {len(open_orders)} open orders"
-            )
+            # Endast logga om det INTE är routine polling
+            if not should_suppress_routine_log("/api/orders", "GET"):
+                event_logger.log_event(
+                    EventType.API_ERROR,  # Using available type
+                    f"Orders fetched: {len(open_orders)} open orders"
+                )
 
             return jsonify({"orders": open_orders}), 200
 
         except ExchangeError as e:
-            current_app.logger.error(f"❌ [Orders] Exchange error: {e}")
+            # Exchange fel ska alltid loggas
+            event_logger.log_exchange_error("fetch_orders", str(e))
             return jsonify({"orders": []}), 200  # Empty rather than error
         except Exception as e:
-            current_app.logger.error(f"❌ [Orders] Unexpected error: {e}")
+            # Kritiska fel ska alltid loggas
+            event_logger.log_api_error("/api/orders", str(e))
             return jsonify({"error": "Failed to fetch orders"}), 500
 
     @app.route("/api/orders", methods=["POST"])
@@ -92,8 +101,8 @@ def register(app):
             400: Invalid input data
             500: Server error
         """
-        current_app.logger.info("📋 [Orders] POST order request")
-
+        # PLACE ORDER är en VERKLIG användaraktion - ALLTID loggas!
+        
         try:
             data = request.get_json()
             if not data:
@@ -114,9 +123,7 @@ def register(app):
 
             exchange_service = get_shared_exchange_service()
             if not exchange_service:
-                current_app.logger.error(
-                    "❌ [Orders] Cannot place order - no exchange service"
-                )
+                event_logger.log_api_error("/api/orders", "Cannot place order - no exchange service")
                 return (
                     jsonify(
                         {
@@ -135,10 +142,6 @@ def register(app):
 
             # Log the symbol conversion for debugging
             log_symbol_conversion(ui_symbol, bitfinex_symbol, "order_placement")
-
-            current_app.logger.info(
-                f"📋 [Orders] Symbol converted: {ui_symbol} → {bitfinex_symbol}"
-            )
 
             # Place order on Bitfinex using shared service (thread-safe nonce)
             # Include position_type for margin/spot differentiation
@@ -168,12 +171,15 @@ def register(app):
                     "order_id": order.get("id"),
                     "original_symbol": data["symbol"],
                 }
-                current_app.logger.info(
-                    f"📊 [Order Metadata] Saved {position_type.upper()} order: "
-                    f"{data['symbol']} -> {normalized_symbol} {data['side']} {data['amount']}"
-                )
 
-            current_app.logger.info(f"✅ [Orders] Order placed: {order['id']}")
+            # LOGGA VERKLIG TRADE - detta är en meningsfull händelse!
+            event_logger.log_order_creation(
+                symbol=data["symbol"],
+                side=data["side"],
+                amount=float(data["amount"]),
+                price=float(data.get("price", 0)),
+                order_type=data["order_type"]
+            )
 
             return (
                 jsonify({"message": "Order placed successfully", "order": order}),
@@ -181,10 +187,12 @@ def register(app):
             )
 
         except ExchangeError as e:
-            current_app.logger.error(f"❌ [Orders] Exchange error: {e}")
+            # Exchange fel vid order placering ska alltid loggas
+            event_logger.log_exchange_error("place_order", str(e))
             return jsonify({"error": "Failed to place order", "details": str(e)}), 400
         except Exception as e:
-            current_app.logger.error(f"❌ [Orders] Unexpected error: {e}")
+            # Kritiska fel ska alltid loggas
+            event_logger.log_api_error("/api/orders", str(e))
             return jsonify({"error": "Failed to place order", "details": str(e)}), 500
 
     @app.route("/api/orders/<order_id>", methods=["DELETE"])
@@ -200,7 +208,11 @@ def register(app):
             404: Order not found
             500: Server error
         """
-        current_app.logger.info(f"📋 [Orders] DELETE order: {order_id}")
+        # Cancel order är en VERKLIG användaraktion - logga med event_logger
+        event_logger.log_event(
+            EventType.ORDER_CANCELLED,
+            f"Cancel order request: {order_id}"
+        )
 
         try:
             exchange_service = get_shared_exchange_service()
@@ -210,7 +222,11 @@ def register(app):
             # Cancel order on Bitfinex using shared service
             result = exchange_service.cancel_order(order_id)
 
-            current_app.logger.info(f"✅ [Orders] Order cancelled: {order_id}")
+            # Logga framgångsrik cancellation
+            event_logger.log_event(
+                EventType.ORDER_CANCELLED,
+                f"Order cancelled successfully: {order_id}"
+            )
 
             return (
                 jsonify(
@@ -244,7 +260,11 @@ def register(app):
             200: List of historical orders from Bitfinex
             500: Server error
         """
-        current_app.logger.info("📋 [Orders] GET order history request")
+        # Order history GET är routine polling - suppress det
+        if should_suppress_routine_log("/api/orders/history", "GET"):
+            pass  # Suppress routine polling
+        else:
+            current_app.logger.info("📋 [Orders] GET order history request")
 
         try:
             exchange_service = get_shared_exchange_service()
@@ -262,9 +282,13 @@ def register(app):
                 symbols=symbols, limit=limit
             )
 
-            current_app.logger.info(
-                f"✅ [Orders] Retrieved {len(order_history)} " f"historical orders"
-            )
+            # Suppress routine history success logs
+            if should_suppress_routine_log("/api/orders/history", "GET"):
+                pass  # Suppress routine polling
+            else:
+                current_app.logger.info(
+                    f"✅ [Orders] Retrieved {len(order_history)} " f"historical orders"
+                )
 
             return jsonify(order_history), 200
 

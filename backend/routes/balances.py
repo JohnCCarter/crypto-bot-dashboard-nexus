@@ -1,8 +1,9 @@
-import logging
-
 from flask import jsonify
 
 from backend.services.balance_service import fetch_balances
+from backend.services.event_logger import (
+    event_logger, should_suppress_routine_log, EventType
+)
 
 
 def register(app):
@@ -30,7 +31,19 @@ def register(app):
                         "available": balance_data["free"][currency],
                     }
                 )
+            
+            # Balance GET requests är routine polling - suppress dem
+            if should_suppress_routine_log("/api/balances", "GET"):
+                pass  # Suppress routine balance polling
+            else:
+                # Om det skulle loggas, använd rätt event type
+                event_logger.log_event(
+                    EventType.PARAMETER_CHANGED,  
+                    f"Balance fetched: {len(result)} currencies"
+                )
+                
             return jsonify(result), 200
         except Exception as e:
-            logging.exception("Fel vid hämtning av saldon i /api/balances:")
+            # FEL ska alltid loggas - de är meningsfulla
+            event_logger.log_api_error("/api/balances", str(e))
             return jsonify({"error": str(e)}), 500

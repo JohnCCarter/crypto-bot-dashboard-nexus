@@ -1,4 +1,5 @@
 import os
+import logging
 
 from dotenv import load_dotenv
 from flask import Flask
@@ -12,6 +13,16 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 app = Flask(__name__)
 CORS(app)
+
+# DRASTISK logging-reducering: Endast WARNING och ERROR
+# Tysta ALL INFO-level spam från alla routes och services
+logging.getLogger().setLevel(logging.WARNING)  # Root logger
+logging.getLogger('backend').setLevel(logging.WARNING)  # Alla backend modules
+logging.getLogger('werkzeug').setLevel(logging.ERROR)  # Flask server logs
+logging.getLogger('app').setLevel(logging.WARNING)  # App-specific logs
+
+# Event_logger ska också bara logga WARNING+ (inte INFO)
+logging.getLogger('event_logger').setLevel(logging.WARNING)
 
 
 # Initialize shared exchange service with API keys from .env
