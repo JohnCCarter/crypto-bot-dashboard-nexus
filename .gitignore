@@ -45,6 +45,12 @@ backend/.venv/
 .pytest_cache/
 backend/__pycache__/
 
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+local.db
+
 # Temporary files and test outputs
 temp/
 flake8_errors.txt
@@ -78,3 +84,7 @@ Thumbs.db
 
 # CI/CD specific
 .github/coverage_reports/
+
+# Test files
+scripts/testing/test_*.py
+!scripts/testing/test_bitfinex_integration.py

@@ -12,5 +12,12 @@ black
 scikit-learn
 matplotlib
 requests
-h11<0.15
+bitfinex-api-py>=3.0.4
 # Lägg till andra huvudpaket du faktiskt använder här
+
+# Development and CI/CD tools
+flake8
+isort
+pytest-cov
+coverage
+pip-tools
