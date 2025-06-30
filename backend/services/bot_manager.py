@@ -5,6 +5,7 @@ import threading
 import time
 from datetime import UTC, datetime
 from typing import Any, Dict, Optional
+from threading import Lock
 
 from backend.persistence.utils import load_bot_state  # NEW IMPORT
 from backend.persistence.utils import save_bot_state
@@ -85,15 +86,20 @@ class ThreadSafeBotState:
 # Global thread-safe bot state instance
 bot_state = ThreadSafeBotState()
 
+# Initialize a lock for start/stop operations
+bot_operation_lock = Lock()
+
 
 def start_bot():
     """Startar tradingboten med faktisk trading logic."""
-    if bot_state.is_running():
-        return {
-            "success": False,
-            "message": "Bot is already running",
-            "status": "running",
-        }
+    with bot_operation_lock:
+        if bot_state.is_running():
+            logger.warning("Bot is already running")
+            return {
+                "success": False,
+                "message": "Bot is already running",
+                "status": "running",
+            }
 
     try:
 
@@ -157,8 +163,14 @@ def start_bot():
 
 def stop_bot():
     """Stoppar tradingboten."""
-    if not bot_state.is_running():
-        return {"success": False, "message": "Bot is not running", "status": "stopped"}
+    with bot_operation_lock:
+        if not bot_state.is_running():
+            logger.warning("Bot is not running")
+            return {
+                "success": False,
+                "message": "Bot is not running",
+                "status": "stopped",
+            }
 
     # Safely stop the bot
     bot_state.set_running(False)
@@ -173,7 +185,11 @@ def stop_bot():
 
     bot_state.set_thread(None)
     logger.info("Trading bot stopped successfully")
-    return {"success": True, "message": "Bot stopped successfully", "status": "stopped"}
+    return {
+        "success": True,
+        "message": "Bot stopped successfully",
+        "status": "stopped",
+    }
 
 
 def get_bot_status():

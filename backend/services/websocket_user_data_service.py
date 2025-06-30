@@ -11,10 +11,11 @@ import hashlib
 import hmac
 import json
 import logging
-import time
+from backend.services.global_nonce_manager import get_global_nonce_manager
+from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 try:
     import websockets
@@ -198,7 +199,6 @@ class Notification:
 
     mts: int
     notification_type: str
-    message_id: int
     notification_info: list
     code: int
     status: str
@@ -208,54 +208,197 @@ class Notification:
 
 class BitfinexUserDataClient:
     """
-    Bitfinex WebSocket client för authenticated user data streams.
-
-    Hanterar:
-    - Order executions (fills)
-    - Live order status updates
-    - Real-time balance changes
-    - Position updates
+    Klient för Bitfinex autentiserade WebSocket API.
+    Hanterar användarspecifik data som order, balances och positioner.
     """
 
     def __init__(self, api_key: str, api_secret: str):
+        """
+        Initiera klienten med API-nycklar.
+        
+        Args:
+            api_key: Bitfinex API-nyckel
+            api_secret: Bitfinex API-hemlighet
+        """
         self.api_key = api_key
         self.api_secret = api_secret
-        self.ws = None
+        self.websocket = None
+        self.connected = False
         self.authenticated = False
-        self.callbacks: Dict[str, List[Callable]] = {
-            "fills": [],
-            "orders": [],
-            "balances": [],
-        }
+        self.fill_callbacks = []
+        self.order_callbacks = []
+        self.balance_callbacks = []
+        self.position_callbacks = []
+        self.margin_callbacks = []
+        self.notification_callbacks = []
+        
+        # Använd den nya BitfinexClientWrapper för WebSocket-hantering
+        self.bitfinex_client = BitfinexClientWrapper(
+            api_key=api_key,
+            api_secret=api_secret,
+            use_rest_auth=True
+        )
+        
+        # Flagga för att indikera om vi använder wrapper eller legacy-kod
+        self.use_wrapper = True
 
     async def connect(self):
-        """Connect and authenticate WebSocket"""
+        """Anslut till Bitfinex WebSocket API och autentisera."""
+        if self.connected:
+            logger.info("Redan ansluten till Bitfinex User Data WebSocket")
+            return
+
         try:
-            self.ws = await websockets.connect("wss://api-pub.bitfinex.com/ws/2")
-
-            # Authenticate connection
+            if self.use_wrapper:
+                # Använd wrapper för att ansluta
+                success = self.bitfinex_client.connect_websocket()
+                if success:
+                    self.connected = True
+                    self.authenticated = self.bitfinex_client.is_ws_authenticated
+                    
+                    # Registrera callbacks för relevanta händelser
+                    self._register_wrapper_callbacks()
+                    
+                    logger.info("Ansluten till Bitfinex User Data WebSocket via wrapper")
+                    return
+                else:
+                    logger.error("Kunde inte ansluta till Bitfinex WebSocket via wrapper")
+                    # Fallback till legacy-kod
+                    self.use_wrapper = False
+            
+            # Legacy-kod om wrapper inte används eller misslyckas
+            if not websockets:
+                raise ImportError("websockets module is required")
+                
+            self.websocket = await websockets.connect("wss://api.bitfinex.com/ws/2")
+            self.connected = True
+            
+            # Autentisera anslutningen
             await self._authenticate()
-
-            # Start message handler
+            
+            # Starta meddelandehantering i bakgrunden
             asyncio.create_task(self._handle_messages())
-
-            logger.info("✅ User data WebSocket connected and authenticated")
-
+            
+            logger.info("Ansluten till Bitfinex User Data WebSocket")
+            
         except Exception as e:
-            logger.error(f"❌ Failed to connect user data WebSocket: {e}")
+            self.connected = False
+            self.authenticated = False
+            logger.error(f"Fel vid anslutning till Bitfinex User Data WebSocket: {e}")
+            raise
+
+    def _register_wrapper_callbacks(self):
+        """Registrera callbacks för wrapper-klienten."""
+        # Registrera callbacks för olika händelsetyper
+        if self.bitfinex_client:
+            # Orderhantering
+            self.bitfinex_client.register_ws_callback('order_new', 
+                                                     self._wrapper_handle_order_new)
+            self.bitfinex_client.register_ws_callback('order_update', 
+                                                     self._wrapper_handle_order_update)
+            self.bitfinex_client.register_ws_callback('order_cancel', 
+                                                     self._wrapper_handle_order_cancel)
+            
+            # Trades/fills
+            self.bitfinex_client.register_ws_callback('trade_execution', 
+                                                     self._wrapper_handle_trade_execution)
+            
+            # Wallet/balances
+            self.bitfinex_client.register_ws_callback('wallet_snapshot', 
+                                                     self._wrapper_handle_wallet_snapshot)
+            self.bitfinex_client.register_ws_callback('wallet_update', 
+                                                     self._wrapper_handle_wallet_update)
+            
+            # Positions
+            self.bitfinex_client.register_ws_callback('position_snapshot', 
+                                                     self._wrapper_handle_position_snapshot)
+            self.bitfinex_client.register_ws_callback('position_new', 
+                                                     self._wrapper_handle_position_new)
+            self.bitfinex_client.register_ws_callback('position_update', 
+                                                     self._wrapper_handle_position_update)
+            self.bitfinex_client.register_ws_callback('position_close', 
+                                                     self._wrapper_handle_position_close)
+            
+            # Margin info
+            self.bitfinex_client.register_ws_callback('margin_info_update', 
+                                                     self._wrapper_handle_margin_info_update)
+            
+            # Notifications
+            self.bitfinex_client.register_ws_callback('notification', 
+                                                     self._wrapper_handle_notification)
+
+    # Wrapper callback-hanterare
+    def _wrapper_handle_order_new(self, data):
+        """Hantera ny order via wrapper."""
+        asyncio.create_task(self._handle_order_new(data))
+    
+    def _wrapper_handle_order_update(self, data):
+        """Hantera orderuppdatering via wrapper."""
+        asyncio.create_task(self._handle_order_update(data))
+    
+    def _wrapper_handle_order_cancel(self, data):
+        """Hantera avbruten order via wrapper."""
+        asyncio.create_task(self._handle_order_cancel(data))
+    
+    def _wrapper_handle_trade_execution(self, data):
+        """Hantera trade execution via wrapper."""
+        asyncio.create_task(self._handle_trade_execution(data))
+    
+    def _wrapper_handle_wallet_snapshot(self, data):
+        """Hantera wallet snapshot via wrapper."""
+        asyncio.create_task(self._handle_wallet_snapshot(data))
+    
+    def _wrapper_handle_wallet_update(self, data):
+        """Hantera wallet update via wrapper."""
+        asyncio.create_task(self._handle_wallet_update(data))
+    
+    def _wrapper_handle_position_snapshot(self, data):
+        """Hantera position snapshot via wrapper."""
+        asyncio.create_task(self._handle_position_snapshot(data))
+    
+    def _wrapper_handle_position_new(self, data):
+        """Hantera ny position via wrapper."""
+        asyncio.create_task(self._handle_position_new(data))
+    
+    def _wrapper_handle_position_update(self, data):
+        """Hantera positionsuppdatering via wrapper."""
+        asyncio.create_task(self._handle_position_update(data))
+    
+    def _wrapper_handle_position_close(self, data):
+        """Hantera stängd position via wrapper."""
+        asyncio.create_task(self._handle_position_close(data))
+    
+    def _wrapper_handle_margin_info_update(self, data):
+        """Hantera margin info update via wrapper."""
+        asyncio.create_task(self._handle_margin_info_update(data))
+    
+    def _wrapper_handle_notification(self, data):
+        """Hantera notifikation via wrapper."""
+        asyncio.create_task(self._handle_notification(data))
 
     async def disconnect(self):
-        """Disconnect WebSocket"""
-        if self.ws:
-            await self.ws.close()
+        """Koppla från Bitfinex WebSocket API."""
+        if not self.connected:
+            return
+            
+        try:
+            if self.use_wrapper and self.bitfinex_client:
+                self.bitfinex_client.disconnect_websocket()
+            elif self.websocket:
+                await self.websocket.close()
+                
+            self.connected = False
             self.authenticated = False
-            logger.info("🔌 User data WebSocket disconnected")
+            logger.info("Frånkopplad från Bitfinex User Data WebSocket")
+        except Exception as e:
+            logger.error(f"Fel vid frånkoppling från Bitfinex User Data WebSocket: {e}")
 
     async def _authenticate(self):
         """Authenticate WebSocket connection"""
         try:
-            # Generate authentication payload
-            nonce = str(int(time.time() * 1000000))
+            # Generate authentication payload using global nonce manager
+            global_nonce_manager = get_global_nonce_manager()
+            nonce = global_nonce_manager.get_websocket_nonce(self.api_key)
             auth_payload = f"AUTH{nonce}"
             signature = hmac.new(
                 self.api_secret.encode(), auth_payload.encode(), hashlib.sha384
@@ -269,7 +412,7 @@ class BitfinexUserDataClient:
                 "authNonce": nonce,
             }
 
-            await self.ws.send(json.dumps(auth_message))
+            await self.websocket.send(json.dumps(auth_message))
 
         except Exception as e:
             logger.error(f"❌ Authentication failed: {e}")
@@ -277,7 +420,7 @@ class BitfinexUserDataClient:
     async def _handle_messages(self):
         """Handle incoming WebSocket messages"""
         try:
-            async for message in self.ws:
+            async for message in self.websocket:
                 try:
                     data = json.loads(message)
                     await self._process_message(data)
@@ -416,7 +559,7 @@ class BitfinexUserDataClient:
                 )
 
                 # Notify all fill callbacks
-                for callback in self.callbacks["fills"]:
+                for callback in self.fill_callbacks:
                     await self._safe_callback(callback, fill)
 
         except Exception as e:
@@ -440,7 +583,7 @@ class BitfinexUserDataClient:
                 )
 
                 # Notify all order callbacks
-                for callback in self.callbacks["orders"]:
+                for callback in self.order_callbacks:
                     await self._safe_callback(callback, order)
 
         except Exception as e:
@@ -459,7 +602,7 @@ class BitfinexUserDataClient:
                 )
 
                 # Notify all balance callbacks
-                for callback in self.callbacks["balances"]:
+                for callback in self.balance_callbacks:
                     await self._safe_callback(callback, balance)
 
         except Exception as e:
@@ -482,7 +625,7 @@ class BitfinexUserDataClient:
                         )
 
                         # Notify all balance callbacks
-                        for callback in self.callbacks["balances"]:
+                        for callback in self.balance_callbacks:
                             await self._safe_callback(callback, balance)
 
                 logger.info(
@@ -512,7 +655,7 @@ class BitfinexUserDataClient:
                         )
 
                         # Notify all order callbacks
-                        for callback in self.callbacks["orders"]:
+                        for callback in self.order_callbacks:
                             await self._safe_callback(callback, order)
 
                 logger.info(
@@ -543,9 +686,9 @@ class BitfinexUserDataClient:
                         )
 
                         # Notify position callbacks (add to callbacks if needed)
-                        if "positions" not in self.callbacks:
-                            self.callbacks["positions"] = []
-                        for callback in self.callbacks["positions"]:
+                        if "positions" not in self.position_callbacks:
+                            self.position_callbacks["positions"] = []
+                        for callback in self.position_callbacks["positions"]:
                             await self._safe_callback(callback, position)
 
                 logger.info(
@@ -575,9 +718,9 @@ class BitfinexUserDataClient:
                             timestamp=datetime.fromtimestamp(offer[2] / 1000),
                         )
 
-                        if "funding_offers" not in self.callbacks:
-                            self.callbacks["funding_offers"] = []
-                        for callback in self.callbacks["funding_offers"]:
+                        if "funding_offers" not in self.position_callbacks:
+                            self.position_callbacks["funding_offers"] = []
+                        for callback in self.position_callbacks["funding_offers"]:
                             await self._safe_callback(callback, funding_offer)
 
                 logger.info(
@@ -612,9 +755,9 @@ class BitfinexUserDataClient:
                             timestamp=datetime.fromtimestamp(credit[3] / 1000),
                         )
 
-                        if "funding_credits" not in self.callbacks:
-                            self.callbacks["funding_credits"] = []
-                        for callback in self.callbacks["funding_credits"]:
+                        if "funding_credits" not in self.position_callbacks:
+                            self.position_callbacks["funding_credits"] = []
+                        for callback in self.position_callbacks["funding_credits"]:
                             await self._safe_callback(callback, funding_credit)
 
                 logger.info(
@@ -649,9 +792,9 @@ class BitfinexUserDataClient:
                             timestamp=datetime.fromtimestamp(loan[3] / 1000),
                         )
 
-                        if "funding_loans" not in self.callbacks:
-                            self.callbacks["funding_loans"] = []
-                        for callback in self.callbacks["funding_loans"]:
+                        if "funding_loans" not in self.position_callbacks:
+                            self.position_callbacks["funding_loans"] = []
+                        for callback in self.position_callbacks["funding_loans"]:
                             await self._safe_callback(callback, funding_loan)
 
                 logger.info(
@@ -680,9 +823,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.now(),
                 )
 
-                if "positions" not in self.callbacks:
-                    self.callbacks["positions"] = []
-                for callback in self.callbacks["positions"]:
+                if "positions" not in self.position_callbacks:
+                    self.position_callbacks["positions"] = []
+                for callback in self.position_callbacks["positions"]:
                     await self._safe_callback(callback, position)
 
                 logger.info(f"✅ New position: {position.symbol}")
@@ -707,9 +850,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.now(),
                 )
 
-                if "positions" not in self.callbacks:
-                    self.callbacks["positions"] = []
-                for callback in self.callbacks["positions"]:
+                if "positions" not in self.position_callbacks:
+                    self.position_callbacks["positions"] = []
+                for callback in self.position_callbacks["positions"]:
                     await self._safe_callback(callback, position)
 
                 logger.info(f"✅ Updated position: {position.symbol}")
@@ -734,9 +877,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.now(),
                 )
 
-                if "positions" not in self.callbacks:
-                    self.callbacks["positions"] = []
-                for callback in self.callbacks["positions"]:
+                if "positions" not in self.position_callbacks:
+                    self.position_callbacks["positions"] = []
+                for callback in self.position_callbacks["positions"]:
                     await self._safe_callback(callback, position)
 
                 logger.info(f"✅ Closed position: {position.symbol}")
@@ -758,9 +901,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.now(),
                 )
 
-                if "margin_info" not in self.callbacks:
-                    self.callbacks["margin_info"] = []
-                for callback in self.callbacks["margin_info"]:
+                if "margin_info" not in self.margin_callbacks:
+                    self.margin_callbacks["margin_info"] = []
+                for callback in self.margin_callbacks["margin_info"]:
                     await self._safe_callback(callback, margin_info)
 
                 logger.info(f"✅ Margin info update: {margin_info.symbol}")
@@ -777,9 +920,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.now(),
                 )
 
-                if "balance_info" not in self.callbacks:
-                    self.callbacks["balance_info"] = []
-                for callback in self.callbacks["balance_info"]:
+                if "balance_info" not in self.balance_callbacks:
+                    self.balance_callbacks["balance_info"] = []
+                for callback in self.balance_callbacks["balance_info"]:
                     await self._safe_callback(callback, balance_info)
 
                 logger.info(f"✅ Balance update: Total AUM {balance_info.total_aum}")
@@ -799,9 +942,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.now(),
                 )
 
-                if "funding_info" not in self.callbacks:
-                    self.callbacks["funding_info"] = []
-                for callback in self.callbacks["funding_info"]:
+                if "funding_info" not in self.position_callbacks:
+                    self.position_callbacks["funding_info"] = []
+                for callback in self.position_callbacks["funding_info"]:
                     await self._safe_callback(callback, funding_info)
 
                 logger.info(f"✅ Funding info update: {funding_info.symbol}")
@@ -825,17 +968,17 @@ class BitfinexUserDataClient:
 
     async def subscribe_fills(self, callback: Callable):
         """Subscribe to order execution updates"""
-        self.callbacks["fills"].append(callback)
+        self.fill_callbacks.append(callback)
         logger.info("✅ Subscribed to order fills")
 
     async def subscribe_orders(self, callback: Callable):
         """Subscribe to live order status updates"""
-        self.callbacks["orders"].append(callback)
+        self.order_callbacks.append(callback)
         logger.info("✅ Subscribed to order updates")
 
     async def subscribe_balances(self, callback: Callable):
         """Subscribe to live balance updates"""
-        self.callbacks["balances"].append(callback)
+        self.balance_callbacks.append(callback)
         logger.info("✅ Subscribed to balance updates")
 
     async def _safe_callback(self, callback, data):
@@ -883,9 +1026,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.fromtimestamp(offer_data[2] / 1000),
                 )
 
-                if "funding_offers" not in self.callbacks:
-                    self.callbacks["funding_offers"] = []
-                for callback in self.callbacks["funding_offers"]:
+                if "funding_offers" not in self.position_callbacks:
+                    self.position_callbacks["funding_offers"] = []
+                for callback in self.position_callbacks["funding_offers"]:
                     await self._safe_callback(callback, funding_offer)
 
                 logger.info(f"✅ New funding offer: {funding_offer.id}")
@@ -924,9 +1067,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.fromtimestamp(credit_data[3] / 1000),
                 )
 
-                if "funding_credits" not in self.callbacks:
-                    self.callbacks["funding_credits"] = []
-                for callback in self.callbacks["funding_credits"]:
+                if "funding_credits" not in self.position_callbacks:
+                    self.position_callbacks["funding_credits"] = []
+                for callback in self.position_callbacks["funding_credits"]:
                     await self._safe_callback(callback, funding_credit)
 
                 logger.info(f"✅ New funding credit: {funding_credit.id}")
@@ -965,9 +1108,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.fromtimestamp(loan_data[3] / 1000),
                 )
 
-                if "funding_loans" not in self.callbacks:
-                    self.callbacks["funding_loans"] = []
-                for callback in self.callbacks["funding_loans"]:
+                if "funding_loans" not in self.position_callbacks:
+                    self.position_callbacks["funding_loans"] = []
+                for callback in self.position_callbacks["funding_loans"]:
                     await self._safe_callback(callback, funding_loan)
 
                 logger.info(f"✅ New funding loan: {funding_loan.id}")
@@ -998,9 +1141,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.fromtimestamp(trade_data[2] / 1000),
                 )
 
-                if "funding_trades" not in self.callbacks:
-                    self.callbacks["funding_trades"] = []
-                for callback in self.callbacks["funding_trades"]:
+                if "funding_trades" not in self.position_callbacks:
+                    self.position_callbacks["funding_trades"] = []
+                for callback in self.position_callbacks["funding_trades"]:
                     await self._safe_callback(callback, funding_trade)
 
                 logger.info(f"✅ Funding trade execution: {funding_trade.id}")
@@ -1020,7 +1163,6 @@ class BitfinexUserDataClient:
                 notification = Notification(
                     mts=int(notification_data[0]),
                     notification_type=notification_data[1],
-                    message_id=int(notification_data[2]),
                     notification_info=(
                         notification_data[4] if len(notification_data) > 4 else []
                     ),
@@ -1032,9 +1174,9 @@ class BitfinexUserDataClient:
                     timestamp=datetime.fromtimestamp(notification_data[0] / 1000),
                 )
 
-                if "notifications" not in self.callbacks:
-                    self.callbacks["notifications"] = []
-                for callback in self.callbacks["notifications"]:
+                if "notifications" not in self.notification_callbacks:
+                    self.notification_callbacks["notifications"] = []
+                for callback in self.notification_callbacks["notifications"]:
                     await self._safe_callback(callback, notification)
 
                 logger.info(f"✅ Notification: {notification.notification_type}")

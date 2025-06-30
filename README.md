@@ -10,28 +10,28 @@
 
 ---
 
-## 📋 **Table of Contents**
+## 📋 Table of Contents
 
-1. [🎯 Project Overview](#-project-overview)
-2. [⚡ Quick Start](#-quick-start)  
-3. [🏗️ Architecture](#️-architecture)
-4. [📁 Project Structure](#-project-structure)
-5. [🔧 Installation & Setup](#-installation--setup)
-6. [🚀 Running the Application](#-running-the-application)
-7. [🧪 Testing](#-testing)
-8. [📡 API Documentation](#-api-documentation)
-9. [🎛️ Configuration](#️-configuration)
-10. [📊 Trading Strategies](#-trading-strategies)
-11. [🔍 Troubleshooting](#-troubleshooting)
-12. [🤝 Contributing](#-contributing)
+1. [🎯 Project Overview](#project-overview)
+2. [⚡ Quick Start](#quick-start)  
+3. [🏗 Architecture](#architecture)
+4. [📁 Project Structure](#project-structure)
+5. [🔧 Installation & Setup](#installation--setup)
+6. [🚀 Running the Application](#running-the-application)
+7. [🧪 Testing](#testing)
+8. [📡 API Documentation](#api-documentation)
+9. [⚙️ Configuration](#configuration)
+10. [📊 Trading Strategies](#trading-strategies)
+11. [🔍 Troubleshooting](#troubleshooting)
+12. [🤝 Contributing](#contributing)
 
 ---
 
-## 🎯 **Project Overview**
+## 🎯 Project Overview
 
 **Crypto Trading Bot Dashboard Nexus** is a sophisticated full-stack application that combines algorithmic trading with real-time market data visualization. Built with modern technologies, it provides a complete trading ecosystem with:
 
-### ✨ **Key Features**
+### ✨ Key Features
 
 - 🔴 **Live Trading**: Real-time Bitfinex API integration with WebSocket feeds
 - 📊 **Advanced Analytics**: Technical indicators, backtesting, and probability analysis  
@@ -42,13 +42,13 @@
 - 🧪 **Comprehensive Testing**: 94+ automated tests with 99% coverage
 - 🐳 **Docker Ready**: Complete containerization support
 
-### 🎯 **Supported Exchanges**
+### 🎯 Supported Exchanges
 - **Bitfinex** (Primary) - Full REST + WebSocket integration
 - Extensible architecture for additional exchanges
 
 ---
 
-## ⚡ **Quick Start**
+## ⚡ Quick Start
 
 Get up and running in under 5 minutes:
 
@@ -77,7 +77,7 @@ Open **http://localhost:8080** for the dashboard and **http://localhost:5000** f
 
 ---
 
-## 🏗️ **Architecture**
+## 🏗 Architecture
 
 ```mermaid
 graph TB
@@ -91,7 +91,7 @@ graph TB
     Bot --> Strategy[Strategy Engine]
 ```
 
-### **Technology Stack**
+### Technology Stack
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
@@ -104,7 +104,7 @@ graph TB
 
 ---
 
-## 📁 **Project Structure**
+## 📁 Project Structure
 
 ```
 crypto-bot-dashboard-nexus/
@@ -127,11 +127,11 @@ crypto-bot-dashboard-nexus/
 │   ├── guides/                # Implementation and usage guides
 │   ├── reports/               # Analysis and status reports
 │   └── solutions/             # Problem solutions and fixes
-├── scripts/                   # 🛠️ Development & Deployment Scripts
+├── scripts/                   # 🛠 Development & Deployment Scripts
 │   ├── deployment/            # Server startup scripts
 │   ├── development/           # Code formatting and utilities
 │   └── testing/               # Test automation tools
-├── temp/                      # 🗂️ Temporary files (Git ignored)
+├── temp/                      # 🗂 Temporary files (Git ignored)
 ├── public/                    # Static assets
 ├── docker-compose.yml         # 🐳 Multi-container setup
 └── README.md                  # 📖 This file
@@ -139,23 +139,23 @@ crypto-bot-dashboard-nexus/
 
 ---
 
-## 🔧 **Installation & Setup**
+## 🔧 Installation & Setup
 
-### **Prerequisites**
+### Prerequisites
 
 - **Python 3.13+** ([Download](https://www.python.org/downloads/))
 - **Node.js 18+** ([Download](https://nodejs.org/))
 - **Git** ([Download](https://git-scm.com/))
 - **Bitfinex Account** with API access
 
-### **Step 1: Clone Repository**
+### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/your-username/crypto-bot-dashboard-nexus.git
 cd crypto-bot-dashboard-nexus
 ```
 
-### **Step 2: Backend Setup**
+### Step 2: Backend Setup
 
 ```bash
 # Create virtual environment
@@ -169,7 +169,7 @@ pip install -r backend/requirements.txt
 pytest backend/tests/ -v
 ```
 
-### **Step 3: Frontend Setup**
+### Step 3: Frontend Setup
 
 ```bash
 # Install Node.js dependencies
@@ -179,7 +179,7 @@ npm install
 npm run test
 ```
 
-### **Step 4: Environment Configuration**
+### Step 4: Environment Configuration
 
 ```bash
 # Copy environment template
@@ -207,16 +207,16 @@ DEBUG=true
 
 ---
 
-## 🚀 **Running the Application**
+## 🚀 Running the Application
 
-### **Option A: Quick Development Start (Recommended)**
+### Option A: Quick Development Start (Recommended)
 
 ```bash
 # ⚡ Fast start - runs from project root
 ./scripts/deployment/start-dev.sh
 ```
 
-### **Option B: Flexible Server Management**
+### Option B: Flexible Server Management
 
 ```bash
 # Start both servers with health checks
@@ -229,7 +229,7 @@ DEBUG=true
 ./scripts/deployment/start-servers.sh frontend
 ```
 
-### **Option C: Windows PowerShell**
+### Option C: Windows PowerShell
 
 ```powershell
 # Windows users with PowerShell
@@ -239,16 +239,16 @@ DEBUG=true
 .\scripts\deployment\start-servers.ps1 backend
 ```
 
-### **Option D: Manual Start (For Debugging)**
+### Option D: Manual Start (For Debugging)
 
 ```bash
 # ⚠️ CRITICAL: Always run from project root!
-cd crypto-bot-dashboard-nexus-1
+cd crypto-bot-dashboard-nexus
 
 # Terminal 1 - Backend
 export FLASK_APP=backend/app.py
 export FLASK_ENV=development
-source backend/venv/Scripts/activate  # Windows Git Bash
+source venv/Scripts/activate  # Windows Git Bash
 python -m flask run --host=0.0.0.0 --port=5000
 
 # Terminal 2 - Frontend  
@@ -257,7 +257,7 @@ npm run dev
 
 > **🚨 Important:** Flask must run from project root for SQLite database path resolution!
 
-### **Option B: Docker Deployment**
+### Docker Deployment
 
 ```bash
 # Build and start all services
@@ -267,7 +267,7 @@ docker-compose up --build
 docker-compose up -d
 ```
 
-### **Access Points**
+### Access Points
 
 | Service | URL | Description |
 |---------|-----|-------------|
@@ -277,9 +277,9 @@ docker-compose up -d
 
 ---
 
-## 🧪 **Testing**
+## 🧪 Testing
 
-### **Backend Testing**
+### Backend Testing
 
 ```bash
 # Run all tests with coverage
@@ -301,7 +301,7 @@ pytest backend/tests/test_routes.py -v        # API endpoints
 - ✅ Probability analysis systems
 - ✅ Backtest engine and optimization
 
-### **Frontend Testing**
+### Frontend Testing
 
 ```bash
 # Run component tests
@@ -322,15 +322,15 @@ npm run lint
 
 ---
 
-## 📡 **API Documentation**
+## 📡 API Documentation
 
-### **Authentication Endpoints**
+### Authentication Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/status` | System health and status |
 
-### **Trading Endpoints**
+### Trading Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -340,7 +340,7 @@ npm run lint
 | POST | `/api/orders` | Place new order |
 | GET | `/api/orders/history` | Order history |
 
-### **Bot Control Endpoints**
+### Bot Control Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -348,7 +348,7 @@ npm run lint
 | POST | `/api/bot/stop` | Stop trading bot |
 | GET | `/api/bot/status` | Bot status and metrics |
 
-### **Configuration Endpoints**
+### Configuration Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -356,7 +356,7 @@ npm run lint
 | POST | `/api/config` | Update configuration |
 | GET | `/api/strategies` | Available strategies |
 
-### **Example API Usage**
+### Example API Usage
 
 ```bash
 # Get account balances
@@ -378,9 +378,9 @@ curl -X POST \
 
 ---
 
-## 🎛️ **Configuration**
+## ⚙️ Configuration
 
-### **Trading Configuration**
+### Trading Configuration
 
 The system uses `backend/config.json` with JSON Schema validation (`backend/config.schema.json`):
 
@@ -398,239 +398,213 @@ The system uses `backend/config.json` with JSON Schema validation (`backend/conf
   },
   "trading_window": {
     "start_hour": 0,
-    "end_hour": 24,
-    "max_trades_per_day": 5
+    "end_hour": 23
   },
-  "risk": {
-    "max_daily_loss": 2,
-    "lookback": 5,
-    "stop_loss_percent": 2,
-    "take_profit_percent": 2,
-    "risk_per_trade": 0.02
-  },
-  "notifications": {
-    "email_enabled": true,
-    "smtp_server": "smtp.gmail.com",
-    "smtp_port": 465,
-    "sender": "your-email@example.com",
-    "receiver": "alerts@example.com"
+  "risk_management": {
+    "max_position_size": 0.1,
+    "stop_loss_percentage": 0.02,
+    "take_profit_percentage": 0.04,
+    "daily_loss_limit": 0.05
   }
 }
 ```
 
-### **Configuration Validation**
+### Environment Variables
 
-- ✅ JSON Schema validation ensures data integrity
-- ✅ Runtime validation with error reporting  
-- ✅ Hot-reload support for development
-- ✅ Environment-specific overrides
+Create `.env` file from `.env.example`:
+
+```env
+# Required - Bitfinex API
+BITFINEX_API_KEY=your_api_key
+BITFINEX_API_SECRET=your_api_secret
+
+# Optional - Database
+DATABASE_URL=sqlite:///./local.db
+
+# Optional - Supabase
+SUPABASE_URL=your_url
+SUPABASE_ANON_KEY=your_key
+
+# Application
+ENVIRONMENT=development
+DEBUG=true
+FLASK_ENV=development
+```
 
 ---
 
-## 📊 **Trading Strategies**
+## 📊 Trading Strategies
 
-### **Built-in Strategies**
+### Available Strategies
 
-| Strategy | Description | Indicators Used |
-|----------|-------------|----------------|
-| **EMA Crossover** | Classic moving average crossover | EMA Fast/Slow |
-| **RSI Strategy** | Overbought/oversold detection | RSI, Volume |
-| **FVG Strategy** | Fair Value Gap pattern trading | Price gaps, Volume |
-| **Sample Strategy** | Template for custom strategies | Configurable |
+| Strategy | Description | Parameters |
+|----------|-------------|------------|
+| **EMA Crossover** | Uses fast/slow EMA crossovers | `ema_fast`, `ema_slow` |
+| **RSI Strategy** | Overbought/oversold RSI signals | `rsi_period`, `rsi_overbought`, `rsi_oversold` |
+| **FVG Strategy** | Fair Value Gap pattern detection | `atr_multiplier`, `volume_multiplier` |
+| **Sample Strategy** | Template for custom strategies | Configurable parameters |
 
-### **Creating Custom Strategies**
+### Strategy Implementation
 
-All strategies must implement the standard interface:
+Each strategy must implement the interface:
 
 ```python
 def run_strategy(data: pd.DataFrame) -> TradeSignal:
     """
-    Implement your trading logic here.
+    Execute trading strategy logic.
     
     Args:
-        data: Historical price data (OHLCV format)
+        data: OHLCV price data with indicators
         
     Returns:
-        TradeSignal with action ('buy', 'sell', 'hold') and confidence (0-1)
+        TradeSignal: BUY, SELL, or HOLD
     """
-    # Your strategy logic here
-    return TradeSignal(action='hold', confidence=0.5)
+    # Strategy implementation
+    pass
 ```
 
-### **Strategy Development Guidelines**
+### Backtesting
 
-1. **Stateless Functions**: Strategies should be pure functions
-2. **Type Annotations**: Use proper type hints for all parameters  
-3. **Error Handling**: Implement robust error handling
-4. **Testing**: Write comprehensive tests for all scenarios
-5. **Documentation**: Include clear docstrings and examples
+```bash
+# Run strategy backtest
+curl -X POST \
+     -H "Content-Type: application/json" \
+     -d '{"strategy":"ema_crossover","symbol":"BTC/USD","timeframe":"1h"}' \
+     http://localhost:5000/api/backtest
+```
 
 ---
 
-## 🔍 **Troubleshooting**
+## 🔍 Troubleshooting
 
-### **Common Issues**
+### Common Issues
 
-#### 🔴 **Server Start Issues (SOLVED)**
-
+#### Backend Won't Start
 ```bash
-# Problem: Flask SQLite database errors
-# Error: "sqlalchemy.exc.OperationalError: unable to open database file"
-# Solution: Always run Flask from project root!
+# Check if running from project root
+pwd  # Should show crypto-bot-dashboard-nexus
 
-# ❌ WRONG: This fails
-cd backend && flask run
+# Activate virtual environment
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
 
-# ✅ CORRECT: This works  
-cd crypto-bot-dashboard-nexus-1  # Project root
+# Check Flask app path
 export FLASK_APP=backend/app.py
-flask run --host=0.0.0.0 --port=5000
-
-# Problem: Frontend proxy errors (ECONNREFUSED)
-# Error: "http proxy error: /api/balances"
-# Solution: Ensure backend runs on port 5000 from project root
-./start-servers.sh backend  # Use our start scripts!
 ```
 
-#### 🔴 **Virtual Environment Issues**
-
+#### Frontend Proxy Errors
 ```bash
-# Problem: ModuleNotFoundError
-# Solution: Ensure virtual environment is activated
+# Ensure backend is running on port 5000
+curl http://localhost:5000/api/status
+
+# Check Vite proxy configuration in vite.config.ts
+```
+
+#### Database Issues
+```bash
+# Reset SQLite database
+rm local.db
+python -c "from backend.app import create_app; create_app()"
+```
+
+#### Virtual Environment Issues
+```bash
+# Recreate virtual environment
+rm -rf venv
+python3 -m venv venv
 source venv/bin/activate
 pip install -r backend/requirements.txt
-
-# Problem: Python version mismatch
-# Solution: Use Python 3.13+
-python3 --version
-python3 -m venv venv
 ```
 
-#### 🔴 **API Connection Issues**
+### Debug Mode
+
+Enable debug logging:
+
+```env
+# In .env file
+DEBUG=true
+FLASK_DEBUG=true
+```
+
+### Health Checks
 
 ```bash
-# Problem: Bitfinex authentication errors
-# Solution: Verify API keys in .env file
-echo $BITFINEX_API_KEY
-echo $BITFINEX_API_SECRET
+# Backend health
+curl http://localhost:5000/api/status
 
-# Problem: Rate limiting
-# Solution: Check rate limits and implement backoff
-tail -f backend/logs/api.log
+# Frontend health
+curl http://localhost:8080
+
+# WebSocket connectivity
+# Check browser console for WebSocket errors
 ```
-
-#### 🔴 **Frontend Build Issues**
-
-```bash
-# Problem: Node modules errors
-# Solution: Clean install
-rm -rf node_modules package-lock.json
-npm install
-
-# Problem: TypeScript errors
-# Solution: Check TypeScript configuration
-npm run type-check
-```
-
-#### 🔴 **Docker Issues**
-
-```bash
-# Problem: Container build failures
-# Solution: Clean rebuild
-docker-compose down
-docker system prune -a
-docker-compose up --build
-
-# Problem: Port conflicts
-# Solution: Change ports in docker-compose.yml
-```
-
-### **Debugging Tools**
-
-```bash
-# Backend debugging
-FLASK_DEBUG=1 flask run
-
-# Frontend debugging  
-npm run dev:debug
-
-# API testing
-curl -v http://localhost:5000/api/status
-
-# Log monitoring
-tail -f backend/logs/*.log
-```
-
-### **Performance Optimization**
-
-- **Backend**: Use Redis for caching market data
-- **Frontend**: Implement React.memo for expensive components
-- **Database**: Index frequently queried columns
-- **WebSocket**: Implement connection pooling
 
 ---
 
-## 📚 **Documentation**
+## 🤝 Contributing
 
-All project documentation is now organized in the `docs/` folder with comprehensive indexing:
-
-### 📁 **[docs/](./docs/)** - Complete Documentation Index
-
-- **📋 [decisions/](./docs/decisions/)** - Architecture Decision Records (ADRs)
-- **🚀 [development/](./docs/development/)** - Development roadmaps and plans
-- **📖 [guides/](./docs/guides/)** - Implementation guides and how-tos (7 guides)
-- **📊 [reports/](./docs/reports/)** - Status reports and analysis (16 reports)
-- **🔧 [solutions/](./docs/solutions/)** - Technical solutions and fixes (9 solutions)
-
-#### 🔥 **Key Documents**
-- **[Development Roadmap](./docs/development/DEVELOPMENT_ROADMAP.md)** - Complete plan to production
-- **[Quick Deployment Guide](./docs/guides/QUICK_DEPLOYMENT_GUIDE.md)** - Fast deployment procedures
-- **[Debug Guide](./docs/guides/DEBUG_GUIDE.md)** - Troubleshooting procedures
-- **[API Authentication Report](./docs/reports/API_AUTH_VERIFICATION.md)** - API verification status
-- **[Server Start Solution](./docs/solutions/SERVER_START_SOLUTION.md)** - Startup troubleshooting
-
-### 🛠️ **[scripts/](./scripts/)** - Tools & Utilities
-
-- **🚀 [deployment/](./scripts/deployment/)** - Server startup scripts (3 scripts)
-- **🧪 [testing/](./scripts/testing/)** - Test and verification tools (7 tools)
-- **🛠️ [development/](./scripts/development/)** - Development utilities (2 tools)
-
-See **[Scripts Documentation](./scripts/README.md)** for complete usage guide with examples.
-
----
-
-## 🤝 **Contributing**
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### **Development Workflow**
+### Development Workflow
 
 1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Test** thoroughly (`pytest backend/tests/ && npm test`)
-5. **Push** to branch (`git push origin feature/amazing-feature`)
-6. **Open** a Pull Request
+2. **Create** feature branch: `git checkout -b feature/amazing-feature`
+3. **Follow** coding standards (see `.cursor/rules/`)
+4. **Write** tests for new functionality
+5. **Run** full test suite: `pytest backend/tests/ && npm test`
+6. **Commit** with conventional format: `feat: add amazing feature`
+7. **Push** to branch: `git push origin feature/amazing-feature`
+8. **Create** Pull Request
 
-### **Code Standards**
+### Code Standards
 
-- **Python**: Follow PEP 8, use `black` formatter
-- **TypeScript**: Follow ESLint configuration
-- **Commits**: Use conventional commit format
-- **Tests**: Maintain 100% test coverage for new features
+- **Python**: PEP 8, Black formatting, type hints
+- **TypeScript**: Strict mode, ESLint, Prettier
+- **Tests**: 80%+ coverage requirement
+- **Documentation**: JSDoc for functions, docstrings for Python
+
+### Testing Requirements
+
+```bash
+# Backend tests must pass
+pytest backend/tests/ -v --cov=backend --cov-report=term-missing
+
+# Frontend tests must pass
+npm run test
+
+# Linting must pass
+npm run lint
+flake8 backend/
+```
+
+### Project Structure Guidelines
+
+- **Routes**: RESTful API design only
+- **Services**: Business logic separation
+- **Components**: Reusable React components
+- **Types**: Comprehensive TypeScript definitions
 
 ---
 
-## 📜 **License**
+## 📄 License
 
-None
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## ⭐ **Support**
+## 🙏 Acknowledgments
 
-If you find this project helpful, please consider giving it a star! ⭐
+- **Bitfinex** for comprehensive API and WebSocket support
+- **React + TypeScript** community for excellent tooling
+- **Flask** ecosystem for robust backend framework
+- **ccxt** library for exchange integration
 
+---
 
-**Built with ❤️ by the Crypto Trading Community**
-  
+## 📞 Support
+
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/your-username/crypto-bot-dashboard-nexus/issues)
+- **Wiki**: [Project Wiki](https://github.com/your-username/crypto-bot-dashboard-nexus/wiki)
+
+---
+
+**🚀 Happy Trading!** Built with ❤️ for the crypto community.

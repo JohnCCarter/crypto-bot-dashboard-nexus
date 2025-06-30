@@ -13,7 +13,7 @@ interface BotControlProps {
 }
 
 export function BotControl({ status, onStatusChange }: BotControlProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const getStatusColor = (status: string) => {
@@ -31,69 +31,36 @@ export function BotControl({ status, onStatusChange }: BotControlProps) {
     return `${hours}h ${minutes}m`;
   };
 
-  const handleToggleBot = async () => {
-    const action = status.status === 'running' ? 'stop' : 'start';
-    
-    console.log(`🤖 [BotControl] User clicked ${action.toUpperCase()} button`);
-    console.log(`🤖 [BotControl] Current bot status: ${status.status}`);
-    console.log(`🤖 [BotControl] Bot uptime: ${status.uptime}s`);
-    console.log(`🤖 [BotControl] Timestamp: ${new Date().toISOString()}`);
-    
-    setIsLoading(true);
-    
+  const handleButtonClick = async (action: string) => {
+    setLoading(true);
     try {
+      console.log(`🤖 [BotControl] User clicked ${action.toUpperCase()} button`);
+      console.log(`🤖 [BotControl] Current bot status: ${status.status}`);
+      console.log(`🤖 [BotControl] Bot uptime: ${status.uptime}s`);
+      console.log(`🤖 [BotControl] Timestamp: ${new Date().toISOString()}`);
+
       console.log(`🤖 [BotControl] Sending ${action} request to API...`);
-      
-      const response = status.status === 'running' 
-        ? await api.stopBot()
-        : await api.startBot();
-      
-      console.log(`🤖 [BotControl] API Response received:`, response);
-      
-      if (response.success) {
+      const response = await fetch(`/api/bot/${action}`, { method: 'POST' });
+      const data = await response.json();
+
+      console.log(`✅ [BotControl] API Response received:`, data);
+      if (data.success) {
         console.log(`✅ [BotControl] Bot ${action} operation successful!`);
-        console.log(`✅ [BotControl] Server message: ${response.message}`);
-        
-        // Log bot status change using trading logger
-        if (action === 'start') {
-          logger.botActivated();
-        } else {
-          logger.botDeactivated();
-        }
-        
-        toast({
-          title: "Success",
-          description: response.message,
-        });
-        
-        console.log(`🤖 [BotControl] Triggering status refresh...`);
+        console.log(`✅ [BotControl] Server message: ${data.message}`);
         onStatusChange();
       } else {
         console.error(`❌ [BotControl] Bot ${action} failed - response.success = false`);
-        console.error(`❌ [BotControl] Server message: ${response.message || 'No message provided'}`);
-        
-        logger.botError(action, response.message);
-        throw new Error(response.message);
+        console.error(`❌ [BotControl] Server message: ${data.message || 'No message provided'}`);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
       console.error(`❌ [BotControl] Bot ${action} operation failed!`);
       console.error(`❌ [BotControl] Error:`, error);
       console.error(`❌ [BotControl] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
-      console.error(`❌ [BotControl] Error message: ${errorMessage}`);
+      console.error(`❌ [BotControl] Error message: ${error.message}`);
       console.error(`❌ [BotControl] Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
-      
-      logger.botError(action, errorMessage);
-      
-      toast({
-        title: "Bot Control Error",
-        description: `Failed to toggle bot status: ${errorMessage}`,
-        variant: "destructive",
-      });
     } finally {
+      setLoading(false);
       console.log(`🤖 [BotControl] Bot ${action} operation completed (loading=false)`);
-      setIsLoading(false);
     }
   };
 
@@ -118,15 +85,18 @@ export function BotControl({ status, onStatusChange }: BotControlProps) {
         </div>
         
         <Button 
-          onClick={handleToggleBot}
-          disabled={isLoading}
-          className={`w-full ${
-            status.status === 'running' 
-              ? 'bg-red-600 hover:bg-red-700' 
-              : 'bg-green-600 hover:bg-green-700'
-          }`}
+          onClick={() => handleButtonClick('start')}
+          disabled={loading || status.status === 'running'}
+          className={`w-full bg-green-600 hover:bg-green-700`}
         >
-          {isLoading ? 'Processing...' : status.status === 'running' ? 'Stop Bot' : 'Start Bot'}
+          {loading ? 'Processing...' : 'Start Bot'}
+        </Button>
+        <Button 
+          onClick={() => handleButtonClick('stop')}
+          disabled={loading || status.status === 'stopped'}
+          className={`w-full bg-red-600 hover:bg-red-700`}
+        >
+          {loading ? 'Processing...' : 'Stop Bot'}
         </Button>
       </CardContent>
     </Card>

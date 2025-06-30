@@ -276,8 +276,14 @@ def register(app):
             symbol = request.args.get("symbol")
             limit = int(request.args.get("limit", 50))
 
+            # Convert symbol to Bitfinex format if provided
+            symbols = None
+            if symbol:
+                bitfinex_symbol = convert_ui_to_trading(symbol)
+                log_symbol_conversion(symbol, bitfinex_symbol, "order_history")
+                symbols = [bitfinex_symbol]
+
             # Fetch order history from Bitfinex using shared service
-            symbols = [symbol] if symbol else None
             order_history = exchange_service.fetch_order_history(
                 symbols=symbols, limit=limit
             )

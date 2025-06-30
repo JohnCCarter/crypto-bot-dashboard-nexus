@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 from flask import current_app
 
 from backend.services.exchange import ExchangeError
+from backend.services.cache_service import get_cache_service
 
 
 def get_shared_exchange_service():
@@ -78,7 +79,7 @@ def get_position_type_from_metadata(symbol: str) -> str:
 
 def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """
-    Fetch live positions from Bitfinex using hybrid approach.
+    Fetch live positions from Bitfinex using hybrid approach with caching.
 
     For Bitfinex SPOT trading, we convert non-zero cryptocurrency balances
     into "position" format since spot trades don't create margin positions.
@@ -93,6 +94,14 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
         ValueError: If exchange service not available
         ExchangeError: If Bitfinex API call fails
     """
+    cache = get_cache_service()
+    cache_key = f"positions_{symbols or 'all'}"
+    
+    # Check cache first (20 second TTL for positions)
+    cached_positions = cache.get(cache_key, ttl_seconds=20)
+    if cached_positions is not None:
+        return cached_positions
+    
     exchange_service = get_shared_exchange_service()
     if not exchange_service:
         logging.warning("Exchange service not available, returning empty positions")
@@ -221,6 +230,9 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
             f"Classified Margin: {len(margin_positions_from_holdings)}, "
             f"Spot: {len(spot_positions)})"
         )
+
+        # Cache the result for 20 seconds to reduce API calls
+        cache.set(cache_key, all_positions)
 
         return all_positions
 

@@ -98,13 +98,15 @@ const Index: FC = () => {
   useEffect(() => {
     loadAllData();
     
-    // Set up periodic updates
+    // OPTIMIZED: Längre intervall för att minska nonce consumption
+    // Tidigare: 15s med 7 parallella calls = race conditions
+    // Nu: 30s med sekventiella calls = nonce-safe
     const interval = setInterval(() => {
-      loadAllData();
-    }, 5000); // Update every 5 seconds
+      loadAllDataSequentially();
+    }, 30000); // Ökat från 15s till 30s för nonce-säkerhet
 
     return () => clearInterval(interval);
-  }, [selectedSymbol]); // Add selectedSymbol as dependency
+  }, [selectedSymbol]);
 
   // Load EMA crossover data when chartData is available
   useEffect(() => {
@@ -113,6 +115,54 @@ const Index: FC = () => {
     }
   }, [chartData, loadEmaCrossover]);
 
+  // OPTIMIZED: Sekventiell data loading för att förhindra nonce conflicts
+  const loadAllDataSequentially = async () => {
+    try {
+      // STEG 1: Kritisk data först (mest sannolikt cached)
+      const statusData = await api.getBotStatus();
+      setBotStatus(statusData);
+      
+      // STEG 2: Balances (ofta cached i 90s)
+      await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay mellan calls
+      const balancesData = await api.getBalances();
+      setBalances(balancesData);
+      
+      // STEG 3: Positions och trades
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const tradesData = await api.getActiveTrades();
+      setActiveTrades(tradesData);
+      
+      // STEG 4: Order history (låg prioritet, kan vara cached längre)
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const ordersData = await api.getOrderHistory();
+      setOrderHistory(ordersData);
+      
+      // STEG 5: Market data (använd WebSocket när möjligt)
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const orderBookData = await api.getOrderBook(selectedSymbol);
+      setOrderBook(orderBookData);
+      
+      // STEG 6: Chart data (låg prioritet)
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const chartDataResponse = await api.getChartData(selectedSymbol);
+      setChartData(chartDataResponse);
+      
+      // STEG 7: Logs (lägsta prioritet)
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const logsData = await api.getLogs();
+      setLogs(logsData);
+      
+      setIsConnected(true);
+      console.log('✅ Sequential data load completed - nonce-safe approach');
+    } catch (error) {
+      setIsConnected(false);
+      console.error('❌ Sequential data load failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ORIGINAL: Parallell loading för initial load (behålls för snabbare start)
   const loadAllData = async () => {
     try {
       const [
@@ -140,9 +190,11 @@ const Index: FC = () => {
       setOrderBook(orderBookData);
       setLogs(logsData);
       setChartData(chartDataResponse);
-      setIsConnected(true); // Set connected to true when API calls succeed
+      setIsConnected(true);
+      console.log('✅ Parallel initial load completed');
     } catch (error) {
-      setIsConnected(false); // Set connected to false when API calls fail
+      setIsConnected(false);
+      console.error('❌ Parallel initial load failed:', error);
     } finally {
       setIsLoading(false);
     }
@@ -163,16 +215,18 @@ const Index: FC = () => {
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
-    fetchBotStatus();
+    // OPTIMIZED: Använd sekventiell refresh för att förhindra nonce conflicts
+    loadAllDataSequentially();
   };
 
   useEffect(() => {
     fetchBotStatus();
     
-    // Set up periodic status updates
+    // OPTIMIZED: Mycket längre intervall för status (ofta cached)
+    // Status ändras sällan, så längre polling är OK
     const interval = setInterval(() => {
       fetchBotStatus();
-    }, 30000); // Update every 30 seconds
+    }, 120000); // Ökat från 60s till 120s för nonce-besparingar
 
     return () => {
       clearInterval(interval);

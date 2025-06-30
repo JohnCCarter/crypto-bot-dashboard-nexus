@@ -30,9 +30,11 @@ Step-by-step guides for implementing and using system features.
 
 | Document | Description | Category |
 |----------|-------------|----------|
+| [BITFINEX_API_INTEGRATION_GUIDE.md](./guides/BITFINEX_API_INTEGRATION_GUIDE.md) | Guide för Bitfinex API integration | 📡 API |
 | [DEBUG_GUIDE.md](./guides/DEBUG_GUIDE.md) | Debugging procedures and tools | 🐛 Troubleshooting |
 | [HEMARBETE_GUIDE.md](./guides/HEMARBETE_GUIDE.md) | Work-from-home development setup | 🏠 Development |
 | [QUICK_DEPLOYMENT_GUIDE.md](./guides/QUICK_DEPLOYMENT_GUIDE.md) | Fast deployment procedures | 🚀 Deployment |
+| [SERVER_MANAGEMENT_GUIDE.md](./guides/SERVER_MANAGEMENT_GUIDE.md) | Guide for managing server processes | 🏠 Development |
 | [WEBSOCKET_FUNKTIONER_OVERSIKT.md](./guides/WEBSOCKET_FUNKTIONER_OVERSIKT.md) | WebSocket features overview | 📡 Real-time |
 | [WEBSOCKET_IMPLEMENTATION_GUIDE.md](./guides/WEBSOCKET_IMPLEMENTATION_GUIDE.md) | WebSocket implementation details | 📡 Real-time |
 | [WEBSOCKET_USER_DATA_IMPLEMENTATION_PLAN.md](./guides/WEBSOCKET_USER_DATA_IMPLEMENTATION_PLAN.md) | User data stream implementation | 📡 Real-time |
@@ -48,6 +50,7 @@ Current status reports, implementation summaries, and system analysis.
 | **API & Authentication** ||
 | [API_AUTH_VERIFICATION.md](./reports/API_AUTH_VERIFICATION.md) | API authentication verification status | 🔐 Security |
 | **Bitfinex Integration** ||
+| [BITFINEX_API_LIBRARY_INTEGRATION_COMPLETE.md](./reports/BITFINEX_API_LIBRARY_INTEGRATION_COMPLETE.md) | Bitfinex API library integration | 📡 API |
 | [BITFINEX_LIVE_INTEGRATION_SUMMARY.md](./reports/BITFINEX_LIVE_INTEGRATION_SUMMARY.md) | Live trading integration status | 📈 Trading |
 | [BITFINEX_PAPER_TRADING_MARGIN_LIMITATION.md](./reports/BITFINEX_PAPER_TRADING_MARGIN_LIMITATION.md) | Paper trading limitations analysis | 📋 Analysis |
 | [BITFINEX_WEBSOCKET_ENHANCEMENT_COMPLETE.md](./reports/BITFINEX_WEBSOCKET_ENHANCEMENT_COMPLETE.md) | WebSocket enhancements completion | 📡 Real-time |
@@ -100,6 +103,7 @@ Detailed solutions for technical problems and implementation challenges.
 - **Testing**: [TEST_ERROR_ANALYSIS.md](./reports/TEST_ERROR_ANALYSIS.md)  
 - **WebSocket**: [WEBSOCKET_IMPLEMENTATION_GUIDE.md](./guides/WEBSOCKET_IMPLEMENTATION_GUIDE.md)
 - **Architecture**: [ADR-001-database-choice.md](./decisions/ADR-001-database-choice.md)
+- **API Integration**: [BITFINEX_API_INTEGRATION_GUIDE.md](./guides/BITFINEX_API_INTEGRATION_GUIDE.md)
 
 ### 🚀 **For Deployment**
 - **Quick Start**: [QUICK_DEPLOYMENT_GUIDE.md](./guides/QUICK_DEPLOYMENT_GUIDE.md)
@@ -110,6 +114,7 @@ Detailed solutions for technical problems and implementation challenges.
 - **Trading**: [BITFINEX_LIVE_INTEGRATION_SUMMARY.md](./reports/BITFINEX_LIVE_INTEGRATION_SUMMARY.md)
 - **Performance**: [HYBRID_INTEGRATION_AUDIT.md](./reports/HYBRID_INTEGRATION_AUDIT.md)
 - **Real-time**: [WEBSOCKET_VS_REST_ANALYSIS.md](./guides/WEBSOCKET_VS_REST_ANALYSIS.md)
+- **API Library**: [BITFINEX_API_LIBRARY_INTEGRATION_COMPLETE.md](./reports/BITFINEX_API_LIBRARY_INTEGRATION_COMPLETE.md)
 
 ---
 
@@ -134,6 +139,6 @@ When adding new documentation:
 
 ---
 
-**🔄 Last Updated:** January 26, 2025 - Added Frontend Integration Test Complete milestone report
-**📊 Total Documents:** 36+ technical documents organized across 4 categories  
+**🔄 Last Updated:** June 30, 2025 - Added Bitfinex API Library Integration Report
+**📊 Total Documents:** 38+ technical documents organized across 4 categories  
 **🎉 Latest Milestone:** 99% test coverage achieved - Production Ready System 

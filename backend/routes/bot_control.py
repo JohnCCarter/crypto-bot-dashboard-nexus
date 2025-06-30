@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import Blueprint, jsonify
 
 from backend.services.bot_manager import get_bot_status, start_bot, stop_bot
 from backend.services.event_logger import (
@@ -8,62 +8,24 @@ from backend.services.event_logger import (
 # Intern statusflagga
 bot_status = {"running": False}
 
+bot_control_bp = Blueprint('bot_control', __name__)
+
+@bot_control_bp.route('/api/bot/start', methods=['POST'])
+def start_bot_endpoint():
+    """Start the bot if it is not already running."""
+    result = start_bot()
+    return jsonify(result), 200 if result['status'] == 'started' else 400
+
+@bot_control_bp.route('/api/bot/stop', methods=['POST'])
+def stop_bot_endpoint():
+    """Stop the bot if it is running."""
+    result = stop_bot()
+    return jsonify(result), 200 if result['status'] == 'stopped' else 400
 
 def register(app):
-    @app.route("/api/start-bot", methods=["POST"])
-    def start_bot_route():
-        """Startar tradingboten."""
-        # BOT START är en VERKLIG användaraktion - alltid loggas!
-        
-        try:
-            result = start_bot()
-            
-            # Logga framgångsrik bot start
-            event_logger.log_bot_action("start", {
-                "success": True,
-                "result": str(result)
-            })
-
-            return jsonify(result), 200
-        except Exception as e:
-            # Fel vid bot start ska alltid loggas
-            event_logger.log_event(
-                EventType.BOT_ERROR,
-                f"Failed to start bot: {str(e)}"
-            )
-
-            return (
-                jsonify({"error": f"Failed to start bot: {str(e)}", "success": False}),
-                500,
-            )
-
-    @app.route("/api/stop-bot", methods=["POST"])
-    def stop_bot_route():
-        """Stoppar tradingboten."""
-        # BOT STOP är en VERKLIG användaraktion - alltid loggas!
-        
-        try:
-            result = stop_bot()
-            
-            # Logga framgångsrik bot stop
-            event_logger.log_bot_action("stop", {
-                "success": True,
-                "result": str(result)
-            })
-
-            return jsonify(result), 200
-        except Exception as e:
-            # Fel vid bot stop ska alltid loggas
-            event_logger.log_event(
-                EventType.BOT_ERROR,
-                f"Failed to stop bot: {str(e)}"
-            )
-
-            return (
-                jsonify({"error": f"Failed to stop bot: {str(e)}", "success": False}),
-                500,
-            )
-
+    # Registrera Blueprint för bot-kontroll
+    app.register_blueprint(bot_control_bp)
+    
     @app.route("/api/bot-status", methods=["GET"])
     def get_bot_status_route():
         """Returnerar nuvarande status för tradingboten."""

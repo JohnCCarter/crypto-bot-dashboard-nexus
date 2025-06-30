@@ -16,25 +16,23 @@ logger = logging.getLogger(__name__)
 class LiveDataService:
     """Service för att hämta live marknadsdata för trading bot"""
 
-    def __init__(
-        self, exchange_id: str = "bitfinex", api_key: str = None, api_secret: str = None
-    ):
+    def __init__(self, exchange_id: str = "bitfinex"):
         """
-        Initialize live data service
+        Initialize live data service for PUBLIC market data only.
+        
+        No API keys needed - only fetches public market data (OHLCV, ticker, orderbook).
+        This eliminates nonce conflicts with authenticated services.
 
         Args:
             exchange_id: Exchange identifier (default: bitfinex)
-            api_key: API key for authenticated requests (optional)
-            api_secret: API secret for authenticated requests (optional)
         """
         self.exchange_id = exchange_id
 
-        # Initialize exchange
+        # Initialize exchange for PUBLIC data only (no API keys = no nonce conflicts)
         exchange_class = getattr(ccxt, exchange_id)
         self.exchange = exchange_class(
             {
-                "apiKey": api_key,
-                "secret": api_secret,
+                # NO API KEYS - only public endpoints
                 "sandbox": False,  # Use live data
                 "enableRateLimit": True,
                 "timeout": 30000,

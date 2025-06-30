@@ -1,11 +1,14 @@
 """Exchange service for cryptocurrency trading."""
 
-import threading
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 import ccxt
+from flask import current_app
+from backend.services.global_nonce_manager import get_global_nonce_manager
+from backend.services.symbol_converter import BitfinexSymbolConverter
+from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
 
 
 class CustomBitfinex(ccxt.bitfinex):
@@ -13,30 +16,26 @@ class CustomBitfinex(ccxt.bitfinex):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Start with millisecond precision as per Bitfinex official docs
-        self._last_nonce = round(datetime.now().timestamp() * 1000)
-        self._nonce_lock = threading.Lock()
+        # Use global nonce manager for thread-safe coordination
+        self._global_nonce_manager = get_global_nonce_manager()
+        # Register this instance with the global manager
+        api_key = kwargs.get('apiKey', 'unknown')
+        self._global_nonce_manager.register_api_key(api_key, "CustomBitfinex")
 
     def nonce(self):
         """
-        Generate thread-safe monotonically increasing nonce for Bitfinex API.
+        Generate thread-safe globally unique nonce for Bitfinex API.
 
-        Uses Bitfinex official method: round(datetime.now().timestamp() * 1000)
+        Uses GlobalNonceManager to ensure no conflicts across all services.
         This ensures millisecond precision as required by Bitfinex API.
         """
-        with self._nonce_lock:
-            # Use Bitfinex official nonce method: milliseconds since Unix epoch
-            now_milliseconds = round(datetime.now().timestamp() * 1000)
-
-            # Ensure nonce always increments with minimum gap
-            if now_milliseconds <= self._last_nonce:
-                # If current time is not ahead, add minimum increment (1ms)
-                self._last_nonce += 1
-            else:
-                # Use current time but ensure increment from last nonce
-                self._last_nonce = max(now_milliseconds, self._last_nonce + 1)
-
-            return self._last_nonce
+        global_nonce_manager = get_global_nonce_manager()
+        api_key = getattr(self, 'apiKey', 'unknown')
+        
+        return global_nonce_manager.get_next_nonce(
+            api_key=api_key, 
+            service_name="CustomBitfinex"
+        )
 
 
 class ExchangeError(Exception):
@@ -58,6 +57,20 @@ class ExchangeService:
             api_secret: Exchange API secret
         """
         try:
+            # Spara API-nycklar för senare användning
+            self.exchange_id = exchange_id
+            self.api_key = api_key
+            self.api_secret = api_secret
+            
+            # Skapa Bitfinex-klient om det är Bitfinex
+            self.bitfinex_client = None
+            if exchange_id == "bitfinex":
+                self.bitfinex_client = BitfinexClientWrapper(
+                    api_key=api_key,
+                    api_secret=api_secret,
+                    use_rest_auth=True
+                )
+            
             # Use custom Bitfinex class for proper nonce handling
             if exchange_id == "bitfinex":
                 exchange_class = CustomBitfinex
@@ -105,9 +118,47 @@ class ExchangeService:
             ExchangeError: If order creation fails
         """
         try:
+            # Försök med Bitfinex-klienten först om det är Bitfinex och klienten är tillgänglig
+            if self.exchange_id == "bitfinex" and self.bitfinex_client:
+                # Konvertera symbol till Bitfinex-format
+                bitfinex_symbol = BitfinexSymbolConverter.convert_for_api_call(symbol, "trading")
+                
+                # Justera amount baserat på side (positivt för köp, negativt för sälj)
+                adjusted_amount = amount if side == "buy" else -amount
+                
+                # Använd Bitfinex-klienten för att skapa ordern
+                order_result = self.bitfinex_client.place_order(
+                    symbol=bitfinex_symbol,
+                    amount=adjusted_amount,
+                    price=price if order_type == "LIMIT" else 0,
+                    order_type=order_type.upper()
+                )
+                
+                if order_result['status'] == 'success':
+                    order = order_result['order']
+                    return {
+                        "id": order.get("id", ""),
+                        "symbol": symbol,  # Använd ursprunglig symbol för konsistens
+                        "type": order_type,
+                        "side": side,
+                        "amount": abs(float(order.get("amount", amount))),
+                        "price": float(order.get("price", price or 0)),
+                        "status": "open",  # Bitfinex API returnerar inte status direkt
+                        "filled": 0,  # Initialt är inget fyllt
+                        "remaining": abs(float(order.get("amount", amount))),
+                        "position_type": position_type,
+                        "timestamp": int(datetime.utcnow().timestamp() * 1000),
+                    }
+            
+            # Fallback till CCXT om Bitfinex-klienten inte är tillgänglig eller om det inte är Bitfinex
             params = {}
             if order_type == "limit" and price is None:
                 raise ValueError("Price is required for limit orders")
+
+            # Convert UI symbol to Bitfinex trading pair format
+            bitfinex_symbol = BitfinexSymbolConverter.convert_for_api_call(
+                symbol, "trading"
+            )
 
             # Configure for margin vs spot trading on Bitfinex
             if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
@@ -133,7 +184,7 @@ class ExchangeService:
                         params["postonly"] = False
 
             order = self.exchange.create_order(
-                symbol=symbol,
+                symbol=bitfinex_symbol,
                 type=order_type,
                 side=side,
                 amount=amount,
@@ -175,6 +226,27 @@ class ExchangeService:
             ExchangeError: If order fetch fails
         """
         try:
+            # Försök med Bitfinex-klienten först om det är Bitfinex och klienten är tillgänglig
+            if self.exchange_id == "bitfinex" and self.bitfinex_client:
+                order_result = self.bitfinex_client.get_order_status(int(order_id))
+                
+                if order_result['status'] == 'success':
+                    order = order_result['order']
+                    # Konvertera från Bitfinex-format till vårt standardformat
+                    return {
+                        "id": str(order.get("id", order_id)),
+                        "symbol": symbol,  # Använd ursprunglig symbol för konsistens
+                        "type": order.get("type", "unknown").lower(),
+                        "side": "buy" if float(order.get("amount", 0)) > 0 else "sell",
+                        "amount": abs(float(order.get("amount", 0))),
+                        "price": float(order.get("price", 0)),
+                        "status": self._convert_bitfinex_order_status(order.get("status", 0)),
+                        "filled": abs(float(order.get("executed_amount", 0))),
+                        "remaining": abs(float(order.get("amount", 0))) - abs(float(order.get("executed_amount", 0))),
+                        "timestamp": order.get("mts_create", int(datetime.utcnow().timestamp() * 1000)),
+                    }
+            
+            # Fallback till CCXT
             order = self.exchange.fetch_order(order_id, symbol)
             # Safe float conversion with None checks
             amount = float(order["amount"]) if order.get("amount") else 0.0
@@ -198,6 +270,30 @@ class ExchangeService:
             }
         except Exception as e:
             raise ExchangeError(f"Failed to fetch order: {str(e)}")
+    
+    def _convert_bitfinex_order_status(self, status_code: int) -> str:
+        """
+        Konvertera Bitfinex orderstatus-kod till standardformat.
+        
+        Args:
+            status_code: Bitfinex status kod
+            
+        Returns:
+            Status som sträng ('open', 'closed', 'canceled', etc.)
+        """
+        # Bitfinex status codes:
+        # ACTIVE (0), EXECUTED (1), PARTIALLY FILLED (2), CANCELED (3), etc.
+        status_map = {
+            0: "open",
+            1: "closed",
+            2: "open",  # Partially filled but still active
+            3: "canceled",
+            4: "closed",  # Replaced/updated
+            5: "canceled",  # Canceled partially
+            6: "rejected",
+            7: "failed",
+        }
+        return status_map.get(status_code, "unknown")
 
     def cancel_order(self, order_id: str, symbol: Optional[str] = None) -> bool:
         """
@@ -214,6 +310,13 @@ class ExchangeService:
             ExchangeError: If order cancellation fails
         """
         try:
+            # Försök med Bitfinex-klienten först om det är Bitfinex och klienten är tillgänglig
+            if self.exchange_id == "bitfinex" and self.bitfinex_client:
+                result = self.bitfinex_client.cancel_order(int(order_id))
+                if result['status'] == 'success':
+                    return True
+            
+            # Fallback till CCXT
             self.exchange.cancel_order(order_id, symbol)
             return True
         except Exception as e:
@@ -233,6 +336,26 @@ class ExchangeService:
             ExchangeError: If ticker fetch fails
         """
         try:
+            # Försök med Bitfinex-klienten först om det är Bitfinex och klienten är tillgänglig
+            if self.exchange_id == "bitfinex" and self.bitfinex_client:
+                # Konvertera symbol till Bitfinex-format
+                bitfinex_symbol = BitfinexSymbolConverter.convert_for_api_call(symbol, "trading")
+                
+                ticker_result = self.bitfinex_client.get_ticker(bitfinex_symbol)
+                
+                if ticker_result['status'] == 'success':
+                    ticker = ticker_result['ticker']
+                    # Bitfinex ticker format: [BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE, LAST_PRICE, VOLUME, HIGH, LOW]
+                    return {
+                        "symbol": symbol,
+                        "last": float(ticker[6]),
+                        "bid": float(ticker[0]),
+                        "ask": float(ticker[2]),
+                        "volume": float(ticker[7]),
+                        "timestamp": int(datetime.utcnow().timestamp() * 1000),
+                    }
+            
+            # Fallback till CCXT
             ticker = self.exchange.fetch_ticker(symbol)
             return {
                 "symbol": ticker["symbol"],
@@ -638,8 +761,17 @@ class ExchangeService:
                     # Fetch closed orders for each symbol
                     for symbol in symbols:
                         try:
+                            # Convert UI symbol to Bitfinex trading pair format
+                            bitfinex_symbol = BitfinexSymbolConverter.convert_for_api_call(
+                                symbol, "trading"
+                            )
+                            # Lägg till market type för Bitfinex
+                            params = {"type": "exchange"}
+                            current_app.logger.warning(
+                                f"⚠️ [Exchange] Added market type 'exchange' for fetch_closed_orders: {bitfinex_symbol}"
+                            )
                             orders = self.exchange.fetch_closed_orders(
-                                symbol, since, limit
+                                bitfinex_symbol, since, limit, params
                             )
                             all_orders.extend(orders)
                         except Exception as e:
@@ -706,8 +838,34 @@ class ExchangeService:
             ExchangeError: If open orders fetch fails
         """
         try:
-            # Fetch open orders from exchange
-            open_orders = self.exchange.fetch_open_orders(symbol)
+            # Convert UI symbol to Bitfinex trading pair format if needed
+            bitfinex_symbol = None
+            if symbol:
+                bitfinex_symbol = BitfinexSymbolConverter.convert_for_api_call(
+                    symbol, "trading"
+                )
+            
+            # KRITISK FIX: Bitfinex kräver market type när symbol används
+            params = {}
+            if hasattr(self.exchange, "id") and self.exchange.id == "bitfinex":
+                if bitfinex_symbol:
+                    # Lägg till market type för att undvika safeMarket-fel
+                    params["type"] = "exchange"  # Specificera spot/exchange market
+                    current_app.logger.warning(
+                        f"⚠️ [Exchange] Added market type 'exchange' for symbol {bitfinex_symbol}"
+                    )
+                else:
+                    # Varning när ingen symbol specificeras - kan orsaka safeMarket-fel
+                    current_app.logger.warning(
+                        "⚠️ [Exchange] fetch_open_orders called without symbol - "
+                        "this may cause safeMarket() errors for Bitfinex"
+                    )
+            
+            # Fetch open orders from exchange med market type params
+            if params:
+                open_orders = self.exchange.fetch_open_orders(bitfinex_symbol, None, None, params)
+            else:
+                open_orders = self.exchange.fetch_open_orders(bitfinex_symbol)
 
             # Transform to standardized format
             standardized_orders = []
