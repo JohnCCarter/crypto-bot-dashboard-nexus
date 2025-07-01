@@ -34,8 +34,8 @@ def init_services(app):
 
     print("🔑 Initializing exchange service...")
     print(f"📊 Exchange: {exchange_id}")
-    print(f"🔐 API Key: {'***' + api_key[-4:] if api_key else 'MISSING'}")
-    print(f"🔒 Secret: {'***' + api_secret[-4:] if api_secret else 'MISSING'}")
+    print(f"🔐 API Key: {'PRESENT' if api_key else 'MISSING'}")
+    print(f"🔒 Secret: {'PRESENT' if api_secret else 'MISSING'}")
 
     if not api_key or not api_secret:
         print(
