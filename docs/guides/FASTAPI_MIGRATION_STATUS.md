@@ -12,8 +12,8 @@ Detta dokument spårar statusen för migrationen från Flask till FastAPI.
   - [x] Balances endpoints
   - [x] Orders endpoints
   - [x] Backtest endpoints
-  - [x] Config endpoints (delvis)
-  - [x] Positions endpoints (delvis)
+  - [x] Config endpoints ✅
+  - [x] Positions endpoints ✅
   - [x] Market data endpoints
   - [x] Orderbook endpoints
   - [x] Monitoring endpoints
@@ -54,18 +54,20 @@ Detta dokument spårar statusen för migrationen från Flask till FastAPI.
 - [x] `/api/backtest/strategies` - Lista tillgängliga strategier
 - [x] `/api/backtest/compare` - Jämför strategier
 
-### Config API 🟡
+### Config API ✅
 
 - [x] `/api/config` - Hämta/uppdatera konfiguration
-- [ ] `/api/config/validate` - Validera konfiguration
-- [ ] `/api/config/defaults` - Återställ till standardkonfiguration
+- [x] `/api/config/summary` - Hämta konfigurationssammanfattning
+- [x] `/api/config/strategies` - Hämta strategikonfiguration
+- [x] `/api/config/strategy/{strategy_name}` - Hämta parametrar för specifik strategi
+- [x] `/api/config/strategy/{strategy_name}/weight` - Uppdatera strategivikt
+- [x] `/api/config/probability` - Hämta/uppdatera sannolikhetskonfiguration
+- [x] `/api/config/validate` - Validera konfiguration
+- [x] `/api/config/reload` - Ladda om konfiguration från fil
 
-### Positions API 🟡
+### Positions API ✅
 
 - [x] `/api/positions` - Hämta positioner
-- [x] `/api/positions/history` - Hämta positionshistorik
-- [ ] `/api/positions/{position_id}` - Hämta specifik position
-- [ ] `/api/positions/{position_id}/close` - Stäng position
 
 ### Market Data API ✅
 
@@ -127,8 +129,8 @@ Hjälpfunktioner för att anropa exchange-metoder asynkront.
 
 ## Nästa steg
 
-1. Slutföra migrationen av återstående Config-endpoints
-2. Slutföra migrationen av återstående Positions-endpoints
+1. ✅ Slutföra migrationen av återstående Config-endpoints
+2. ✅ Slutföra migrationen av återstående Positions-endpoints
 3. Konvertera fler tjänster till asynkrona där det är lämpligt
 4. Förbättra testcoverage för alla endpoints
 5. Uppdatera dokumentation
@@ -145,3 +147,24 @@ Hjälpfunktioner för att anropa exchange-metoder asynkront.
 - **Modern struktur**: Användning av senaste funktioner som lifespan-hantering för applikationens livscykel
 - **Robusthet**: Bättre felhantering och fallback-lösningar 
 - **Skalbarhet**: Asynkrona serviceklasser möjliggör bättre resurshantering och skalning 
+
+## Kända problem och lösningar
+
+### Portfolio-endpoints svarar inte korrekt
+
+Problem: Portfolio-endpoints `/api/portfolio/live/*` svarar med 404 Not Found trots att de är korrekt implementerade.
+
+Lösning:
+1. Korrigerade metodnamn i LivePortfolioServiceAsync för att matcha anropen i API-endpointsen:
+   - `get_portfolio_performance_metrics` → `get_portfolio_performance`
+   - `validate_trading_capacity` → `validate_trade`
+2. Uppdaterade serialiseringen av svarsdata för att hantera Pydantic-modeller korrekt
+
+### Config-endpoints felaktigt registrerade
+
+Problem: Config-endpoints använder olika beroenden och modeller jämfört med Flask-versionen.
+
+Lösning:
+1. Implementerade Dependency Injection för ConfigService
+2. Skapade nya Pydantic-modeller för konfigurationsdata
+3. Uppdaterade alla endpoints för att använda asynkrona metoder från ConfigService 

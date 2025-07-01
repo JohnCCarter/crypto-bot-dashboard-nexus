@@ -260,11 +260,19 @@ async def get_live_portfolio_performance(
     Dict: Portfolio performance metrics
     """
     try:
-        metrics = await live_portfolio.get_portfolio_performance_metrics(timeframe)
+        metrics = await live_portfolio.get_portfolio_performance(timeframe)
         
         return {
             "status": ResponseStatus.SUCCESS,
-            "performance_metrics": metrics,
+            "metrics": [
+                {
+                    "name": metric.name,
+                    "value": metric.value,
+                    "unit": metric.unit,
+                    "timestamp": metric.timestamp.isoformat(),
+                }
+                for metric in metrics
+            ],
             "timeframe": timeframe,
             "timestamp": datetime.now().isoformat(),
         }
@@ -297,13 +305,20 @@ async def validate_live_trade(
     Dict: Trade validation results
     """
     try:
-        validation_result = await live_portfolio.validate_trading_capacity(
+        validation_result = await live_portfolio.validate_trade(
             symbol, amount, trade_type
         )
         
         return {
             "status": ResponseStatus.SUCCESS,
-            "validation_result": validation_result,
+            "validation_result": {
+                "is_valid": validation_result.is_valid,
+                "message": validation_result.message,
+                "available_balance": validation_result.available_balance,
+                "required_balance": validation_result.required_balance,
+                "max_trade_size": validation_result.max_trade_size,
+                "timestamp": validation_result.timestamp.isoformat(),
+            },
             "timestamp": datetime.now().isoformat(),
         }
         

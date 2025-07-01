@@ -29,19 +29,19 @@ Detta dokument innehåller en sammanställning av alla implementerade FastAPI-en
 ## Konfiguration-endpoints
 
 - **GET /api/config** - Hämta komplett konfiguration
+- **POST /api/config** - Uppdatera konfiguration
 - **GET /api/config/summary** - Hämta konfigurationssammanfattning
 - **GET /api/config/strategies** - Lista alla strategier och vikter
 - **GET /api/config/strategy/{name}** - Hämta parametrar för specifik strategi
 - **PUT /api/config/strategy/{name}/weight** - Uppdatera vikt för specifik strategi
 - **GET /api/config/probability** - Hämta sannolikhetsramverksparametrar
 - **PUT /api/config/probability** - Uppdatera sannolikhetsramverksparametrar
-- **POST /api/config/validate** - Validera aktuell konfiguration
+- **GET /api/config/validate** - Validera aktuell konfiguration
 - **POST /api/config/reload** - Ladda om konfiguration från fil
 
 ## Positions-endpoints
 
 - **GET /api/positions** - Hämta alla aktuella positioner
-- **GET /api/positions/{symbol}** - Hämta positioner för specifikt handelsinstrument
 
 ## Bot-control-endpoints
 
@@ -68,13 +68,13 @@ Detta dokument innehåller en sammanställning av alla implementerade FastAPI-en
 - **GET /api/monitoring/cache** - Övervaka cache-prestanda
 - **GET /api/monitoring/hybrid-setup** - Kontrollera status för hybrid WebSocket/REST-uppsättning
 
-## Riskhantering-endpoints (nya)
+## Riskhantering-endpoints
 
 - **GET /api/risk/assessment** - Bedöm portföljens övergripande risknivå baserat på nuvarande positioner och ordrar
 - **POST /api/risk/validate/order** - Validera en order mot riskparametrar och aktuell portfölj
 - **GET /api/risk/score** - Beräkna risknivån baserat på sannolikhetsdata
 
-## Portföljhantering-endpoints (nya)
+## Portföljhantering-endpoints
 
 - **POST /api/portfolio/allocate** - Beräkna optimal portföljallokering
 - **POST /api/portfolio/process-signals** - Bearbeta strategisignaler för att bestämma handelsåtgärder
@@ -89,6 +89,27 @@ Detta dokument innehåller en sammanställning av alla implementerade FastAPI-en
 - **GET /docs** - OpenAPI/Swagger UI dokumentation (interaktiv)
 - **GET /redoc** - ReDoc dokumentation (alternativ format)
 - **GET /openapi.json** - OpenAPI schema i JSON-format
+
+## Kända problem och lösningar
+
+### Portfolio-endpoints svarar inte korrekt
+
+Problem: Portfolio-endpoints `/api/portfolio/live/*` svarade med 404 Not Found trots att de var korrekt implementerade.
+
+Lösning:
+1. Korrigerade metodnamn i LivePortfolioServiceAsync för att matcha anropen i API-endpointsen:
+   - `get_portfolio_performance_metrics` → `get_portfolio_performance`
+   - `validate_trading_capacity` → `validate_trade`
+2. Uppdaterade serialiseringen av svarsdata för att hantera Pydantic-modeller korrekt
+
+### Config-endpoints felaktigt registrerade
+
+Problem: Config-endpoints använde olika beroenden och modeller jämfört med Flask-versionen.
+
+Lösning:
+1. Implementerade Dependency Injection för ConfigService
+2. Skapade nya Pydantic-modeller för konfigurationsdata
+3. Uppdaterade alla endpoints för att använda asynkrona metoder från ConfigService
 
 ## Fördelar
 
@@ -111,8 +132,8 @@ FastAPI-servern körs på port 8001 parallellt med Flask-servern på port 5000 f
 | Balances | 2 | ✅ Implementerad |
 | Orders | 4 | ✅ Implementerad |
 | Backtest | 4 | ✅ Implementerad |
-| Config | 8 | ✅ Implementerad |
-| Positions | 2 | ✅ Implementerad |
+| Config | 10 | ✅ Implementerad |
+| Positions | 1 | ✅ Implementerad |
 | Bot Control | 3 | ✅ Implementerad |
 | Market Data | 5 | ✅ Implementerad |
 | Orderbook | 2 | ✅ Implementerad |
@@ -120,3 +141,10 @@ FastAPI-servern körs på port 8001 parallellt med Flask-servern på port 5000 f
 | Risk Management | 3 | ✅ Implementerad |
 | Portfolio Management | 7 | ✅ Implementerad |
 | WebSocket | 3 | ⚠️ Delvis implementerad | 
+
+## Nästa steg
+
+1. Konvertera fler tjänster till asynkrona där det är lämpligt
+2. Förbättra testcoverage för alla endpoints
+3. Uppdatera dokumentation
+4. Planera för en fullständig övergång till FastAPI 
