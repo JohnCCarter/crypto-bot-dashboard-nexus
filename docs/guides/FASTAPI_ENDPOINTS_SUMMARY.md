@@ -1,150 +1,111 @@
-# FastAPI Endpoints - Sammanfattning
+# FastAPI Endpoints Summary
 
-Detta dokument innehåller en sammanställning av alla implementerade FastAPI-endpoints.
+Detta dokument innehåller en sammanfattning av alla endpoints som implementerats i FastAPI-versionen av systemet.
 
-## Grundläggande endpoints
+## Status Endpoints
 
-- **GET /** - Root-endpoint som omdirigerar till dokumentation
-- **GET /api/health** - Hälsokontroll som returnerar serverstatus
-- **GET /api/status** - Mer detaljerad statusinformation
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/status` | Hämta systemstatus | ✅ Implementerad |
+| GET | `/api/health` | Hälsokontroll | ✅ Implementerad |
 
-## Balans-endpoints
+## Balances Endpoints
 
-- **GET /api/balances** - Hämta alla tillgängliga balanser
-- **GET /api/balances/{currency}** - Hämta balans för specifik valuta
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/balances` | Hämta saldoinformation | ✅ Implementerad |
 
-## Order-endpoints
+## Orders Endpoints
 
-- **GET /api/orders** - Hämta alla öppna ordrar
-- **GET /api/orders/{order_id}** - Hämta specifik order med ID
-- **POST /api/orders** - Skapa ny order
-- **DELETE /api/orders/{order_id}** - Annullera specifik order
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/orders` | Hämta ordrar | ✅ Implementerad |
+| POST | `/api/orders` | Skapa order | ✅ Implementerad |
+| DELETE | `/api/orders/{order_id}` | Avbryt order | ✅ Implementerad |
 
-## Backtest-endpoints
+## Backtest Endpoints
 
-- **GET /api/backtest/strategies** - Lista alla tillgängliga backtest-strategier
-- **POST /api/backtest/run** - Kör en backtest med specifika parametrar
-- **GET /api/backtest/{id}** - Hämta resultat från specifik backtest
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/backtest/strategies` | Hämta tillgängliga strategier | ✅ Implementerad |
+| POST | `/api/backtest/run` | Kör backtest | ✅ Implementerad |
+| GET | `/api/backtest/results/{backtest_id}` | Hämta backtestresultat | ✅ Implementerad |
 
-## Konfiguration-endpoints
+## Config Endpoints
 
-- **GET /api/config** - Hämta komplett konfiguration
-- **POST /api/config** - Uppdatera konfiguration
-- **GET /api/config/summary** - Hämta konfigurationssammanfattning
-- **GET /api/config/strategies** - Lista alla strategier och vikter
-- **GET /api/config/strategy/{name}** - Hämta parametrar för specifik strategi
-- **PUT /api/config/strategy/{name}/weight** - Uppdatera vikt för specifik strategi
-- **GET /api/config/probability** - Hämta sannolikhetsramverksparametrar
-- **PUT /api/config/probability** - Uppdatera sannolikhetsramverksparametrar
-- **GET /api/config/validate** - Validera aktuell konfiguration
-- **POST /api/config/reload** - Ladda om konfiguration från fil
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/config` | Hämta aktuell konfiguration | ✅ Implementerad |
+| POST | `/api/config` | Uppdatera konfiguration | ✅ Implementerad |
+| GET | `/api/config/summary` | Hämta konfigurationssammanfattning | ✅ Implementerad |
+| GET | `/api/config/strategies` | Hämta strategikonfiguration | ✅ Implementerad |
+| GET | `/api/config/strategy/{strategy_name}` | Hämta parametrar för en specifik strategi | ✅ Implementerad |
+| PUT | `/api/config/strategy/{strategy_name}/weight` | Uppdatera strategivikt | ✅ Implementerad |
+| GET | `/api/config/probability` | Hämta sannolikhetskonfiguration | ✅ Implementerad |
+| PUT | `/api/config/probability` | Uppdatera sannolikhetskonfiguration | ✅ Implementerad |
+| GET | `/api/config/validate` | Validera aktuell konfiguration | ✅ Implementerad |
+| POST | `/api/config/reload` | Tvinga omläsning av konfiguration från fil | ✅ Implementerad |
 
-## Positions-endpoints
+## Positions Endpoints
 
-- **GET /api/positions** - Hämta alla aktuella positioner
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/positions` | Hämta aktuella positioner | ✅ Implementerad |
 
-## Bot-control-endpoints
+## Bot Control Endpoints
 
-- **GET /api/bot-status** - Hämta aktuell status för tradingbot
-- **POST /api/bot/start** - Starta tradingbot
-- **POST /api/bot/stop** - Stoppa tradingbot
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/bot/status` | Hämta botstatus | ✅ Implementerad |
+| POST | `/api/bot/start` | Starta bot | ✅ Implementerad |
+| POST | `/api/bot/stop` | Stoppa bot | ✅ Implementerad |
 
-## Market-data-endpoints
+## Market Data Endpoints
 
-- **GET /api/market/ohlcv/{symbol}** - Hämta OHLCV-data (ljusstakar) för handelsinstrument
-- **GET /api/market/orderbook/{symbol}** - Hämta orderbok för handelsinstrument
-- **GET /api/market/ticker/{symbol}** - Hämta ticker-data för handelsinstrument
-- **GET /api/market/trades/{symbol}** - Hämta senaste trades för handelsinstrument
-- **GET /api/market/markets** - Lista alla tillgängliga marknader
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/market/ohlcv` | Hämta OHLCV-data | ✅ Implementerad |
+| GET | `/api/market/ticker` | Hämta ticker-data | ✅ Implementerad |
+| GET | `/api/market/orderbook` | Hämta orderbook-data | ✅ Implementerad |
+| GET | `/api/market/trades` | Hämta senaste trades | ✅ Implementerad |
+| GET | `/api/market/markets` | Hämta tillgängliga marknader | ✅ Implementerad |
+| GET | `/api/market/status` | Hämta marknadsstatus | ✅ Implementerad |
+| GET | `/api/market/validate` | Validera marknadssymbol | ✅ Implementerad |
 
-## Orderbok-endpoints
+## Orderbook Endpoints
 
-- **GET /api/orderbook/{symbol}** - Hämta detaljerad orderbok för handelsinstrument
-- **GET /api/indicators/fvg** - Analysera orderbok för Fair Value Gaps
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/orderbook/{symbol}` | Hämta orderbook för en specifik symbol | ✅ Implementerad |
 
-## Monitoring-endpoints
+## Monitoring Endpoints
 
-- **GET /api/monitoring/nonce** - Övervaka nonce-status för API-anrop
-- **GET /api/monitoring/cache** - Övervaka cache-prestanda
-- **GET /api/monitoring/hybrid-setup** - Kontrollera status för hybrid WebSocket/REST-uppsättning
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/monitoring/nonce` | Hämta nonce-statistik | ✅ Implementerad |
+| GET | `/api/monitoring/cache` | Hämta cache-statistik | ✅ Implementerad |
+| GET | `/api/monitoring/hybrid` | Hämta hybrid-setup-information | ✅ Implementerad |
 
-## Riskhantering-endpoints
+## Risk Management Endpoints
 
-- **GET /api/risk/assessment** - Bedöm portföljens övergripande risknivå baserat på nuvarande positioner och ordrar
-- **POST /api/risk/validate/order** - Validera en order mot riskparametrar och aktuell portfölj
-- **GET /api/risk/score** - Beräkna risknivån baserat på sannolikhetsdata
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/risk/validate-order` | Validera order mot riskparametrar | ⬜ Planerad |
+| GET | `/api/risk/assessment` | Utför riskbedömning | ⬜ Planerad |
+| GET | `/api/risk/score` | Beräkna riskscore | ⬜ Planerad |
 
-## Portföljhantering-endpoints
+## Portfolio Endpoints
 
-- **POST /api/portfolio/allocate** - Beräkna optimal portföljallokering
-- **POST /api/portfolio/process-signals** - Bearbeta strategisignaler för att bestämma handelsåtgärder
-- **GET /api/portfolio/status** - Hämta aktuell portföljstatus med allokeringar och metriker
-- **POST /api/portfolio/rebalance** - Balansera om portföljen för att matcha målallokeringar
-- **GET /api/portfolio/live/snapshot** - Hämta realtidsöversikt över portföljen med aktuella marknadspriser
-- **GET /api/portfolio/live/performance** - Hämta prestandametriker för portföljen
-- **POST /api/portfolio/live/validate-trade** - Validera om en specifik handel kan utföras baserat på aktuella balanser
+| Metod | Endpoint | Beskrivning | Status |
+|-------|----------|-------------|--------|
+| GET | `/api/portfolio/allocation` | Hämta portföljallokeringar | ⬜ Planerad |
+| POST | `/api/portfolio/optimize` | Optimera portfölj | ⬜ Planerad |
 
-## Åtkomst till dokumentation
+## Sammanfattning
 
-- **GET /docs** - OpenAPI/Swagger UI dokumentation (interaktiv)
-- **GET /redoc** - ReDoc dokumentation (alternativ format)
-- **GET /openapi.json** - OpenAPI schema i JSON-format
+- **Totalt antal endpoints:** 32
+- **Implementerade endpoints:** 27
+- **Planerade endpoints:** 5
+- **Implementationsprocent:** 84%
 
-## Kända problem och lösningar
-
-### Portfolio-endpoints svarar inte korrekt
-
-Problem: Portfolio-endpoints `/api/portfolio/live/*` svarade med 404 Not Found trots att de var korrekt implementerade.
-
-Lösning:
-1. Korrigerade metodnamn i LivePortfolioServiceAsync för att matcha anropen i API-endpointsen:
-   - `get_portfolio_performance_metrics` → `get_portfolio_performance`
-   - `validate_trading_capacity` → `validate_trade`
-2. Uppdaterade serialiseringen av svarsdata för att hantera Pydantic-modeller korrekt
-
-### Config-endpoints felaktigt registrerade
-
-Problem: Config-endpoints använde olika beroenden och modeller jämfört med Flask-versionen.
-
-Lösning:
-1. Implementerade Dependency Injection för ConfigService
-2. Skapade nya Pydantic-modeller för konfigurationsdata
-3. Uppdaterade alla endpoints för att använda asynkrona metoder från ConfigService
-
-## Fördelar
-
-FastAPI-implementationen ger flera fördelar jämfört med Flask-versionen:
-
-1. **Automatisk validering** av indata och utdata med Pydantic-modeller
-2. **Interaktiv dokumentation** med Swagger UI
-3. **Förbättrad prestanda** genom asynkron hantering
-4. **Bättre felhantering** med detaljerade felmeddelanden
-5. **Dependency Injection** för enklare testning och resurssdelning
-6. **Typannotering** för förbättrad kodkvalitet och IDE-stöd
-
-FastAPI-servern körs på port 8001 parallellt med Flask-servern på port 5000 för att möjliggöra stegvis testning och övergång. 
-
-## Sammanfattning av implementationsstatus
-
-| Endpoint-kategori | Antal endpoints | Status |
-|-------------------|----------------|--------|
-| Status | 2 | ✅ Implementerad |
-| Balances | 2 | ✅ Implementerad |
-| Orders | 4 | ✅ Implementerad |
-| Backtest | 4 | ✅ Implementerad |
-| Config | 10 | ✅ Implementerad |
-| Positions | 1 | ✅ Implementerad |
-| Bot Control | 3 | ✅ Implementerad |
-| Market Data | 5 | ✅ Implementerad |
-| Orderbook | 2 | ✅ Implementerad |
-| Monitoring | 3 | ✅ Implementerad |
-| Risk Management | 3 | ✅ Implementerad |
-| Portfolio Management | 7 | ✅ Implementerad |
-| WebSocket | 3 | ⚠️ Delvis implementerad | 
-
-## Nästa steg
-
-1. Konvertera fler tjänster till asynkrona där det är lämpligt
-2. Förbättra testcoverage för alla endpoints
-3. Uppdatera dokumentation
-4. Planera för en fullständig övergång till FastAPI 
+Uppdaterad: 2025-07-01 

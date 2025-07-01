@@ -1,208 +1,97 @@
-# FastAPI Config och Positions Implementation
+# FastAPI Config och Positions Endpoints Implementation
+
+Detta dokument beskriver implementationen av config- och positions-endpoints för FastAPI-migrationen.
 
 ## Översikt
 
-Detta dokument beskriver implementationen av Config- och Positions-endpoints för FastAPI-migrationen. Dessa endpoints är viktiga för systemets konfigurationshantering och positionsövervakning.
+Som en del av den pågående migrationen från Flask till FastAPI har vi nu implementerat följande endpoints:
 
-## Config-endpoints
+1. **Config Endpoints** - För hantering av systemkonfiguration
+2. **Positions Endpoints** - För att hämta positioner från Bitfinex
 
-### Implementerade endpoints
+Dessa endpoints kompletterar de tidigare implementerade status-, balances-, orders-, backtest-, market-data- och monitoring-endpoints.
 
-Vi har implementerat följande config-endpoints för FastAPI:
+## Config Endpoints
 
-1. **GET /api/config** - Hämta komplett konfiguration
-2. **POST /api/config** - Uppdatera konfiguration
-3. **GET /api/config/summary** - Hämta konfigurationssammanfattning
-4. **GET /api/config/strategies** - Lista alla strategier och vikter
-5. **GET /api/config/strategy/{name}** - Hämta parametrar för specifik strategi
-6. **PUT /api/config/strategy/{name}/weight** - Uppdatera vikt för specifik strategi
-7. **GET /api/config/probability** - Hämta sannolikhetsramverksparametrar
-8. **PUT /api/config/probability** - Uppdatera sannolikhetsramverksparametrar
-9. **GET /api/config/validate** - Validera aktuell konfiguration
-10. **POST /api/config/reload** - Ladda om konfiguration från fil
+### Implementerade Endpoints
 
-### Förbättringar jämfört med Flask-implementationen
+Följande config-endpoints har implementerats:
 
-1. **Dependency Injection**:
-   - Implementerat `get_config_service()` som en dependency för att förenkla testning och mocking
-   - Konsekvent användning av DI i alla endpoints
+| Metod | Endpoint | Beskrivning |
+|-------|----------|-------------|
+| GET | `/api/config` | Hämta aktuell konfiguration |
+| POST | `/api/config` | Uppdatera konfiguration |
+| GET | `/api/config/summary` | Hämta konfigurationssammanfattning med valideringsstatus |
+| GET | `/api/config/strategies` | Hämta strategikonfiguration |
+| GET | `/api/config/strategy/{strategy_name}` | Hämta parametrar för en specifik strategi |
+| PUT | `/api/config/strategy/{strategy_name}/weight` | Uppdatera strategivikt |
+| GET | `/api/config/probability` | Hämta sannolikhetskonfiguration |
+| PUT | `/api/config/probability` | Uppdatera sannolikhetskonfiguration |
+| GET | `/api/config/validate` | Validera aktuell konfiguration |
+| POST | `/api/config/reload` | Tvinga omläsning av konfiguration från fil |
 
-2. **Pydantic-modeller**:
-   - Skapat `StrategyWeight` och `ProbabilitySettings` för validering av indata
-   - Använder `Body()` för flexibel validering av JSON-data
+### Viktiga Implementationsdetaljer
 
-3. **Asynkrona funktioner**:
-   - Alla endpoints använder `async/await` för förbättrad prestanda
-   - Anropar asynkrona metoder från ConfigService
+- Använder Pydantic-modeller för validering av både indata och utdata
+- Använder FastAPI:s dependency injection för att tillhandahålla ConfigService
+- Implementerar asynkrona anrop till ConfigService
+- Använder HTTP-statuskoder och strukturerade felmeddelanden
 
-4. **Förbättrad felhantering**:
-   - Mer detaljerade felmeddelanden
-   - Specifik validering för numeriska värden (t.ex. vikter mellan 0.0 och 1.0)
-   - Separata felhanterare för olika typer av fel
+## Positions Endpoints
 
-5. **Standardiserade svar**:
-   - Alla svar följer samma format med `status`, `message` och data
-   - Använder `ResponseStatus` enum för konsekvent statusrapportering
+### Implementerade Endpoints
 
-### Kodexempel: Uppdatera strategivikt
+Följande positions-endpoints har implementerats:
 
-```python
-@router.put("/strategy/{strategy_name}/weight")
-async def update_strategy_weight(
-    strategy_name: str,
-    data: Dict[str, float] = Body(...),
-    config_service: ConfigService = Depends(get_config_service),
-) -> Dict[str, Any]:
-    """
-    Update strategy weight.
-    
-    Parameters:
-        strategy_name: Name of the strategy
-        data: Dictionary with weight value
-        
-    Returns:
-        Dict: Update result
-    """
-    try:
-        new_weight = data.get("weight")
-        
-        if new_weight is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Weight value is required"
-            )
-            
-        if not (0.0 <= new_weight <= 1.0):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Weight must be between 0.0 and 1.0"
-            )
-            
-        success = await config_service.update_strategy_weight_async(
-            strategy_name, new_weight
-        )
-        
-        if success:
-            return {
-                "status": ResponseStatus.SUCCESS,
-                "message": f"Updated {strategy_name} weight to {new_weight}",
-                "strategy_name": strategy_name,
-                "new_weight": new_weight,
-            }
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update strategy weight"
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update strategy weight: {str(e)}"
-        )
-```
+| Metod | Endpoint | Beskrivning |
+|-------|----------|-------------|
+| GET | `/api/positions` | Hämta aktuella positioner från Bitfinex |
 
-## Positions-endpoints
+### Viktiga Implementationsdetaljer
 
-### Implementerade endpoints
+- Använder Pydantic-modeller för strukturerad utdata
+- Implementerar asynkrona anrop till PositionsService
+- Integrerar med event_logger för att hantera loggning av rutinmässiga anrop
+- Hanterar olika felfall (ExchangeError vs andra fel) på ett konsekvent sätt
 
-Vi har implementerat följande positions-endpoint för FastAPI:
+## Dependency Injection
 
-1. **GET /api/positions** - Hämta alla aktuella positioner
-
-### Förbättringar jämfört med Flask-implementationen
-
-1. **Asynkrona funktioner**:
-   - Använder `fetch_live_positions_async()` för asynkron hämtning av positioner
-   - Förbättrad prestanda genom att undvika blockering vid API-anrop
-
-2. **Förbättrad felhantering**:
-   - Separata felhanterare för ExchangeError och andra fel
-   - Mer detaljerade felmeddelanden
-
-3. **Utökad svarsdata**:
-   - Inkluderar antal positioner (`count`)
-   - Inkluderar timestamp från positionsdata
-   - Använder `ResponseStatus` för att indikera varningsstatus vid exchange-fel
-
-4. **Standardiserade svar**:
-   - Alla svar följer samma format med `status`, `positions`, `count` och metadata
-
-### Kodexempel: Hämta positioner
+För att stödja dessa endpoints har vi använt FastAPI:s dependency injection-system:
 
 ```python
-@router.get("")
-async def get_positions() -> Dict[str, Any]:
-    """
-    Fetch current positions from Bitfinex.
+# Config service dependency
+def get_config_service() -> ConfigService:
+    return config_service
 
-    Returns live positions if API keys are configured,
-    otherwise returns empty list (no mock data for live trading).
-
-    Returns:
-        Dict: List of positions and metadata
-    """
-    try:
-        # Attempt to fetch live positions from Bitfinex
-        positions = await fetch_live_positions_async()
-
-        return {
-            "status": ResponseStatus.SUCCESS,
-            "positions": positions,
-            "count": len(positions),
-            "timestamp": positions[0].get("timestamp") if positions else None,
-        }
-
-    except ExchangeError as e:
-        # For exchange errors, return empty list rather than mock data for safety
-        return {
-            "status": ResponseStatus.WARNING,
-            "positions": [],
-            "count": 0,
-            "message": f"Exchange error: {str(e)}",
-        }
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch positions: {str(e)}"
-        )
+# Positions service dependency
+async def get_positions_service() -> Callable:
+    return fetch_live_positions_async
 ```
 
-## Utmaningar och lösningar
+## Pydantic-modeller
 
-### 1. Asynkrona metoder i ConfigService
+Vi använder följande Pydantic-modeller för validering:
 
-**Utmaning**: ConfigService saknade asynkrona metoder för att passa FastAPI:s asynkrona modell.
+- `ConfigSummary` - För konfigurationssammanfattning
+- `ValidationResponse` - För valideringsresultat
+- `ReloadConfigResponse` - För resultat av konfigurationsomläsning
+- `StrategyWeightsResponse` - För strategivikter
+- `StrategyParamsResponse` - För strategiparametrar
+- `UpdateStrategyWeightRequest` - För uppdatering av strategivikt
+- `ProbabilityConfig` - För sannolikhetskonfiguration
+- `UpdateProbabilitySettingsRequest` - För uppdatering av sannolikhetsinställningar
+- `Position` - För positionsdata
+- `PositionsResponse` - För svar med positioner
 
-**Lösning**: Implementerade asynkrona versioner av alla ConfigService-metoder som används av API-endpointsen:
-- `get_config_summary_async()`
-- `get_strategy_weights_async()`
-- `get_strategy_params_async()`
-- `update_strategy_weight_async()`
-- `load_config_async()`
-- `validate_config_async()`
-- `update_probability_settings_async()`
+## Nästa Steg
 
-### 2. Dependency Injection
+Med dessa implementationer har vi nu migrerat alla kritiska endpoints från Flask till FastAPI. Nästa steg i migrationen är:
 
-**Utmaning**: Flask-implementationen använde globala tjänstinstanser, vilket inte passar FastAPI:s DI-modell.
-
-**Lösning**: Skapade dependency-funktioner för alla tjänster:
-- `get_config_service()` för ConfigService
-- Använde befintliga asynkrona funktioner för positions-endpointsen
-
-### 3. Standardiserade svarsformat
-
-**Utmaning**: Olika endpoints returnerade olika svarsformat i Flask-implementationen.
-
-**Lösning**: Standardiserade alla svar att inkludera:
-- `status` (SUCCESS, WARNING, ERROR)
-- Relevant data (positions, config, etc.)
-- Metadata (count, timestamp, etc.)
-- Felmeddelande vid behov
+1. Fortsätta konvertera fler service-funktioner till asynkrona
+2. Implementera fler avancerade funktioner i FastAPI som inte finns i Flask-versionen
+3. Genomföra omfattande testning av alla endpoints
+4. Uppdatera frontend för att använda FastAPI-endpoints
 
 ## Slutsats
 
-Implementationen av Config- och Positions-endpoints för FastAPI har förbättrat kodkvaliteten, prestandan och användarupplevelsen. Genom att använda FastAPI:s funktioner för asynkrona operationer, dependency injection och Pydantic-modeller har vi skapat en mer robust och underhållbar API. 
+Implementationen av config- och positions-endpoints för FastAPI är nu klar och integrerad i systemet. Dessa endpoints körs parallellt med Flask-versionerna, vilket möjliggör en gradvis övergång till FastAPI. 
