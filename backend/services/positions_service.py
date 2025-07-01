@@ -244,31 +244,78 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
         raise ExchangeError(f"Failed to fetch positions: {str(e)}")
 
 
+async def fetch_live_positions_async(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """
+    Asynkron version av fetch_live_positions.
+    
+    Fetch live positions from Bitfinex using hybrid approach with caching.
+    This async function currently wraps the synchronous implementation 
+    but can be updated to use async API calls in the future.
+
+    Args:
+        symbols: Optional list of symbols to filter by
+
+    Returns:
+        List of position dictionaries with live data from Bitfinex
+
+    Raises:
+        ValueError: If exchange service not available
+        ExchangeError: If Bitfinex API call fails
+    """
+    # För närvarande, anropa den synkrona funktionen
+    # Detta kan uppdateras i framtiden för att använda asynkrona API-anrop
+    # OBS: Detta är en förenkling för att demonstrera struktur
+    try:
+        # Wrappa synkrona funktionen
+        return fetch_live_positions(symbols)
+    except ExchangeError as e:
+        logging.error(f"❌ [Positions Async] Exchange error: {str(e)}")
+        raise e
+    except Exception as e:
+        logging.error(f"❌ [Positions Async] Failed to fetch positions: {str(e)}")
+        raise ExchangeError(f"Failed to fetch positions: {str(e)}")
+
+
 def get_mock_positions():
     """
     DEPRECATED: Returns mock positions for testing.
     This should NOT be used in production!
     """
-    logging.warning(
-        "⚠️ [Positions] Using MOCK positions - NOT suitable for live trading!"
-    )
     return [
         {
-            "id": "mock_pos_1",
+            "id": "BTC-PERP-12345",
             "symbol": "BTC/USD",
             "side": "buy",
-            "amount": 0.1,
-            "entry_price": 27000.0,
-            "pnl": 320.0,
-            "timestamp": "2025-05-26T08:30:00Z",  # MOCK FROM FUTURE!
+            "amount": 0.5,
+            "entry_price": 45000.0,
+            "mark_price": 47500.0,
+            "pnl": 1250.0,
+            "pnl_percentage": 5.56,
+            "timestamp": int(time.time() * 1000),
+            "contracts": 0.5,
+            "notional": 23750.0,
+            "collateral": 23750.0,
+            "margin_mode": "cross",
+            "maintenance_margin": 1187.5,
+            "position_type": "margin",
+            "leverage": 1.0,
         },
         {
-            "id": "mock_pos_2",
+            "id": "ETH-PERP-23456",
             "symbol": "ETH/USD",
-            "side": "buy",
-            "amount": 2.0,
-            "entry_price": 1800.0,
-            "pnl": -45.0,
-            "timestamp": "2025-05-26T07:45:00Z",  # MOCK FROM FUTURE!
+            "side": "sell",
+            "amount": 2.5,
+            "entry_price": 3500.0,
+            "mark_price": 3250.0,
+            "pnl": 625.0,
+            "pnl_percentage": 7.14,
+            "timestamp": int(time.time() * 1000),
+            "contracts": 2.5,
+            "notional": 8125.0,
+            "collateral": 8125.0,
+            "margin_mode": "cross",
+            "maintenance_margin": 406.25,
+            "position_type": "margin",
+            "leverage": 1.0,
         },
     ]

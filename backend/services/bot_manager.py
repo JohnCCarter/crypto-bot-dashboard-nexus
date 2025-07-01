@@ -220,3 +220,38 @@ def get_bot_status():
         status_info["error"] = current_state["error"]
 
     return status_info
+
+
+# Asynkrona versioner av funktionerna
+
+
+async def start_bot_async():
+    """
+    Asynkron version av start_bot.
+    
+    Startar tradingboten med faktisk trading logic.
+    Detta är en asynkron wrapper runt den synkrona funktionen.
+    """
+    # Eftersom vi inte kan göra threading-operationer asynkrona på ett enkelt sätt,
+    # använder vi den befintliga synkrona implementationen
+    return start_bot()
+
+
+async def stop_bot_async():
+    """
+    Asynkron version av stop_bot.
+    
+    Stoppar tradingboten.
+    Detta är en asynkron wrapper runt den synkrona funktionen.
+    """
+    return stop_bot()
+
+
+async def get_bot_status_async():
+    """
+    Asynkron version av get_bot_status.
+    
+    Returnerar nuvarande status för tradingboten, uptime och senaste uppdateringstid.
+    Detta är en asynkron wrapper runt den synkrona funktionen.
+    """
+    return get_bot_status()

@@ -50,6 +50,24 @@ class ConfigService:
 
         return self._parse_config(self._config_cache)
 
+    async def load_config_async(self, force_reload: bool = False) -> TradingConfig:
+        """
+        Asynkron version av load_config.
+        
+        Load configuration from file with caching.
+        This async function currently wraps the synchronous implementation
+        but can be updated to use async file operations in the future.
+
+        Args:
+            force_reload: Force reload from file even if cached
+
+        Returns:
+            TradingConfig object with all settings
+        """
+        # För närvarande, använd den synkrona implementationen
+        # Detta kan uppdateras i framtiden för asynkrona filoperationer
+        return self.load_config(force_reload)
+
     def _load_from_file(self) -> Dict[str, Any]:
         """Load raw configuration from JSON file."""
         try:
@@ -154,6 +172,19 @@ class ConfigService:
 
         return strategy_weights
 
+    async def get_strategy_weights_async(self) -> List[StrategyWeight]:
+        """
+        Asynkron version av get_strategy_weights.
+        
+        Get strategy weights for portfolio manager.
+        This async function currently wraps the synchronous implementation.
+
+        Returns:
+            List of StrategyWeight objects
+        """
+        # Wrappa synkrona funktionen
+        return self.get_strategy_weights()
+
     def get_strategy_params(self, strategy_name: str) -> Dict[str, Any]:
         """
         Get parameters for a specific strategy.
@@ -177,6 +208,22 @@ class ConfigService:
         strategy_params.update(strategy_config)
 
         return strategy_params
+
+    async def get_strategy_params_async(self, strategy_name: str) -> Dict[str, Any]:
+        """
+        Asynkron version av get_strategy_params.
+        
+        Get parameters for a specific strategy.
+        This async function currently wraps the synchronous implementation.
+
+        Args:
+            strategy_name: Name of the strategy
+
+        Returns:
+            Dict with strategy parameters
+        """
+        # Wrappa synkrona funktionen
+        return self.get_strategy_params(strategy_name)
 
     def update_strategy_weight(self, strategy_name: str, new_weight: float) -> bool:
         """
@@ -215,6 +262,23 @@ class ConfigService:
             self.logger.error(f"Failed to update strategy weight: {e}")
             return False
 
+    async def update_strategy_weight_async(self, strategy_name: str, new_weight: float) -> bool:
+        """
+        Asynkron version av update_strategy_weight.
+        
+        Update strategy weight in configuration.
+        This async function currently wraps the synchronous implementation.
+
+        Args:
+            strategy_name: Name of strategy to update
+            new_weight: New weight value (0.0 - 1.0)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        # Wrappa synkrona funktionen
+        return self.update_strategy_weight(strategy_name, new_weight)
+
     def update_probability_settings(self, new_settings: Dict[str, Any]) -> bool:
         """
         Update probability settings in configuration.
@@ -246,6 +310,22 @@ class ConfigService:
         except Exception as e:
             self.logger.error(f"Failed to update probability settings: {e}")
             return False
+
+    async def update_probability_settings_async(self, new_settings: Dict[str, Any]) -> bool:
+        """
+        Asynkron version av update_probability_settings.
+        
+        Update probability settings in configuration.
+        This async function currently wraps the synchronous implementation.
+
+        Args:
+            new_settings: New probability settings
+
+        Returns:
+            True if successful, False otherwise
+        """
+        # Wrappa synkrona funktionen
+        return self.update_probability_settings(new_settings)
 
     def validate_config(self) -> List[str]:
         """
@@ -305,6 +385,19 @@ class ConfigService:
 
         return errors
 
+    async def validate_config_async(self) -> List[str]:
+        """
+        Asynkron version av validate_config.
+        
+        Validate current configuration and return any errors.
+        This async function currently wraps the synchronous implementation.
+
+        Returns:
+            List of validation error messages
+        """
+        # Wrappa synkrona funktionen
+        return self.validate_config()
+
     def get_config_summary(self) -> Dict[str, Any]:
         """
         Get a summary of current configuration.
@@ -354,3 +447,16 @@ class ConfigService:
                 "config_valid": False,
                 "error": str(e),
             }
+
+    async def get_config_summary_async(self) -> Dict[str, Any]:
+        """
+        Asynkron version av get_config_summary.
+        
+        Get a summary of current configuration.
+        This async function currently wraps the synchronous implementation.
+
+        Returns:
+            Dict with configuration summary
+        """
+        # Wrappa synkrona funktionen
+        return self.get_config_summary()
