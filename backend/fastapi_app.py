@@ -4,9 +4,13 @@ This module provides the FastAPI application instance and configuration.
 """
 
 import os
+import sys
 import logging
 from typing import Dict, Any
 from contextlib import asynccontextmanager
+
+# Lägg till projektroten i Python-sökvägen för att kunna importera backend-modulen
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, HTTPException, Request, status as http_status
 from fastapi.middleware.cors import CORSMiddleware
