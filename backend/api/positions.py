@@ -1,56 +1,60 @@
-"""
-Positions API endpoints for FastAPI.
-"""
+"""API routes for positions management with FastAPI."""
 
-from typing import Dict, Any, List
+from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Depends, HTTPException
 
+from backend.api.dependencies import get_positions_service_async
+from backend.api.models import PositionsResponse
 from backend.services.exchange import ExchangeError
-from backend.services.positions_service import fetch_live_positions_async
-from backend.api.models import ResponseStatus
-
-
-# Create router
-router = APIRouter(
-    prefix="/api/positions",
-    tags=["positions"],
+from backend.services.event_logger import (
+    event_logger, should_suppress_routine_log, EventType
 )
 
+# Create router
+router = APIRouter(prefix="/api/positions", tags=["positions"])
 
-@router.get("")
-async def get_positions() -> Dict[str, Any]:
+
+@router.get("/", response_model=PositionsResponse)
+async def get_positions(
+    symbols: Optional[List[str]] = None,
+    fetch_positions_async=Depends(get_positions_service_async)
+):
     """
     Fetch current positions from Bitfinex.
 
     Returns live positions if API keys are configured,
     otherwise returns empty list (no mock data for live trading).
 
-    Returns:
-        Dict: List of positions and metadata
-    """
-    try:
-        # Attempt to fetch live positions from Bitfinex
-        positions = await fetch_live_positions_async()
+    Args:
+        symbols: Optional list of symbols to filter by
 
-        return {
-            "status": ResponseStatus.SUCCESS,
-            "positions": positions,
-            "count": len(positions),
-            "timestamp": positions[0].get("timestamp") if positions else None,
-        }
+    Returns:
+        List of live positions
+    """
+    # Detta är routine polling - supprimerias enligt event_logger
+    
+    try:
+        # Attempt to fetch live positions from Bitfinex using async service
+        positions = await fetch_positions_async(symbols)
+
+        # Endast logga om det INTE är routine polling
+        if not should_suppress_routine_log("/api/positions", "GET"):
+            event_logger.log_event(
+                EventType.API_ERROR,  # Using available type
+                f"Positions fetched: {len(positions)} positions"
+            )
+
+        return {"positions": positions}
 
     except ExchangeError as e:
-        # For exchange errors, return empty list rather than mock data for safety
-        return {
-            "status": ResponseStatus.WARNING,
-            "positions": [],
-            "count": 0,
-            "message": f"Exchange error: {str(e)}",
-        }
+        # FEL ska alltid loggas - de är meningsfulla
+        event_logger.log_exchange_error("fetch_positions", str(e))
+        
+        # Return empty list rather than mock data for safety
+        return {"positions": []}
 
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch positions: {str(e)}"
-        ) 
+        # Kritiska fel ska alltid loggas
+        event_logger.log_api_error("/api/positions", str(e))
+        raise HTTPException(status_code=500, detail=str(e)) 

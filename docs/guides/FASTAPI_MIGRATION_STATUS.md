@@ -1,171 +1,110 @@
 # FastAPI Migration Status
 
-Detta dokument spårar statusen för migrationen från Flask till FastAPI.
+Detta dokument beskriver den aktuella statusen för migrationen från Flask till FastAPI.
 
-## Övergripande status
+## Översikt
 
-- [x] Grundläggande FastAPI-struktur
-- [x] Gemensamma modeller med Pydantic
-- [x] Dependency injection system
-- [x] Migrerade endpoints
-  - [x] Status endpoints
-  - [x] Balances endpoints
-  - [x] Orders endpoints
-  - [x] Backtest endpoints
-  - [x] Config endpoints ✅
-  - [x] Positions endpoints ✅
-  - [x] Market data endpoints
-  - [x] Orderbook endpoints
-  - [x] Monitoring endpoints ✅
-  - [x] Risk management endpoints
-  - [x] Portfolio endpoints
-- [x] Asynkrona tjänster
-  - [x] OrderServiceAsync
-  - [x] RiskManagerAsync
-  - [x] PortfolioManagerAsync
-  - [x] LivePortfolioServiceAsync
-  - [x] ExchangeAsync (hjälpfunktioner)
-- [ ] Fullständig test coverage
-- [ ] Dokumentation
+Vi genomför en stegvis migration från Flask till FastAPI för att dra nytta av:
+- Asynkron kod och förbättrad prestanda
+- Automatisk dokumentation med Swagger UI
+- Inbyggd validering med Pydantic
+- Dependency injection
 
-## Migrerade endpoints
+FastAPI-servern körs parallellt med Flask-servern under migrationen för att säkerställa kontinuerlig drift.
 
-### Status API ✅
+## Implementerade Endpoints
 
-- [x] `/api/status` - Systemstatus
-- [x] `/api/exchange/status` - Exchange status
+Följande endpoints har framgångsrikt migrerats till FastAPI:
 
-### Balances API ✅
+### Status Endpoints
+- ✅ GET `/api/status` - Systemstatus
+- ✅ GET `/api/health` - Hälsokontroll
 
-- [x] `/api/balances` - Hämta saldo
-- [x] `/api/balances/history` - Hämta saldohistorik
+### Balances Endpoints
+- ✅ GET `/api/balances` - Hämta saldoinformation
 
-### Orders API ✅
+### Orders Endpoints
+- ✅ GET `/api/orders` - Hämta ordrar
+- ✅ POST `/api/orders` - Skapa order
+- ✅ DELETE `/api/orders/{order_id}` - Avbryt order
 
-- [x] `/api/orders` - Skapa order
-- [x] `/api/orders/history` - Hämta orderhistorik
-- [x] `/api/orders/{order_id}` - Hämta specifik order
-- [x] `/api/orders/{order_id}/cancel` - Avbryt order
+### Backtest Endpoints
+- ✅ GET `/api/backtest/strategies` - Lista strategier
+- ✅ POST `/api/backtest/run` - Kör backtest
+- ✅ GET `/api/backtest/results/{backtest_id}` - Hämta resultat
+- ✅ GET `/api/backtest/performance/{backtest_id}` - Hämta prestanda
 
-### Backtest API ✅
+### Config Endpoints
+- ✅ GET `/api/config` - Hämta konfiguration
+- ✅ GET `/api/config/summary` - Hämta konfigurationssammanfattning
+- ✅ GET `/api/config/strategy` - Hämta strategikonfiguration
+- ✅ GET `/api/config/strategy/{strategy_id}` - Hämta strategiparametrar
+- ✅ POST `/api/config/strategy/weight` - Uppdatera strategivikt
+- ✅ GET `/api/config/probability` - Hämta sannolikhetskonfiguration
+- ✅ POST `/api/config/probability` - Uppdatera sannolikhetsinställningar
+- ✅ GET `/api/config/validate` - Validera konfiguration
+- ✅ POST `/api/config/reload` - Ladda om konfiguration
 
-- [x] `/api/backtest/run` - Kör backtest
-- [x] `/api/backtest/results` - Hämta backtest-resultat
-- [x] `/api/backtest/strategies` - Lista tillgängliga strategier
-- [x] `/api/backtest/compare` - Jämför strategier
+### Positions Endpoints
+- ✅ GET `/api/positions` - Hämta positioner
 
-### Config API ✅
+### Market Data Endpoints
+- ✅ GET `/api/market/ohlcv/{symbol}` - Hämta OHLCV-data
+- ✅ GET `/api/market/ticker/{symbol}` - Hämta ticker-data
+- ✅ GET `/api/market/orderbook/{symbol}` - Hämta orderbook
+- ✅ GET `/api/market/context/{symbol}` - Hämta marknadskontext
+- ✅ GET `/api/market/validate/{symbol}` - Validera symbol
 
-- [x] `/api/config` - Hämta/uppdatera konfiguration
-- [x] `/api/config/summary` - Hämta konfigurationssammanfattning
-- [x] `/api/config/strategies` - Hämta strategikonfiguration
-- [x] `/api/config/strategy/{strategy_name}` - Hämta parametrar för specifik strategi
-- [x] `/api/config/strategy/{strategy_name}/weight` - Uppdatera strategivikt
-- [x] `/api/config/probability` - Hämta/uppdatera sannolikhetskonfiguration
-- [x] `/api/config/validate` - Validera konfiguration
-- [x] `/api/config/reload` - Ladda om konfiguration från fil
+### Monitoring Endpoints
+- ✅ GET `/api/monitoring/nonce` - Nonce-statistik
+- ✅ GET `/api/monitoring/cache` - Cache-statistik
+- ✅ GET `/api/monitoring/hybrid` - Hybrid-setup-information
 
-### Positions API ✅
+## Asynkrona Tjänster
 
-- [x] `/api/positions` - Hämta positioner
+Följande tjänster har implementerats med asynkron funktionalitet:
 
-### Market Data API ✅
+- ✅ OrderServiceAsync - Asynkron orderhantering
+- ✅ RiskManagerAsync - Asynkron riskhantering
+- ✅ PortfolioManagerAsync - Asynkron portföljhantering
+- ✅ LiveDataServiceAsync - Asynkron marknadsdatahämtning
+- ✅ PositionsServiceAsync - Asynkron positionshantering
 
-- [x] `/api/market-data/candles` - Hämta OHLCV-data
-- [x] `/api/market-data/ticker` - Hämta ticker-data
-- [x] `/api/market-data/symbols` - Lista tillgängliga symboler
+## Nästa Steg
 
-### Orderbook API ✅
+1. Migrera återstående endpoints:
+   - ❌ Bot Control Endpoints
+   - ❌ Portfolio Endpoints
+   - ❌ Risk Management Endpoints
 
-- [x] `/api/orderbook/{symbol}` - Hämta orderbok
+2. Förbättra asynkron implementation:
+   - ❌ Skapa asynkron ConfigService
+   - ❌ Implementera asynkron WebSocket-integration
 
-### Monitoring API ✅
+3. Tester och dokumentation:
+   - ✅ Grundläggande tester för migrerade endpoints
+   - ❌ Omfattande tester för asynkrona tjänster
+   - ❌ Komplett API-dokumentation
 
-- [x] `/api/monitoring/nonce` - Hämta nonce-övervakningsrapport
-- [x] `/api/monitoring/cache` - Hämta cache-statistik
-- [x] `/api/monitoring/hybrid-setup` - Hämta status för hybrid-implementationen
+## Kända Problem
 
-### Risk Management API ✅
+- Vissa tester för asynkrona tjänster misslyckas på grund av svårigheter med att mocka asynkrona funktioner.
+- Flask-applikationskontexten är inte tillgänglig i FastAPI, vilket kräver refaktorering av vissa tjänster.
 
-- [x] `/api/risk/parameters` - Hämta/uppdatera riskparametrar
-- [x] `/api/risk/limits` - Hämta/uppdatera risklimiter
-- [x] `/api/risk/analyze` - Analysera risk för en potentiell trade
-- [x] `/api/risk/probability` - Beräkna sannolikheter för olika utfall
+## Tidslinje
 
-### Portfolio API ✅
+- **Fas 1**: ✅ Grundläggande struktur och status/balances/orders endpoints
+- **Fas 2**: ✅ Backtest endpoints och asynkrona order/risk/portfolio-tjänster
+- **Fas 3**: ✅ Config och positions endpoints samt asynkrona market data-tjänster
+- **Fas 4**: ❌ Bot control och portfolio endpoints
+- **Fas 5**: ❌ Risk management endpoints och fullständig asynkron implementation
 
-- [x] `/api/portfolio/allocate` - Beräkna optimal portfölj-allokering
-- [x] `/api/portfolio/process-signals` - Bearbeta strategisignaler
-- [x] `/api/portfolio/status` - Hämta portföljstatus
-- [x] `/api/portfolio/rebalance` - Rebalansera portfölj
-- [x] `/api/portfolio/live/snapshot` - Hämta realtids-snapshot av portföljen
-- [x] `/api/portfolio/live/performance` - Hämta prestationsmetriker
-- [x] `/api/portfolio/live/validate-trade` - Validera potentiell trade
+## Dokumentation
 
-## Asynkrona tjänster
+- [FASTAPI_MIGRATION_PLAN.md](FASTAPI_MIGRATION_PLAN.md) - Detaljerad migreringsplan
+- [FASTAPI_ENDPOINTS_SUMMARY.md](FASTAPI_ENDPOINTS_SUMMARY.md) - Sammanfattning av alla endpoints
+- [FASTAPI_MIGRATION_PLAN_NEXT_STEPS.md](FASTAPI_MIGRATION_PLAN_NEXT_STEPS.md) - Nästa steg i migrationen
+- [../reports/FASTAPI_ASYNC_MARKET_DATA_IMPLEMENTATION.md](../reports/FASTAPI_ASYNC_MARKET_DATA_IMPLEMENTATION.md) - Implementation av asynkron market data
+- [../reports/FASTAPI_CONFIG_POSITIONS_IMPLEMENTATION.md](../reports/FASTAPI_CONFIG_POSITIONS_IMPLEMENTATION.md) - Implementation av config och positions endpoints
 
-### OrderServiceAsync ✅
-
-Implementerad för att hantera order-relaterade operationer asynkront.
-
-### RiskManagerAsync ✅
-
-Implementerad för att hantera risk-relaterade operationer asynkront, inklusive sannolikhetsberäkningar.
-
-### PortfolioManagerAsync ✅
-
-Implementerad för att hantera portfölj-relaterade operationer asynkront, inklusive allokering och rebalansering.
-
-### LivePortfolioServiceAsync ✅
-
-Ny tjänst för realtidsövervakning av portföljen, inklusive:
-- Realtids-snapshot av portföljen
-- Prestationsmetriker
-- Trade-validering baserat på aktuella saldon
-
-### ExchangeAsync ✅
-
-Hjälpfunktioner för att anropa exchange-metoder asynkront.
-
-## Nästa steg
-
-1. ✅ Slutföra migrationen av återstående Config-endpoints
-2. ✅ Slutföra migrationen av återstående Positions-endpoints
-3. ✅ Slutföra migrationen av Monitoring-endpoints
-4. Konvertera fler tjänster till asynkrona där det är lämpligt
-5. Förbättra testcoverage för alla endpoints
-6. Uppdatera dokumentation
-7. Planera för en fullständig övergång till FastAPI
-
-## Fördelar med FastAPI
-
-- **Förbättrad kodstruktur**: Tydligare separation av routes, modeller och beroenden
-- **Automatisk API-dokumentation**: OpenAPI och Swagger UI tillgängliga på `/docs`
-- **Bättre typvalidering**: Pydantic-modeller ger robust validering och automatisk konvertering
-- **Asynkron kod**: Möjlighet att använda `async`/`await` för förbättrad prestanda
-- **Dependency Injection**: Inbyggt system för att hantera beroenden
-- **Testbarhet**: Enklare att skriva tester för API-endpoints
-- **Modern struktur**: Användning av senaste funktioner som lifespan-hantering för applikationens livscykel
-- **Robusthet**: Bättre felhantering och fallback-lösningar 
-- **Skalbarhet**: Asynkrona serviceklasser möjliggör bättre resurshantering och skalning 
-
-## Kända problem och lösningar
-
-### Portfolio-endpoints svarar inte korrekt
-
-Problem: Portfolio-endpoints `/api/portfolio/live/*` svarar med 404 Not Found trots att de är korrekt implementerade.
-
-Lösning:
-1. Korrigerade metodnamn i LivePortfolioServiceAsync för att matcha anropen i API-endpointsen:
-   - `get_portfolio_performance_metrics` → `get_portfolio_performance`
-   - `validate_trading_capacity` → `validate_trade`
-2. Uppdaterade serialiseringen av svarsdata för att hantera Pydantic-modeller korrekt
-
-### Config-endpoints felaktigt registrerade
-
-Problem: Config-endpoints använder olika beroenden och modeller jämfört med Flask-versionen.
-
-Lösning:
-1. Implementerade Dependency Injection för ConfigService
-2. Skapade nya Pydantic-modeller för konfigurationsdata
-3. Uppdaterade alla endpoints för att använda asynkrona metoder från ConfigService 
+Uppdaterad: 2025-07-01 

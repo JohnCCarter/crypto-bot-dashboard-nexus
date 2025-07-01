@@ -1,94 +1,91 @@
-# FastAPI Migration - Nästa steg
+# FastAPI Migration - Next Steps
 
-## Sammanfattning av nuvarande status
+Detta dokument beskriver de nästa stegen i migrationen från Flask till FastAPI.
 
-Vi har framgångsrikt migrerat följande endpoints från Flask till FastAPI:
-- Status endpoints
-- Balances endpoints
-- Orders endpoints
-- Backtest endpoints
-- Config endpoints
-- Positions endpoints
-- Monitoring endpoints
+## Slutförda Uppgifter
 
-Vi har också implementerat flera asynkrona tjänster:
-- OrderServiceAsync
-- RiskManagerAsync
-- PortfolioManagerAsync
-- LivePortfolioServiceAsync
-- ExchangeAsync (hjälpfunktioner)
+### Grundläggande Struktur
+- ✅ Skapa grundläggande FastAPI-applikation
+- ✅ Konfigurera CORS och middleware
+- ✅ Implementera felhantering
+- ✅ Skapa dependency injection-system
 
-## Nästa steg i migrationen
+### Endpoints
+- ✅ Migrera status endpoints
+- ✅ Migrera balances endpoints
+- ✅ Migrera orders endpoints
+- ✅ Migrera backtest endpoints
+- ✅ Migrera config endpoints
+- ✅ Migrera positions endpoints
+- ✅ Migrera market data endpoints
+- ✅ Migrera monitoring endpoints
 
-### 1. Konvertera fler tjänster till asynkrona
+### Asynkrona Tjänster
+- ✅ Implementera OrderServiceAsync
+- ✅ Implementera RiskManagerAsync
+- ✅ Implementera PortfolioManagerAsync
+- ✅ Implementera LiveDataServiceAsync
+- ✅ Implementera PositionsServiceAsync
 
-Följande tjänster bör konverteras till asynkrona för att förbättra prestandan:
+## Nästa Steg
 
-- **MarketDataServiceAsync**
-  - Hämtar marknadsdata från externa API:er
-  - Innehåller flera I/O-intensiva operationer som skulle dra nytta av asynkron hantering
-  - Prioritet: Hög
+### Endpoints att Migrera
+- ❌ Bot Control Endpoints
+  - GET `/api/bot/status`
+  - POST `/api/bot/start`
+  - POST `/api/bot/stop`
+- ❌ Portfolio Endpoints
+  - GET `/api/portfolio/allocation`
+  - POST `/api/portfolio/optimize`
+- ❌ Risk Management Endpoints
+  - GET `/api/risk/validate-order`
+  - GET `/api/risk/assessment`
+  - GET `/api/risk/score`
 
-- **OrderbookServiceAsync**
-  - Hanterar orderböcker från olika börser
-  - Innehåller många nätverksanrop som skulle dra nytta av asynkron hantering
-  - Prioritet: Medel
+### Asynkrona Tjänster att Implementera
+- ❌ ConfigServiceAsync
+- ❌ BotManagerAsync
+- ❌ WebSocketServiceAsync
 
-- **ConfigServiceAsync**
-  - Hanterar konfigurationsdata
-  - Innehåller diskoperationer som skulle dra nytta av asynkron hantering
-  - Prioritet: Låg
+### Testning och Dokumentation
+- ❌ Förbättra testning av asynkrona tjänster
+- ❌ Skapa omfattande API-dokumentation
+- ❌ Uppdatera användardokumentation
 
-### 2. Förbättra testcoverage
+## Prioritering
 
-- Skapa enhetstester för alla FastAPI-endpoints
-- Implementera integrationstester för att verifiera att endpoints fungerar korrekt tillsammans
-- Förbättra mockning av beroenden för att göra testerna mer robusta
-- Implementera prestandatester för att mäta förbättringarna med asynkrona tjänster
+1. **Hög Prioritet**
+   - Migrera Bot Control Endpoints
+   - Implementera BotManagerAsync
+   - Förbättra testning av asynkrona tjänster
 
-### 3. Uppdatera dokumentation
+2. **Medium Prioritet**
+   - Migrera Portfolio Endpoints
+   - Implementera ConfigServiceAsync
+   - Uppdatera API-dokumentation
 
-- Skapa en detaljerad API-dokumentation för alla endpoints
-- Uppdatera arkitekturdokumentation för att reflektera de nya asynkrona tjänsterna
-- Skapa en guide för hur man använder dependency injection i FastAPI
-- Dokumentera prestandaförbättringar från migrationen
+3. **Lägre Prioritet**
+   - Migrera Risk Management Endpoints
+   - Implementera WebSocketServiceAsync
+   - Uppdatera användardokumentation
 
-### 4. Planera för en fullständig övergång till FastAPI
+## Tidslinje
 
-#### Fas 1: Parallell drift (nuvarande fas)
-- Fortsätt att köra både Flask och FastAPI-servrar parallellt
-- Migrera återstående endpoints
-- Validera att alla endpoints fungerar korrekt
+- **Vecka 1**: Migrera Bot Control Endpoints och implementera BotManagerAsync
+- **Vecka 2**: Migrera Portfolio Endpoints och implementera ConfigServiceAsync
+- **Vecka 3**: Migrera Risk Management Endpoints och förbättra testning
+- **Vecka 4**: Implementera WebSocketServiceAsync och uppdatera dokumentation
 
-#### Fas 2: Gradvis övergång
-- Dirigera en del av trafiken till FastAPI-servern
-- Övervaka prestanda och felfrekvens
-- Åtgärda eventuella problem som upptäcks
+## Utmaningar
 
-#### Fas 3: Fullständig övergång
-- Dirigera all trafik till FastAPI-servern
-- Avveckla Flask-servern
-- Konsolidera konfiguration och dokumentation
+- **Testning av Asynkrona Tjänster**: Utveckla bättre strategier för att mocka asynkrona funktioner
+- **Flask-beroenden**: Hantera övergången från Flask-applikationskontext till FastAPI-modellen
+- **Parallell Drift**: Säkerställa att både Flask och FastAPI fungerar parallellt under migrationen
 
-## Tidsplan
+## Resurser
 
-| Fas | Uppgift | Estimerad tid |
-|-----|---------|---------------|
-| 1 | Konvertera MarketDataServiceAsync | 1 vecka |
-| 1 | Konvertera OrderbookServiceAsync | 1 vecka |
-| 1 | Konvertera ConfigServiceAsync | 3 dagar |
-| 1 | Förbättra testcoverage | 2 veckor |
-| 1 | Uppdatera dokumentation | 1 vecka |
-| 2 | Gradvis övergång | 2 veckor |
-| 3 | Fullständig övergång | 1 vecka |
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Async/Await in Python](https://docs.python.org/3/library/asyncio.html)
+- [Pydantic Documentation](https://docs.pydantic.dev/)
 
-## Risker och utmaningar
-
-- **Bakåtkompatibilitet**: Säkerställa att alla klienter fungerar med både Flask och FastAPI under övergångsperioden
-- **Prestandaövervakning**: Implementera övervakning för att jämföra prestanda mellan Flask och FastAPI
-- **Felhantering**: Säkerställa konsekvent felhantering mellan de två implementationerna
-- **Dokumentation**: Hålla dokumentationen uppdaterad under migrationen
-
-## Slutsats
-
-Migrationen till FastAPI har gått bra hittills med flera viktiga endpoints redan migrerade. Genom att följa denna plan kan vi slutföra migrationen på ett strukturerat och kontrollerat sätt, med minimal påverkan på användarna och maximal förbättring av prestanda och kodkvalitet. 
+Uppdaterad: 2025-07-01 

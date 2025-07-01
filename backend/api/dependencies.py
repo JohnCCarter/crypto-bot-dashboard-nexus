@@ -48,6 +48,7 @@ from backend.services.portfolio_manager_async import (
     PortfolioManagerAsync,
     StrategyWeight
 )
+from backend.services.positions_service_async import fetch_positions_async
 
 import logging
 
@@ -413,3 +414,15 @@ def get_cache_service_dependency() -> EnhancedCacheService:
     EnhancedCacheService: The cache service
     """
     return get_cache_service() 
+
+
+# Positions service async dependency provider
+def get_positions_service_async() -> Callable:
+    """
+    Get the async positions service function.
+    
+    Returns:
+    --------
+    Callable: The fetch_positions_async function
+    """
+    return fetch_positions_async
