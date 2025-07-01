@@ -5,10 +5,45 @@ This module provides asynchronous wrapper functions around the ExchangeService.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any, Dict, List
 from unittest.mock import MagicMock
 
 from backend.services.exchange import ExchangeService, ExchangeError
+
+logger = logging.getLogger(__name__)
+
+# Global exchange instance
+_exchange_instance = None
+
+
+async def init_exchange_async() -> None:
+    """
+    Initialize the exchange service asynchronously.
+    
+    This function creates a global exchange instance that can be used
+    by other async functions in this module.
+    """
+    global _exchange_instance
+    
+    try:
+        logger.info("🚀 Initializing exchange service asynchronously...")
+        
+        # Create exchange service
+        # This is a placeholder for now - in the future we might want to
+        # use a truly async exchange client like ccxt.async_support
+        _exchange_instance = ExchangeService(
+            exchange_id="bitfinex",
+            api_key="",
+            api_secret=""
+        )
+        
+        logger.info("✅ Exchange service initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize exchange service: {str(e)}")
+        # Create a mock exchange service as fallback
+        _exchange_instance = create_mock_exchange_service()
+        logger.warning("⚠️ Using mock exchange service as fallback")
 
 
 async def fetch_ohlcv_async(
@@ -162,11 +197,13 @@ async def get_exchange_status_async(
     try:
         # Run the synchronous method in a thread pool
         loop = asyncio.get_event_loop()
+        # Använd exchange.exchange.fetchStatus() istället för get_status
         return await loop.run_in_executor(
-            None, lambda: exchange.get_status()
+            None, lambda: exchange.exchange.fetchStatus()
         )
     except Exception as e:
-        raise ExchangeError(f"Failed to check exchange status: {str(e)}")
+        msg = f"Failed to check exchange status: {str(e)}"
+        raise ExchangeError(msg)
 
 
 def create_mock_exchange_service() -> MagicMock:
@@ -180,7 +217,9 @@ def create_mock_exchange_service() -> MagicMock:
     mock.name = "bitfinex-mock"
     
     # Konfigurera mock-svar för vanliga metoder
-    mock.fetch_ohlcv.return_value = [[1625097600000, 35000.0, 35100.0, 34900.0, 35050.0, 10.5]]
+    mock.fetch_ohlcv.return_value = [
+        [1625097600000, 35000.0, 35100.0, 34900.0, 35050.0, 10.5]
+    ]
     mock.fetch_order_book.return_value = {
         "bids": [[35000.0, 1.5], [34900.0, 2.3]], 
         "asks": [[35100.0, 1.2], [35200.0, 3.4]]
@@ -195,7 +234,11 @@ def create_mock_exchange_service() -> MagicMock:
     mock.fetch_recent_trades.return_value = [
         {"id": 1, "price": 35050.0, "amount": 0.1, "timestamp": 1625097600000}
     ]
-    mock.get_markets.return_value = {"tBTCUSD": {"symbol": "tBTCUSD", "base": "BTC", "quote": "USD"}}
-    mock.get_status.return_value = {"status": "ok", "timestamp": 1625097600000}
+    mock.get_markets.return_value = {
+        "tBTCUSD": {"symbol": "tBTCUSD", "base": "BTC", "quote": "USD"}
+    }
+    # Skapa en nested mock för exchange-attributet
+    mock.exchange = MagicMock()
+    mock.exchange.fetchStatus.return_value = {"status": "ok", "timestamp": 1625097600000}
     
     return mock 

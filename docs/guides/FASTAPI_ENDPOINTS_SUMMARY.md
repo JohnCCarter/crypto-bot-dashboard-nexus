@@ -80,6 +80,9 @@ Detta dokument innehåller en sammanställning av alla implementerade FastAPI-en
 - **POST /api/portfolio/process-signals** - Bearbeta strategisignaler för att bestämma handelsåtgärder
 - **GET /api/portfolio/status** - Hämta aktuell portföljstatus med allokeringar och metriker
 - **POST /api/portfolio/rebalance** - Balansera om portföljen för att matcha målallokeringar
+- **GET /api/portfolio/live/snapshot** - Hämta realtidsöversikt över portföljen med aktuella marknadspriser
+- **GET /api/portfolio/live/performance** - Hämta prestandametriker för portföljen
+- **POST /api/portfolio/live/validate-trade** - Validera om en specifik handel kan utföras baserat på aktuella balanser
 
 ## Åtkomst till dokumentation
 
@@ -115,5 +118,5 @@ FastAPI-servern körs på port 8001 parallellt med Flask-servern på port 5000 f
 | Orderbook | 2 | ✅ Implementerad |
 | Monitoring | 3 | ✅ Implementerad |
 | Risk Management | 3 | ✅ Implementerad |
-| Portfolio Management | 4 | ✅ Implementerad |
+| Portfolio Management | 7 | ✅ Implementerad |
 | WebSocket | 3 | ⚠️ Delvis implementerad | 
