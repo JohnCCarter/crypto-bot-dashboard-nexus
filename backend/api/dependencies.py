@@ -388,4 +388,28 @@ def get_risk_manager() -> RiskManagerAsync:
     --------
     RiskManagerAsync: A risk manager instance
     """
-    return RiskManagerAsync() 
+    return RiskManagerAsync()
+
+
+# Nonce monitoring service dependency provider
+def get_nonce_monitoring_service_dependency() -> EnhancedNonceMonitoringService:
+    """
+    Get the nonce monitoring service dependency.
+    
+    Returns:
+    --------
+    EnhancedNonceMonitoringService: The nonce monitoring service
+    """
+    return get_nonce_monitoring_service()
+
+
+# Cache service dependency provider
+def get_cache_service_dependency() -> EnhancedCacheService:
+    """
+    Get the cache service dependency.
+    
+    Returns:
+    --------
+    EnhancedCacheService: The cache service
+    """
+    return get_cache_service() 

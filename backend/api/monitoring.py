@@ -5,22 +5,21 @@ Exponerar nonce-monitoring, cache-statistik och WebSocket metrics
 för dashboard och debugging purposes.
 """
 
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Dict, Any
 
-from fastapi import APIRouter, HTTPException, Depends
-
-from backend.api.dependencies import get_monitoring, MonitoringDependency
-
-# Skapa API router
-router = APIRouter(
-    prefix="/api/monitoring",
-    tags=["monitoring"],
+from backend.services.global_nonce_manager import get_global_nonce_manager
+from backend.api.dependencies import (
+    get_nonce_monitoring_service_dependency,
+    get_cache_service_dependency
 )
+
+router = APIRouter(prefix="/api/monitoring", tags=["monitoring"])
 
 
 @router.get("/nonce", response_model=Dict[str, Any])
 async def get_nonce_monitoring(
-    monitoring: MonitoringDependency = Depends(get_monitoring)
+    monitor=Depends(get_nonce_monitoring_service_dependency)
 ):
     """
     Get comprehensive nonce monitoring report
@@ -29,8 +28,7 @@ async def get_nonce_monitoring(
         Dict with monitoring report and nonce manager status
     """
     try:
-        monitor = monitoring.get_nonce_monitoring()
-        nonce_manager = monitoring.get_nonce_manager()
+        nonce_manager = get_global_nonce_manager()
         
         monitoring_report = monitor.get_monitoring_report()
         nonce_status = nonce_manager.get_status()
@@ -53,7 +51,7 @@ async def get_nonce_monitoring(
 
 @router.get("/cache", response_model=Dict[str, Any])
 async def get_cache_monitoring(
-    monitoring: MonitoringDependency = Depends(get_monitoring)
+    cache=Depends(get_cache_service_dependency)
 ):
     """
     Get comprehensive cache monitoring report
@@ -62,8 +60,6 @@ async def get_cache_monitoring(
         Dict with cache statistics and nonce savings estimate
     """
     try:
-        cache = monitoring.get_cache_service()
-        
         cache_stats = cache.get_cache_stats()
         nonce_savings = cache.get_nonce_savings_estimate()
         
@@ -83,7 +79,8 @@ async def get_cache_monitoring(
 
 @router.get("/hybrid-setup", response_model=Dict[str, Any])
 async def get_hybrid_setup_status(
-    monitoring: MonitoringDependency = Depends(get_monitoring)
+    monitor=Depends(get_nonce_monitoring_service_dependency),
+    cache=Depends(get_cache_service_dependency)
 ):
     """
     Get overall hybrid-setup implementation status
@@ -92,9 +89,7 @@ async def get_hybrid_setup_status(
         Dict with hybrid setup status information
     """
     try:
-        monitor = monitoring.get_nonce_monitoring()
-        cache = monitoring.get_cache_service()
-        nonce_manager = monitoring.get_nonce_manager()
+        nonce_manager = get_global_nonce_manager()
         
         # Samla status från alla komponenter
         hybrid_status = {

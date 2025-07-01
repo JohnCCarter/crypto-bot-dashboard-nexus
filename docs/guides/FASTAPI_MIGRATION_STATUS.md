@@ -16,7 +16,7 @@ Detta dokument spårar statusen för migrationen från Flask till FastAPI.
   - [x] Positions endpoints ✅
   - [x] Market data endpoints
   - [x] Orderbook endpoints
-  - [x] Monitoring endpoints
+  - [x] Monitoring endpoints ✅
   - [x] Risk management endpoints
   - [x] Portfolio endpoints
 - [x] Asynkrona tjänster
@@ -81,9 +81,9 @@ Detta dokument spårar statusen för migrationen från Flask till FastAPI.
 
 ### Monitoring API ✅
 
-- [x] `/api/monitoring/system` - Systemövervakning
-- [x] `/api/monitoring/logs` - Hämta loggar
-- [x] `/api/monitoring/alerts` - Hämta/skapa alerts
+- [x] `/api/monitoring/nonce` - Hämta nonce-övervakningsrapport
+- [x] `/api/monitoring/cache` - Hämta cache-statistik
+- [x] `/api/monitoring/hybrid-setup` - Hämta status för hybrid-implementationen
 
 ### Risk Management API ✅
 
@@ -131,10 +131,11 @@ Hjälpfunktioner för att anropa exchange-metoder asynkront.
 
 1. ✅ Slutföra migrationen av återstående Config-endpoints
 2. ✅ Slutföra migrationen av återstående Positions-endpoints
-3. Konvertera fler tjänster till asynkrona där det är lämpligt
-4. Förbättra testcoverage för alla endpoints
-5. Uppdatera dokumentation
-6. Planera för en fullständig övergång till FastAPI
+3. ✅ Slutföra migrationen av Monitoring-endpoints
+4. Konvertera fler tjänster till asynkrona där det är lämpligt
+5. Förbättra testcoverage för alla endpoints
+6. Uppdatera dokumentation
+7. Planera för en fullständig övergång till FastAPI
 
 ## Fördelar med FastAPI
 
