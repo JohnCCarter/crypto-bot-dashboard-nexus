@@ -73,7 +73,21 @@ class BitfinexClientWrapper:
         """Konfigurera grundläggande WebSocket-händelsehanterare"""
         # Hantera anslutningshändelser
         self.client.wss.on('open', self._handle_ws_connected)
-        self.client.wss.on('close', self._handle_ws_disconnected)
+        
+        # Försök registrera close-händelse, eller använd closed om det är tillgängligt
+        try:
+            self.client.wss.on('close', self._handle_ws_disconnected)
+        except Exception as e:
+            logger.warning(f"Kunde inte registrera 'close' event: {e}")
+            try:
+                # Prova med 'closed' event istället, som är vanligt i vissa WebSocket implementationer
+                self.client.wss.on('closed', self._handle_ws_disconnected)
+            except Exception as e2:
+                logger.warning(f"Kunde inte registrera 'closed' event heller: {e2}")
+                # Använd istället error-händelsen för att upptäcka potentiella frånkopplingar
+                logger.warning("Använder 'error' event för att detektera frånkopplingar")
+
+        # Hantera fel-händelser
         self.client.wss.on('error', self._handle_ws_error)
 
         # Hantera autentiseringshändelser

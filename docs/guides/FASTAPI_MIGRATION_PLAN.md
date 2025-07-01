@@ -28,7 +28,7 @@ För att minimera risken och säkerställa kontinuerlig funktionalitet kommer mi
 - [x] Implementera status-endpoints (hälsokontroll och systeminformation)
 - [x] Testa den grundläggande implementationen
 
-### Fas 3: Stegvis migration av endpoints (DELVIS KLAR)
+### Fas 3: Stegvis migration av endpoints (KLAR)
 
 - [x] Migrera balances-endpoints (`/api/balances` och `/api/balances/{currency}`)
 - [x] Migrera orders-endpoints (`/api/orders`, `/api/orders/{order_id}`)
@@ -36,20 +36,26 @@ För att minimera risken och säkerställa kontinuerlig funktionalitet kommer mi
 - [x] Migrera config-endpoints (`/api/config`, `/api/config/strategies`, etc.)
 - [x] Migrera positions-endpoints (`/api/positions`)
 - [x] Migrera bot-control-endpoints (`/api/bot-status`, `/api/bot/start`, `/api/bot/stop`)
-- [ ] Migrera market-data-endpoints (`/api/market-data`)
-- [ ] Migrera orderbook-endpoints (`/api/orderbook`)
-- [ ] Migrera monitoring-endpoints (`/api/monitoring`)
+- [x] Migrera market-data-endpoints (`/api/market-data`)
+- [x] Migrera orderbook-endpoints (`/api/orderbook`)
+- [x] Migrera monitoring-endpoints (`/api/monitoring`)
 
-### Fas 4: Servicelager och asynkron konvertering (PÅBÖRJAD)
+### Fas 4: Servicelager och asynkron konvertering (PÅGÅENDE)
 
 - [x] Skapa asynkrona versioner av service-funktioner
 - [x] Implementera dependency injection för servicelager (grundläggande struktur klar)
+- [x] Utöka dependency injection-systemet med monitoring-komponenter
+- [x] Implementera asynkron order_service med dependency injection
+- [x] Implementera asynkron risk_manager med avancerade riskhanteringsfunktioner
+- [x] Implementera asynkron portfolio_manager med strategi-integration
+- [x] Integrera risk_manager och portfolio_manager i dependency injection-systemet
 - [ ] Optimera dataflöde för asynkrona operationer
-- [ ] Konvertera fler service-funktioner till asynkrona
+- [ ] Konvertera återstående service-funktioner till asynkrona
 
 ### Fas 5: Integration och testning
 
 - [ ] Skapa omfattande tester för FastAPI-endpoints
+- [ ] Implementera tester för asynkrona service-klasser
 - [ ] Verifiera att alla endpoints fungerar korrekt
 - [ ] Testa prestanda och skalbarhet
 - [ ] Implementera lösning för databasanslutningar med asynkrona sessioner
@@ -75,9 +81,9 @@ Detta möjliggör stegvis testning och övergång.
 Migreringen kommer att ske stegvis under kommande sprints:
 
 1. **Fas 1 & 2**: Sprint 1 (KLAR)
-2. **Fas 3**: Sprint 2-3 (PÅGÅENDE)
-3. **Fas 4 & 5**: Sprint 4
-4. **Fas 6**: Sprint 5
+2. **Fas 3**: Sprint 2-3 (KLAR)
+3. **Fas 4 & 5**: Sprint 4-5 (PÅGÅENDE)
+4. **Fas 6**: Sprint 6
 
 ## Uppföljning och dokumentation
 
@@ -93,17 +99,23 @@ Framstegen i migrationen kommer att spåras i `docs/guides/FASTAPI_MIGRATION_STA
 ## Nuvarande status
 
 - Fas 1 och 2 är helt slutförda.
-- Fas 3 är delvis slutförd med migreringar av balances, orders, backtest, config, positions, och bot-control-endpoints.
-- Fas 4 är påbörjad med implementation av grundläggande dependency injection struktur.
-- FastAPI-servern körs på port 8001.
+- Fas 3 är helt slutförd med migreringar av alla planerade endpoints.
+- Fas 4 är i full gång med betydande framsteg:
+  - Vi har implementerat en fullständig asynkron version av order_service med dependency injection
+  - Vi har integrerat asynkron order_service med FastAPI orders API
+  - Vi har implementerat helt nya asynkrona risk_manager_async och portfolio_manager_async moduler
+  - Vi har utökat dependency injection-systemet med stöd för risk- och portföljhantering
+  - Vi använder singleton-mönster för kritiska serviceklasser för att optimera resursanvändning
+- FastAPI-servern körs på port 8001 parallellt med Flask-servern på port 5000.
 - Pydantic-modeller finns på plats för alla resurser som har migrerats hittills.
+- Dokumentation för asynkrona implementationer har skapats i form av rapporter.
 
 ## Nästa steg
 
-1. Fortsätt med Fas 3 genom att migrera återstående endpoints
-2. Utveckla dependency injection-strukturen vidare
-3. Konvertera fler service-funktioner till asynkrona
-4. Börja skriva tester för de nya FastAPI-endpoints
+1. Skapa endpoints som använder de nya asynkrona risk- och portföljhanteringsklasserna
+2. Fortsätta med Fas 4 genom att konvertera återstående service-funktioner till asynkrona
+3. Optimera asynkron datahantering och implementera caching där lämpligt
+4. Påbörja Fas 5 genom att skriva tester för de nya FastAPI-endpoints och asynkrona serviceklasserna
 
 ## Uppföljning
 

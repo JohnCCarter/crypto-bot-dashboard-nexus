@@ -413,7 +413,7 @@ def get_cache_service_dependency() -> EnhancedCacheService:
     --------
     EnhancedCacheService: The cache service
     """
-    return get_cache_service() 
+    return get_cache_service()
 
 
 # Positions service async dependency provider
