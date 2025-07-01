@@ -49,6 +49,10 @@ from backend.services.portfolio_manager_async import (
     StrategyWeight
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # Service instances
 config_service = ConfigService()
@@ -360,4 +364,28 @@ async def get_portfolio_manager(
     if not strategy_weights:
         strategy_weights = [StrategyWeight(strategy_name="default", weight=1.0)]
     
-    return await get_portfolio_manager_async(risk_manager, strategy_weights) 
+    return await get_portfolio_manager_async(risk_manager, strategy_weights)
+
+
+# Portfolio manager
+def get_portfolio_manager() -> PortfolioManagerAsync:
+    """
+    Get an instance of the PortfolioManagerAsync.
+    
+    Returns:
+    --------
+    PortfolioManagerAsync: A portfolio manager instance
+    """
+    return PortfolioManagerAsync()
+
+
+# Risk manager
+def get_risk_manager() -> RiskManagerAsync:
+    """
+    Get an instance of the RiskManagerAsync.
+    
+    Returns:
+    --------
+    RiskManagerAsync: A risk manager instance
+    """
+    return RiskManagerAsync() 

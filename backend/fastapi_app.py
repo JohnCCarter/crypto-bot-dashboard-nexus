@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status as http_status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from dotenv import load_dotenv
 
 from backend.api import status as status_api
@@ -26,7 +26,7 @@ from backend.api import monitoring as monitoring_api
 from backend.api import risk_management as risk_management_api
 from backend.api import portfolio as portfolio_api
 from backend.services.exchange import ExchangeService, ExchangeError
-from backend.services.exchange_async import create_mock_exchange_service
+from backend.services.exchange_async import create_mock_exchange_service, init_exchange_async
 
 # Ladda miljövariabler
 load_dotenv()
@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
         app: FastAPI-applikation
     """
     # Startup-kod
-    logger.info("Initializing services...")
+    logger.info("🚀 Starting FastAPI application...")
     
     # Hämta API-nyckel och hemlighet från miljövariabler
     api_key = os.getenv("BITFINEX_API_KEY", "")
@@ -77,10 +77,15 @@ async def lifespan(app: FastAPI):
         app.state.services = {"exchange": mock_exchange}
         logger.warning("Using mock exchange service for development")
     
+    # Initialize exchange service
+    await init_exchange_async()
+    
+    logger.info("✅ FastAPI application startup complete")
     yield
     
     # Shutdown-kod
-    logger.info("Shutting down services...")
+    logger.info("👋 Shutting down FastAPI application...")
+    logger.info("✅ FastAPI application shutdown complete")
 
 
 # Skapa FastAPI-applikation
@@ -120,17 +125,17 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle all unhandled exceptions."""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    logger.error(f"Uncaught exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"error": "Internal server error", "details": str(exc)},
     )
 
 # Grundläggande endpoints
-@app.get("/")
-async def root() -> Dict[str, str]:
-    """Root endpoint redirects to docs."""
-    return {"message": "API is running. Visit /docs for documentation."}
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect to API documentation."""
+    return RedirectResponse(url="/docs")
 
 @app.get("/api/health")
 async def health_check() -> Dict[str, str]:
@@ -169,4 +174,9 @@ if __name__ == "__main__":
         host="0.0.0.0", 
         port=int(os.getenv("FASTAPI_PORT", "8001")),
         reload=True
-    ) 
+    )
+
+# Startup message
+logger.info("📡 FastAPI application configured with all endpoints")
+logger.info("📚 API documentation available at /docs and /redoc")
+logger.info("🔄 FastAPI server will run on port 8001 in parallel with Flask") 
