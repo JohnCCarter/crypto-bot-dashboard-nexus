@@ -27,7 +27,8 @@ import {
 } from '@/types/trading';
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, RefreshCw, TrendingUp } from 'lucide-react';
+import { Settings, RefreshCw, TrendingUp, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 /**
  * Main dashboard page for the crypto trading application.
@@ -248,7 +249,7 @@ const Index: FC = () => {
               <div className="flex items-center space-x-2">
                 <TrendingUp className="w-4 h-4 text-muted-foreground" />
                 <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder="Symbol" />
                   </SelectTrigger>
                   <SelectContent>
@@ -261,22 +262,29 @@ const Index: FC = () => {
                 </Select>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center space-x-4">
+              {/* FastAPI Demo Link */}
+              <Link to="/fastapi-demo" className="flex items-center space-x-2 px-3 py-2 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors">
+                <Zap className="w-4 h-4" />
+                <span>FastAPI Demo</span>
+              </Link>
+              
               <Button 
                 variant="outline" 
-                size="sm"
+                size="icon"
                 onClick={handleRefresh}
+                title="Refresh Data"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
+                <RefreshCw className="h-4 w-4" />
               </Button>
               <Button 
                 variant="outline" 
-                size="sm"
+                size="icon"
                 onClick={() => setIsSettingsOpen(true)}
+                title="Settings"
               >
-                <Settings className="w-4 h-4 mr-2" />
-                ⚙️ Settings
+                <Settings className="h-4 w-4" />
               </Button>
               <ThemeToggle />
             </div>

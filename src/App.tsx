@@ -7,6 +7,7 @@ import { WebSocketMarketProvider } from "./contexts/WebSocketMarketProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { HybridDemo } from "./pages/HybridDemo";
+import { FastAPIDemo } from "./pages/FastAPIDemo";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/hybrid-demo" element={<HybridDemo />} />
+            <Route path="/fastapi-demo" element={<FastAPIDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

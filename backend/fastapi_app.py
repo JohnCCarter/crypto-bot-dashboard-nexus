@@ -29,8 +29,10 @@ from backend.api import orderbook as orderbook_api
 from backend.api import monitoring as monitoring_api
 from backend.api import risk_management as risk_management_api
 from backend.api import portfolio as portfolio_api
+from backend.api import websocket as websocket_api
 from backend.services.exchange import ExchangeService, ExchangeError
 from backend.services.exchange_async import create_mock_exchange_service, init_exchange_async
+from backend.services.websocket_market_service import start_websocket_service, stop_websocket_service
 
 # Ladda miljövariabler
 load_dotenv()
@@ -84,11 +86,26 @@ async def lifespan(app: FastAPI):
     # Initialize exchange service
     await init_exchange_async()
     
+    # Starta WebSocket-tjänsten för marknadsdata
+    try:
+        await start_websocket_service()
+        logger.info("WebSocket market service started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start WebSocket market service: {e}")
+    
     logger.info("✅ FastAPI application startup complete")
     yield
     
     # Shutdown-kod
     logger.info("👋 Shutting down FastAPI application...")
+    
+    # Stoppa WebSocket-tjänsten
+    try:
+        await stop_websocket_service()
+        logger.info("WebSocket market service stopped successfully")
+    except Exception as e:
+        logger.error(f"Failed to stop WebSocket market service: {e}")
+    
     logger.info("✅ FastAPI application shutdown complete")
 
 
@@ -168,6 +185,7 @@ app.include_router(orderbook_api.router)
 app.include_router(monitoring_api.router)
 app.include_router(risk_management_api.router)
 app.include_router(portfolio_api.router)
+app.include_router(websocket_api.router)
 logger.info("API routes loaded successfully")
 
 # Om denna fil körs direkt, starta Uvicorn-server

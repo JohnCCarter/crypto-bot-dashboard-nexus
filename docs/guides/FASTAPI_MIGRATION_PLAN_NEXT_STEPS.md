@@ -1,83 +1,79 @@
-# FastAPI Migration - Next Steps
+# FastAPI Migration - Nästa steg
 
 Detta dokument beskriver de nästa stegen i migrationen från Flask till FastAPI.
 
-## Slutförda Uppgifter
+## Slutförda steg
 
-### Grundläggande Struktur
-- ✅ Skapa grundläggande FastAPI-applikation
-- ✅ Konfigurera CORS och middleware
-- ✅ Implementera felhantering
-- ✅ Skapa dependency injection-system
+- ✅ Grundläggande FastAPI-struktur
+- ✅ Status-endpoints
+- ✅ Balances-endpoints
+- ✅ Orders-endpoints
+- ✅ Backtest-endpoints
+- ✅ Positions-endpoints
+- ✅ Bot Control-endpoints
+- ✅ Config-endpoints
+- ✅ WebSocket-endpoints
+- ✅ Frontend-integration för WebSocket
+- ✅ BotManagerAsync implementation
 
-### Endpoints
-- ✅ Migrera status endpoints
-- ✅ Migrera balances endpoints
-- ✅ Migrera orders endpoints
-- ✅ Migrera backtest endpoints
-- ✅ Migrera config endpoints
-- ✅ Migrera positions endpoints
-- ✅ Migrera market data endpoints
-- ✅ Migrera monitoring endpoints
-- ✅ Migrera bot control endpoints
-- ✅ Migrera portfolio endpoints
-- ✅ Migrera risk management endpoints
+## Nästa steg
 
-### Asynkrona Tjänster
-- ✅ Implementera OrderServiceAsync
-- ✅ Implementera PositionsServiceAsync
-- ✅ Implementera LiveDataServiceAsync
-- ✅ Implementera RiskManagerAsync
-- ✅ Implementera PortfolioManagerAsync
-- ✅ Implementera BotManagerAsync
+### 1. Förbättra testning
 
-## Nästa Steg
+- Åtgärda testerna för bot control-endpoints
+  - Implementera en bättre mockstrategi för FastAPI dependencies
+  - Lösa problem med asyncio event loop i tester
+- Åtgärda de tre misslyckade testerna i test_fastapi_websocket.py
+- Förbättra testning av asynkrona tjänster
+- Implementera end-to-end-tester för WebSocket-funktionalitet
 
-### Asynkron Bot Logic
-- ✅ Refaktorera main_bot.py för att använda asynkrona funktioner (main_bot_async.py)
-- ✅ Implementera asynkron strategi-exekvering
-- ✅ Skapa asynkron version av TradingWindow
+### 2. Asynkrona tjänster
 
-### WebSocket-stöd
-- ⬜ Implementera WebSocket-endpoints för realtidsuppdateringar
-- ⬜ Migrera befintliga WebSocket-funktioner till FastAPI
-- ⬜ Skapa WebSocket-klienter för frontend-integration
+Implementera asynkrona versioner av följande tjänster:
 
-### Testning
-- ⬜ Förbättra testning av asynkrona tjänster
-- ⬜ Implementera end-to-end tester för FastAPI-endpoints
-- ⬜ Skapa prestandatester för att jämföra Flask och FastAPI
+- OrderServiceAsync (påbörjad)
+- RiskManagerAsync
+- PortfolioManagerAsync
+- LiveDataServiceAsync (påbörjad)
+- MainBotAsync
 
-### Dokumentation
-- ⬜ Uppdatera API-dokumentation för alla endpoints
-- ⬜ Skapa utvecklarguide för FastAPI-implementationen
-- ⬜ Dokumentera migreringsprocessen och lärdomar
+### 3. Frontend-integration
 
-## Prioriteringsordning
+- Utöka frontend-integration för FastAPI-endpoints
+- Skapa växlingsmekanism mellan Flask och FastAPI
+- Implementera felhantering och återanslutningslogik
 
-1. Asynkron Bot Logic - Hög prioritet
-   - Detta är kritiskt för att fullt ut dra nytta av asynkron arkitektur
+### 4. Dokumentation
 
-2. Förbättrad Testning - Medium prioritet
-   - Säkerställer att migrationen inte introducerar buggar
-
-3. WebSocket-stöd - Medium prioritet
-   - Viktigt för realtidsfunktionalitet men inte kritiskt för grundläggande funktionalitet
-
-4. Dokumentation - Låg prioritet
-   - Viktigt för långsiktig underhållbarhet men inte kritiskt för funktionalitet
+- Uppdatera API-dokumentation
+- Skapa användarguide för FastAPI-migrationen
+- Dokumentera arkitekturförändringar
 
 ## Tidslinje
 
-- **Vecka 1**: Implementera asynkron bot logic
-- **Vecka 2**: Förbättra testning och implementera WebSocket-stöd
-- **Vecka 3**: Slutföra dokumentation och genomföra prestandatester
+| Steg | Uppskattad tid | Prioritet |
+|------|----------------|-----------|
+| Förbättra testning | 2-3 dagar | Hög |
+| Asynkrona tjänster | 3-5 dagar | Medium |
+| Frontend-integration | 2-3 dagar | Medium |
+| Dokumentation | 1 dag | Låg |
+
+## Kända problem att åtgärda
+
+- ImportError för get_positions_service_async i vissa miljöer
+- Tre tester i test_fastapi_websocket.py misslyckas
+- Tester för bot control-endpoints misslyckas
+- Problem med mockande av FastAPI dependencies i tester
+- Behov av bättre felhantering i WebSocket-anslutningar
+- ✅ Åtgärdat: Testproblem för config-endpoints (15/15 tester passerar nu)
 
 ## Resurser
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Asyncio Documentation](https://docs.python.org/3/library/asyncio.html)
-- [WebSockets in FastAPI](https://fastapi.tiangolo.com/advanced/websockets/)
-- [Testing FastAPI Applications](https://fastapi.tiangolo.com/tutorial/testing/)
+- [FastAPI dokumentation](https://fastapi.tiangolo.com/)
+- [Starlette WebSockets](https://www.starlette.io/websockets/)
+- [Pydantic v2 dokumentation](https://docs.pydantic.dev/latest/)
+- [Async SQLAlchemy](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html)
+- [FastAPI Testing Guide](https://fastapi.tiangolo.com/tutorial/testing/)
+- [Pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/latest/)
 
-Senast uppdaterad: 2024-07-10 
+Senast uppdaterad: 2024-07-17 

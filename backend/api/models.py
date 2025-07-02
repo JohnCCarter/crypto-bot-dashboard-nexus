@@ -266,7 +266,6 @@ class ConfigSummary(BaseModel):
     total_strategy_count: int = Field(..., description="Total number of strategies")
     risk_management: Dict[str, Any] = Field(..., description="Risk management settings")
     probability_framework: Dict[str, Any] = Field(..., description="Probability framework settings")
-    error: Optional[str] = Field(None, description="Error message if config loading failed")
 
 
 class ValidationResponse(BaseModel):
