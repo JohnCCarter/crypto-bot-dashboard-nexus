@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from typing import Any, Dict, Optional
 
 from backend.persistence.utils import load_bot_state, save_bot_state
-from backend.services.main_bot import main
+from backend.services.main_bot_async import main_async
 
 logger = logging.getLogger(__name__)
 
@@ -232,10 +232,8 @@ class BotManagerAsync:
             
             while await self.bot_state.is_running():
                 try:
-                    # Run one trading cycle
-                    # Note: main() is still synchronous, we'll need to adapt it later
-                    # For now, we run it in an executor to avoid blocking
-                    await asyncio.to_thread(main)
+                    # Run one trading cycle using the asynchronous main_async function
+                    await main_async()
                     
                     await self.bot_state.increment_cycle()
                     cycle_count = (await self.bot_state.get_state())['cycle_count']
