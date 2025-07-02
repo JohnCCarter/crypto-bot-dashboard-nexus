@@ -5,6 +5,7 @@ This module provides endpoints for risk management operations.
 """
 
 from typing import Optional
+import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -45,6 +46,14 @@ async def assess_portfolio_risk(
         RiskAssessmentResponse: Risk assessment data
     """
     try:
+        # Skapa en event loop om det inte finns någon
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # Om ingen loop körs, skapa en ny
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
         # Fetch current positions
         positions_resp = await order_service.get_positions()
         positions = positions_resp.get("positions", {})

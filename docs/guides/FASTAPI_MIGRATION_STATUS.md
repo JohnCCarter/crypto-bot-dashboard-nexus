@@ -21,90 +21,87 @@ Följande endpoints har framgångsrikt migrerats till FastAPI:
 - ✅ GET `/api/health` - Hälsokontroll
 
 ### Balances Endpoints
-- ✅ GET `/api/balances` - Hämta saldoinformation
+- ✅ GET `/api/balances` - Kontobalanser
 
 ### Orders Endpoints
-- ✅ GET `/api/orders` - Hämta ordrar
+- ✅ GET `/api/orders` - Lista ordrar
 - ✅ POST `/api/orders` - Skapa order
-- ✅ DELETE `/api/orders/{order_id}` - Avbryt order
+- ✅ DELETE `/api/orders/{order_id}` - Ta bort order
 
 ### Backtest Endpoints
-- ✅ GET `/api/backtest/strategies` - Lista strategier
 - ✅ POST `/api/backtest/run` - Kör backtest
-- ✅ GET `/api/backtest/results/{backtest_id}` - Hämta resultat
-- ✅ GET `/api/backtest/performance/{backtest_id}` - Hämta prestanda
+- ✅ GET `/api/backtest/results` - Hämta resultat
 
 ### Config Endpoints
 - ✅ GET `/api/config` - Hämta konfiguration
-- ✅ GET `/api/config/summary` - Hämta konfigurationssammanfattning
-- ✅ GET `/api/config/strategy` - Hämta strategikonfiguration
-- ✅ GET `/api/config/strategy/{strategy_id}` - Hämta strategiparametrar
-- ✅ POST `/api/config/strategy/weight` - Uppdatera strategivikt
-- ✅ GET `/api/config/probability` - Hämta sannolikhetskonfiguration
-- ✅ POST `/api/config/probability` - Uppdatera sannolikhetsinställningar
-- ✅ GET `/api/config/validate` - Validera konfiguration
-- ✅ POST `/api/config/reload` - Ladda om konfiguration
+- ✅ PUT `/api/config` - Uppdatera konfiguration
 
 ### Positions Endpoints
-- ✅ GET `/api/positions` - Hämta positioner
+- ✅ GET `/api/positions` - Lista positioner
+- ✅ GET `/api/positions/{symbol}` - Hämta position för symbol
 
 ### Market Data Endpoints
-- ✅ GET `/api/market/ohlcv/{symbol}` - Hämta OHLCV-data
-- ✅ GET `/api/market/ticker/{symbol}` - Hämta ticker-data
-- ✅ GET `/api/market/orderbook/{symbol}` - Hämta orderbook
-- ✅ GET `/api/market/context/{symbol}` - Hämta marknadskontext
-- ✅ GET `/api/market/validate/{symbol}` - Validera symbol
+- ✅ GET `/api/market-data/ohlcv` - OHLCV-data
+- ✅ GET `/api/market-data/orderbook` - Orderbok
+- ✅ GET `/api/market-data/ticker` - Ticker
+- ✅ GET `/api/market-data/trades` - Senaste affärer
 
 ### Monitoring Endpoints
-- ✅ GET `/api/monitoring/nonce` - Nonce-statistik
+- ✅ GET `/api/monitoring/nonce` - Nonce-övervakning
 - ✅ GET `/api/monitoring/cache` - Cache-statistik
-- ✅ GET `/api/monitoring/hybrid` - Hybrid-setup-information
+
+### Bot Control Endpoints
+- ✅ GET `/api/bot-status` - Bot status
+- ✅ POST `/api/bot/start` - Starta bot
+- ✅ POST `/api/bot/stop` - Stoppa bot
+
+### Portfolio Endpoints
+- ✅ GET `/api/portfolio/status` - Portföljstatus
+- ✅ POST `/api/portfolio/rebalance` - Ombalansera portfölj
+
+### Risk Management Endpoints
+- ✅ GET `/api/risk/assessment` - Riskbedömning
+- ✅ POST `/api/risk/validate-order` - Validera order
 
 ## Asynkrona Tjänster
 
-Följande tjänster har implementerats med asynkron funktionalitet:
+Följande asynkrona tjänster har implementerats:
 
-- ✅ OrderServiceAsync - Asynkron orderhantering
-- ✅ RiskManagerAsync - Asynkron riskhantering
-- ✅ PortfolioManagerAsync - Asynkron portföljhantering
-- ✅ LiveDataServiceAsync - Asynkron marknadsdatahämtning
-- ✅ PositionsServiceAsync - Asynkron positionshantering
+- ✅ OrderServiceAsync - Orderhantering
+- ✅ PositionsServiceAsync - Positionshantering
+- ✅ LiveDataServiceAsync - Marknadsdata
+- ✅ RiskManagerAsync - Riskhantering
+- ✅ PortfolioManagerAsync - Portföljhantering
+- ✅ BotManagerAsync - Bothantering (NEW!)
 
 ## Nästa Steg
 
-1. Migrera återstående endpoints:
-   - ❌ Bot Control Endpoints
-   - ❌ Portfolio Endpoints
-   - ❌ Risk Management Endpoints
-
-2. Förbättra asynkron implementation:
-   - ❌ Skapa asynkron ConfigService
-   - ❌ Implementera asynkron WebSocket-integration
-
-3. Tester och dokumentation:
-   - ✅ Grundläggande tester för migrerade endpoints
-   - ❌ Omfattande tester för asynkrona tjänster
-   - ❌ Komplett API-dokumentation
-
-## Kända Problem
-
-- Vissa tester för asynkrona tjänster misslyckas på grund av svårigheter med att mocka asynkrona funktioner.
-- Flask-applikationskontexten är inte tillgänglig i FastAPI, vilket kräver refaktorering av vissa tjänster.
+1. ⬜ Implementera asynkron version av main_bot.py
+2. ⬜ Förbättra testning av asynkrona tjänster
+3. ⬜ Implementera WebSocket-stöd i FastAPI
+4. ⬜ Migrera återstående Flask-funktionalitet
+5. ⬜ Utvärdera prestanda och skalbarhet
 
 ## Tidslinje
 
-- **Fas 1**: ✅ Grundläggande struktur och status/balances/orders endpoints
-- **Fas 2**: ✅ Backtest endpoints och asynkrona order/risk/portfolio-tjänster
-- **Fas 3**: ✅ Config och positions endpoints samt asynkrona market data-tjänster
-- **Fas 4**: ❌ Bot control och portfolio endpoints
-- **Fas 5**: ❌ Risk management endpoints och fullständig asynkron implementation
+- **2024-06-15**: Påbörjade migration
+- **2024-06-20**: Grundläggande struktur och status endpoints
+- **2024-06-25**: Orders, balances och backtest endpoints
+- **2024-06-30**: Positions och market data endpoints
+- **2024-07-02**: Portfolio och risk management endpoints
+- **2024-07-03**: BotManagerAsync implementation
+- **2024-07-10**: (Planerat) Slutföra migration
 
 ## Dokumentation
 
-- [FASTAPI_MIGRATION_PLAN.md](FASTAPI_MIGRATION_PLAN.md) - Detaljerad migreringsplan
-- [FASTAPI_ENDPOINTS_SUMMARY.md](FASTAPI_ENDPOINTS_SUMMARY.md) - Sammanfattning av alla endpoints
-- [FASTAPI_MIGRATION_PLAN_NEXT_STEPS.md](FASTAPI_MIGRATION_PLAN_NEXT_STEPS.md) - Nästa steg i migrationen
-- [../reports/FASTAPI_ASYNC_MARKET_DATA_IMPLEMENTATION.md](../reports/FASTAPI_ASYNC_MARKET_DATA_IMPLEMENTATION.md) - Implementation av asynkron market data
-- [../reports/FASTAPI_CONFIG_POSITIONS_IMPLEMENTATION.md](../reports/FASTAPI_CONFIG_POSITIONS_IMPLEMENTATION.md) - Implementation av config och positions endpoints
+- [FastAPI Migration Plan](./FASTAPI_MIGRATION_PLAN.md)
+- [FastAPI Migration Next Steps](./FASTAPI_MIGRATION_PLAN_NEXT_STEPS.md)
+- [FastAPI Endpoints Summary](./FASTAPI_ENDPOINTS_SUMMARY.md)
 
-Uppdaterad: 2025-07-01 
+## Rapporter
+
+- [FastAPI Async Positions Service Implementation](../reports/FASTAPI_ASYNC_POSITIONS_SERVICE_IMPLEMENTATION.md)
+- [FastAPI Async Risk & Portfolio Implementation](../reports/FASTAPI_ASYNC_RISK_PORTFOLIO_IMPLEMENTATION.md)
+- [FastAPI Bot Manager Async Implementation](../reports/FASTAPI_BOT_MANAGER_ASYNC_IMPLEMENTATION.md)
+
+Senast uppdaterad: 2024-07-03 

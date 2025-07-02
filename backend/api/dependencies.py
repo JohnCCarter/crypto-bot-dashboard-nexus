@@ -4,13 +4,13 @@ Dependency injection for FastAPI.
 This module provides dependencies for FastAPI dependency injection system.
 """
 
-from typing import Callable, Dict, Any, Optional, List
+from typing import Callable, Dict, Any, Optional
 
 from fastapi import Depends, Request
 
 from backend.services.config_service import ConfigService
 from backend.services.positions_service import fetch_live_positions_async
-from backend.services.bot_manager import get_bot_status_async, start_bot_async, stop_bot_async
+from backend.services.bot_manager_async import BotManagerAsync, get_bot_manager_async
 from backend.services.exchange import ExchangeService
 from backend.services.exchange_async import (
     fetch_ohlcv_async,
@@ -40,8 +40,7 @@ from backend.services.order_service_async import (
 from backend.services.risk_manager_async import (
     get_risk_manager_async,
     RiskManagerAsync,
-    RiskParameters,
-    ProbabilityData
+    RiskParameters
 )
 from backend.services.portfolio_manager_async import (
     get_portfolio_manager_async,
@@ -105,8 +104,16 @@ async def get_positions_service() -> Callable:
 class BotManagerDependency:
     """Bot manager dependency provider."""
     
-    @staticmethod
-    async def get_status() -> Dict[str, Any]:
+    def __init__(self, bot_manager: BotManagerAsync):
+        """
+        Initialize the bot manager dependency.
+        
+        Args:
+            bot_manager: BotManagerAsync instance
+        """
+        self.bot_manager = bot_manager
+    
+    async def get_status(self) -> Dict[str, Any]:
         """
         Get the bot status.
         
@@ -114,10 +121,9 @@ class BotManagerDependency:
         --------
         Dict[str, Any]: The bot status
         """
-        return await get_bot_status_async()
+        return await self.bot_manager.get_status()
     
-    @staticmethod
-    async def start_bot() -> Dict[str, Any]:
+    async def start_bot(self) -> Dict[str, Any]:
         """
         Start the bot.
         
@@ -125,10 +131,9 @@ class BotManagerDependency:
         --------
         Dict[str, Any]: The result of the start operation
         """
-        return await start_bot_async()
+        return await self.bot_manager.start_bot()
     
-    @staticmethod
-    async def stop_bot() -> Dict[str, Any]:
+    async def stop_bot(self) -> Dict[str, Any]:
         """
         Stop the bot.
         
@@ -136,11 +141,11 @@ class BotManagerDependency:
         --------
         Dict[str, Any]: The result of the stop operation
         """
-        return await stop_bot_async()
+        return await self.bot_manager.stop_bot()
 
 
 # Bot manager dependency provider
-def get_bot_manager() -> BotManagerDependency:
+async def get_bot_manager() -> BotManagerDependency:
     """
     Get the bot manager dependency.
     
@@ -148,7 +153,8 @@ def get_bot_manager() -> BotManagerDependency:
     --------
     BotManagerDependency: The bot manager dependency
     """
-    return BotManagerDependency()
+    bot_manager = await get_bot_manager_async()
+    return BotManagerDependency(bot_manager)
 
 
 # Market data dependencies
@@ -351,15 +357,18 @@ async def get_portfolio_manager(
     strategy_config = config.get_strategy_weights() or {}
     strategy_weights = []
     
-    for name, details in strategy_config.items():
-        strategy_weights.append(
-            StrategyWeight(
-                strategy_name=name,
-                weight=float(details.get("weight", 1.0)),
-                min_confidence=float(details.get("min_confidence", 0.5)),
-                enabled=bool(details.get("enabled", True))
+    # strategy_config är en dict, så den har items()-metoden
+    # men strategy_weights är en lista utan items()-metod
+    if isinstance(strategy_config, dict):
+        for name, details in strategy_config.items():
+            strategy_weights.append(
+                StrategyWeight(
+                    strategy_name=name,
+                    weight=float(details.get("weight", 1.0)),
+                    min_confidence=float(details.get("min_confidence", 0.5)),
+                    enabled=bool(details.get("enabled", True))
+                )
             )
-        )
     
     # Use default weights if none found in config
     if not strategy_weights:
@@ -368,20 +377,8 @@ async def get_portfolio_manager(
     return await get_portfolio_manager_async(risk_manager, strategy_weights)
 
 
-# Portfolio manager
-def get_portfolio_manager() -> PortfolioManagerAsync:
-    """
-    Get an instance of the PortfolioManagerAsync.
-    
-    Returns:
-    --------
-    PortfolioManagerAsync: A portfolio manager instance
-    """
-    return PortfolioManagerAsync()
-
-
-# Risk manager
-def get_risk_manager() -> RiskManagerAsync:
+# Risk manager (legacy function name, renamed to avoid conflict)
+def get_risk_manager_legacy() -> RiskManagerAsync:
     """
     Get an instance of the RiskManagerAsync.
     
@@ -389,7 +386,16 @@ def get_risk_manager() -> RiskManagerAsync:
     --------
     RiskManagerAsync: A risk manager instance
     """
-    return RiskManagerAsync()
+    # Använd parametrar för att lösa lint-felet
+    risk_params = RiskParameters(
+        max_position_size=0.2,
+        max_leverage=5.0,
+        stop_loss_pct=0.05,
+        take_profit_pct=0.1,
+        max_daily_loss=0.05,
+        max_open_positions=10
+    )
+    return RiskManagerAsync(risk_params)
 
 
 # Nonce monitoring service dependency provider

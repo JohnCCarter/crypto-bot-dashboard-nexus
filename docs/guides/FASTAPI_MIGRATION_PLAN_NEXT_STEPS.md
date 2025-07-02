@@ -19,73 +19,65 @@ Detta dokument beskriver de nästa stegen i migrationen från Flask till FastAPI
 - ✅ Migrera positions endpoints
 - ✅ Migrera market data endpoints
 - ✅ Migrera monitoring endpoints
+- ✅ Migrera bot control endpoints
+- ✅ Migrera portfolio endpoints
+- ✅ Migrera risk management endpoints
 
 ### Asynkrona Tjänster
 - ✅ Implementera OrderServiceAsync
+- ✅ Implementera PositionsServiceAsync
+- ✅ Implementera LiveDataServiceAsync
 - ✅ Implementera RiskManagerAsync
 - ✅ Implementera PortfolioManagerAsync
-- ✅ Implementera LiveDataServiceAsync
-- ✅ Implementera PositionsServiceAsync
+- ✅ Implementera BotManagerAsync
 
 ## Nästa Steg
 
-### Endpoints att Migrera
-- ❌ Bot Control Endpoints
-  - GET `/api/bot/status`
-  - POST `/api/bot/start`
-  - POST `/api/bot/stop`
-- ❌ Portfolio Endpoints
-  - GET `/api/portfolio/allocation`
-  - POST `/api/portfolio/optimize`
-- ❌ Risk Management Endpoints
-  - GET `/api/risk/validate-order`
-  - GET `/api/risk/assessment`
-  - GET `/api/risk/score`
+### Asynkron Bot Logic
+- ⬜ Refaktorera main_bot.py för att använda asynkrona funktioner
+- ⬜ Implementera asynkron strategi-exekvering
+- ⬜ Skapa asynkron version av TradingWindow
 
-### Asynkrona Tjänster att Implementera
-- ❌ ConfigServiceAsync
-- ❌ BotManagerAsync
-- ❌ WebSocketServiceAsync
+### WebSocket-stöd
+- ⬜ Implementera WebSocket-endpoints för realtidsuppdateringar
+- ⬜ Migrera befintliga WebSocket-funktioner till FastAPI
+- ⬜ Skapa WebSocket-klienter för frontend-integration
 
-### Testning och Dokumentation
-- ❌ Förbättra testning av asynkrona tjänster
-- ❌ Skapa omfattande API-dokumentation
-- ❌ Uppdatera användardokumentation
+### Testning
+- ⬜ Förbättra testning av asynkrona tjänster
+- ⬜ Implementera end-to-end tester för FastAPI-endpoints
+- ⬜ Skapa prestandatester för att jämföra Flask och FastAPI
 
-## Prioritering
+### Dokumentation
+- ⬜ Uppdatera API-dokumentation för alla endpoints
+- ⬜ Skapa utvecklarguide för FastAPI-implementationen
+- ⬜ Dokumentera migreringsprocessen och lärdomar
 
-1. **Hög Prioritet**
-   - Migrera Bot Control Endpoints
-   - Implementera BotManagerAsync
-   - Förbättra testning av asynkrona tjänster
+## Prioriteringsordning
 
-2. **Medium Prioritet**
-   - Migrera Portfolio Endpoints
-   - Implementera ConfigServiceAsync
-   - Uppdatera API-dokumentation
+1. Asynkron Bot Logic - Hög prioritet
+   - Detta är kritiskt för att fullt ut dra nytta av asynkron arkitektur
 
-3. **Lägre Prioritet**
-   - Migrera Risk Management Endpoints
-   - Implementera WebSocketServiceAsync
-   - Uppdatera användardokumentation
+2. Förbättrad Testning - Medium prioritet
+   - Säkerställer att migrationen inte introducerar buggar
+
+3. WebSocket-stöd - Medium prioritet
+   - Viktigt för realtidsfunktionalitet men inte kritiskt för grundläggande funktionalitet
+
+4. Dokumentation - Låg prioritet
+   - Viktigt för långsiktig underhållbarhet men inte kritiskt för funktionalitet
 
 ## Tidslinje
 
-- **Vecka 1**: Migrera Bot Control Endpoints och implementera BotManagerAsync
-- **Vecka 2**: Migrera Portfolio Endpoints och implementera ConfigServiceAsync
-- **Vecka 3**: Migrera Risk Management Endpoints och förbättra testning
-- **Vecka 4**: Implementera WebSocketServiceAsync och uppdatera dokumentation
-
-## Utmaningar
-
-- **Testning av Asynkrona Tjänster**: Utveckla bättre strategier för att mocka asynkrona funktioner
-- **Flask-beroenden**: Hantera övergången från Flask-applikationskontext till FastAPI-modellen
-- **Parallell Drift**: Säkerställa att både Flask och FastAPI fungerar parallellt under migrationen
+- **Vecka 1**: Implementera asynkron bot logic
+- **Vecka 2**: Förbättra testning och implementera WebSocket-stöd
+- **Vecka 3**: Slutföra dokumentation och genomföra prestandatester
 
 ## Resurser
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Async/Await in Python](https://docs.python.org/3/library/asyncio.html)
-- [Pydantic Documentation](https://docs.pydantic.dev/)
+- [Asyncio Documentation](https://docs.python.org/3/library/asyncio.html)
+- [WebSockets in FastAPI](https://fastapi.tiangolo.com/advanced/websockets/)
+- [Testing FastAPI Applications](https://fastapi.tiangolo.com/tutorial/testing/)
 
-Uppdaterad: 2025-07-01 
+Senast uppdaterad: 2024-07-03 
