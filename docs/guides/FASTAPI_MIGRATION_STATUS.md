@@ -72,7 +72,8 @@ Följande asynkrona tjänster har implementerats:
 - ✅ LiveDataServiceAsync - Marknadsdata
 - ✅ RiskManagerAsync - Riskhantering
 - ✅ PortfolioManagerAsync - Portföljhantering
-- ✅ BotManagerAsync - Bothantering (NEW!)
+- ✅ BotManagerAsync - Bothantering
+- ✅ TradingWindowAsync - Handelsperioder (NEW!)
 
 ## Nästa Steg
 
@@ -91,6 +92,7 @@ Följande asynkrona tjänster har implementerats:
 - **2024-07-02**: Portfolio och risk management endpoints
 - **2024-07-03**: BotManagerAsync implementation
 - **2024-07-10**: Implementering av main_bot_async.py
+- **2024-07-10**: Implementering av TradingWindowAsync
 - **2024-07-15**: (Planerat) Slutföra migration
 
 ## Dokumentation

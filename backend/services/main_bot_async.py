@@ -16,7 +16,7 @@ from backend.services.config_service import ConfigService
 from backend.services.live_data_service_async import LiveDataServiceAsync, get_live_data_service_async
 from backend.services.notifications import Notifier
 from backend.services.risk_manager_async import RiskManagerAsync, RiskParameters, get_risk_manager_async
-from backend.services.trading_window import TradingWindow
+from backend.services.trading_window_async import TradingWindowAsync, get_trading_window_async
 from backend.strategies.ema_crossover_strategy import run_strategy as run_ema
 from backend.strategies.fvg_strategy import run_strategy as run_fvg
 from backend.strategies.rsi_strategy import run_strategy as run_rsi
@@ -72,7 +72,7 @@ async def main_async():
     risk_manager = await get_risk_manager_async(risk_params)
 
     # Trading window
-    trading_window = TradingWindow(config.trading_window)
+    trading_window = await get_trading_window_async(config.trading_window)
 
     # Notifications
     notif_conf = config.notifications
@@ -87,7 +87,7 @@ async def main_async():
     logger.info(" [TradingBotAsync] All services initialized successfully")
 
     # Main trading logic with LIVE DATA
-    if trading_window.is_within_window() and trading_window.can_trade():
+    if await trading_window.is_within_window() and await trading_window.can_trade():
         logger.info(
             " [TradingBotAsync] Trading window is OPEN - proceeding with live analysis"
         )
@@ -231,7 +231,7 @@ async def main_async():
                     )
 
                 # Register trade execution
-                trading_window.register_trade()
+                await trading_window.register_trade()
 
                 # Send notification with live market context
                 notification_message = f"""

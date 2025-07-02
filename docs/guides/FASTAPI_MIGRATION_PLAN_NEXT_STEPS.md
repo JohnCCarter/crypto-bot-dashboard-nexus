@@ -36,7 +36,7 @@ Detta dokument beskriver de nästa stegen i migrationen från Flask till FastAPI
 ### Asynkron Bot Logic
 - ✅ Refaktorera main_bot.py för att använda asynkrona funktioner (main_bot_async.py)
 - ✅ Implementera asynkron strategi-exekvering
-- ⬜ Skapa asynkron version av TradingWindow
+- ✅ Skapa asynkron version av TradingWindow
 
 ### WebSocket-stöd
 - ⬜ Implementera WebSocket-endpoints för realtidsuppdateringar
