@@ -3,6 +3,7 @@ Bot control API endpoints.
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends
+from typing import Dict, Any
 
 from backend.api.models import BotStatusResponse, BotActionResponse
 from backend.api.dependencies import get_bot_manager, BotManagerDependency
