@@ -4,6 +4,7 @@ Säkerställer unika, monotonically increasing nonces för hela applikationen
 MED SEKVENTIELL KÖ för att eliminera race conditions fullständigt
 """
 
+import os
 import threading
 import time
 from datetime import datetime
@@ -32,6 +33,7 @@ class EnhancedGlobalNonceManager:
     - Enhanced logging och monitoring
     - API rate limiting awareness
     - Async/sync hybrid support
+    - Development mode support (inaktivering för lägre CPU-användning)
     
     Garanterar:
     - Unika nonces över alla services (REST + WebSocket)
@@ -55,7 +57,10 @@ class EnhancedGlobalNonceManager:
         # Prevent re-initialization
         if hasattr(self, '_initialized'):
             return
-            
+        
+        # Kontrollera om vi ska köra i utvecklingsläge (inaktiverad)
+        self._development_mode = os.getenv("DISABLE_NONCE_MANAGER", "").lower() == "true"
+        
         # Initialize enhanced nonce state
         self._last_nonce = round(datetime.now().timestamp() * 1000)
         # Reentrant lock för nested calls
@@ -76,20 +81,24 @@ class EnhancedGlobalNonceManager:
         # Rate limiting awareness
         # Per-service last request
         self._last_request_time: Dict[str, float] = {}
-        self._min_request_interval = 0.1  # 100ms minimum between requests
+        self._min_request_interval = 0.1  # 100ms minimum mellan requests
         
         self._initialized = True
         
         base_nonce = self._last_nonce
-        print(f"🔐 Enhanced GlobalNonceManager initialized: {base_nonce}")
-        print("🔐 Sekventiell kö aktiverad för race condition elimination")
         
-        # Start queue processor
-        self._start_queue_processor()
+        # Endast starta kö-processorn och logga om vi inte är i utvecklingsläge
+        if not self._development_mode:
+            print(f"🔐 Enhanced GlobalNonceManager initialized: {base_nonce}")
+            print("🔐 Sekventiell kö aktiverad för race condition elimination")
+            # Start queue processor
+            self._start_queue_processor()
+        else:
+            print("⚠️ GlobalNonceManager körs i utvecklingsläge (inaktiverad)")
     
     def _start_queue_processor(self):
         """Starta sekventiell kö-processor för FIFO nonce-generering"""
-        if not self._queue_processor_running:
+        if not self._queue_processor_running and not self._development_mode:
             self._queue_processor_running = True
             thread = threading.Thread(
                 target=self._process_nonce_queue,
@@ -136,6 +145,10 @@ class EnhancedGlobalNonceManager:
             api_key: Bitfinex API key
             service_name: Name of service using this key
         """
+        # Om i utvecklingsläge, logga inte och gör ingenting
+        if self._development_mode:
+            return
+            
         with self._nonce_lock:
             if api_key not in self._api_key_tracking:
                 self._api_key_tracking[api_key] = []
@@ -164,6 +177,10 @@ class EnhancedGlobalNonceManager:
         Returns:
             Unique nonce (milliseconds since epoch)
         """
+        # Om i utvecklingsläge, returnera en enkel timestamp utan köhantering
+        if self._development_mode:
+            return round(datetime.now().timestamp() * 1000)
+            
         request_time = time.time()
         
         # Create nonce request för sekventiell kö
@@ -198,6 +215,10 @@ class EnhancedGlobalNonceManager:
         
         DENNA METOD KAN EJ ANROPAS PARALLELLT - endast via kö-processor.
         """
+        # Om i utvecklingsläge, returnera en enkel timestamp utan någon loggning
+        if self._development_mode:
+            return round(datetime.now().timestamp() * 1000)
+            
         with self._nonce_lock:
             # Rate limiting check
             if api_key in self._last_request_time:
@@ -254,6 +275,11 @@ class EnhancedGlobalNonceManager:
         Returns:
             Nonce as string (microseconds for WebSocket auth)
         """
+        # Om i utvecklingsläge, returnera en enkel timestamp utan köhantering
+        if self._development_mode:
+            ws_nonce = round(datetime.now().timestamp() * 1000) * 1000
+            return str(ws_nonce)
+            
         # Use sekventiell kö även för WebSocket
         base_nonce = self.get_next_nonce(api_key, "WebSocket")
         # Convert to microseconds for WebSocket (multiply by 1000)
@@ -264,6 +290,15 @@ class EnhancedGlobalNonceManager:
     
     def get_status(self) -> dict:
         """Get enhanced nonce manager status för debugging."""
+        # Om i utvecklingsläge, returnera minimal statusinformation
+        if self._development_mode:
+            return {
+                "mode": "development",
+                "active": False,
+                "development_mode": True,
+                "last_nonce": self._last_nonce,
+            }
+            
         with self._nonce_lock:
             queue_size = (
                 len(self._request_queue) 
@@ -292,11 +327,20 @@ class EnhancedGlobalNonceManager:
     
     def get_nonce_history(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get recent nonce history för debugging race conditions."""
+        # Om i utvecklingsläge, returnera tom lista
+        if self._development_mode:
+            return []
+            
         with self._nonce_lock:
             return self._nonce_history[-limit:]
     
     def shutdown(self):
         """Graceful shutdown av nonce manager."""
+        # Om i utvecklingsläge, gör ingenting
+        if self._development_mode:
+            print("⚠️ GlobalNonceManager redan inaktiverad (utvecklingsläge)")
+            return
+            
         self._queue_processor_running = False
         if (self._queue_processor_thread and 
                 self._queue_processor_thread.is_alive()):

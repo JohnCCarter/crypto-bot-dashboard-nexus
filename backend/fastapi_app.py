@@ -35,7 +35,14 @@ from backend.services.exchange_async import create_mock_exchange_service, init_e
 from backend.services.websocket_market_service import start_websocket_service, stop_websocket_service
 
 # Ladda miljövariabler
-load_dotenv()
+# För utveckling - använd DOTENV_PATH om den är angiven
+custom_env_path = os.getenv("DOTENV_PATH")
+if custom_env_path and os.path.exists(custom_env_path):
+    load_dotenv(custom_env_path)
+    print(f"📝 Laddar anpassade inställningar från: {custom_env_path}")
+else:
+    load_dotenv()
+    print("📝 Laddar standardinställningar från .env")
 
 # Konfigurera loggning
 logging.basicConfig(
@@ -43,6 +50,18 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("fastapi_app")
+
+# Konfigureringsalternativ
+DISABLE_WEBSOCKET = os.getenv("DISABLE_WEBSOCKET", "").lower() == "true"
+DISABLE_NONCE_MANAGER = os.getenv("DISABLE_NONCE_MANAGER", "").lower() == "true"
+MOCK_EXCHANGE_SERVICE = os.getenv("MOCK_EXCHANGE_SERVICE", "").lower() == "true"
+
+if DISABLE_WEBSOCKET:
+    logger.info("⚠️ WebSockets är inaktiverade i denna konfiguration")
+if DISABLE_NONCE_MANAGER:
+    logger.info("⚠️ GlobalNonceManager är inaktiverad i denna konfiguration")
+if MOCK_EXCHANGE_SERVICE:
+    logger.info("🔧 Använder mock exchange service i denna konfiguration")
 
 
 # Livscykelhanterare
@@ -69,29 +88,35 @@ async def lifespan(app: FastAPI):
     
     # Initialisera services och lagra i app.state
     if not hasattr(app, "state"):
-        app.state = type("AppState", (), {})
+        app.state = {}  # Använd dict istället för type för att undvika lint-fel
     
     # Försök initialisera ExchangeService
     try:
-        exchange_service = ExchangeService("bitfinex", api_key, api_secret)
-        app.state.services = {"exchange": exchange_service}
-        logger.info("Services initialized successfully")
+        if MOCK_EXCHANGE_SERVICE:
+            logger.info("Using mock exchange service as configured")
+            mock_exchange = create_mock_exchange_service()
+            app.state["services"] = {"exchange": mock_exchange}
+        else:
+            exchange_service = ExchangeService("bitfinex", api_key, api_secret)
+            app.state["services"] = {"exchange": exchange_service}
+            logger.info("Services initialized successfully")
     except ExchangeError as e:
         logger.error(f"Failed to initialize exchange service: {e}")
         # Använd vår fördefinierade mock ExchangeService för utveckling
         mock_exchange = create_mock_exchange_service()
-        app.state.services = {"exchange": mock_exchange}
+        app.state["services"] = {"exchange": mock_exchange}
         logger.warning("Using mock exchange service for development")
     
     # Initialize exchange service
     await init_exchange_async()
     
-    # Starta WebSocket-tjänsten för marknadsdata
-    try:
-        await start_websocket_service()
-        logger.info("WebSocket market service started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start WebSocket market service: {e}")
+    # Starta WebSocket-tjänsten för marknadsdata om den inte är inaktiverad
+    if not DISABLE_WEBSOCKET:
+        try:
+            await start_websocket_service()
+            logger.info("WebSocket market service started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start WebSocket market service: {e}")
     
     logger.info("✅ FastAPI application startup complete")
     yield
@@ -99,12 +124,23 @@ async def lifespan(app: FastAPI):
     # Shutdown-kod
     logger.info("👋 Shutting down FastAPI application...")
     
-    # Stoppa WebSocket-tjänsten
-    try:
-        await stop_websocket_service()
-        logger.info("WebSocket market service stopped successfully")
-    except Exception as e:
-        logger.error(f"Failed to stop WebSocket market service: {e}")
+    # Stoppa WebSocket-tjänsten om den är aktiverad
+    if not DISABLE_WEBSOCKET:
+        try:
+            await stop_websocket_service()
+            logger.info("WebSocket market service stopped successfully")
+        except Exception as e:
+            logger.error(f"Failed to stop WebSocket market service: {e}")
+    
+    # Stoppa GlobalNonceManager för att frigöra resurser om den är aktiverad
+    if not DISABLE_NONCE_MANAGER:
+        try:
+            from backend.services.global_nonce_manager import get_global_nonce_manager
+            nonce_manager = get_global_nonce_manager()
+            nonce_manager.shutdown()
+            logger.info("GlobalNonceManager shutdown complete")
+        except Exception as e:
+            logger.error(f"Failed to shutdown GlobalNonceManager: {e}")
     
     logger.info("✅ FastAPI application shutdown complete")
 
@@ -170,6 +206,9 @@ async def api_status() -> Dict[str, Any]:
         "status": "operational",
         "version": "0.1.0",
         "environment": os.getenv("ENVIRONMENT", "development"),
+        "websocket_enabled": not DISABLE_WEBSOCKET,
+        "nonce_manager_enabled": not DISABLE_NONCE_MANAGER,
+        "using_mock_exchange": MOCK_EXCHANGE_SERVICE
     }
 
 # Inkludera API-routers
