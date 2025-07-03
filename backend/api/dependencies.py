@@ -9,7 +9,6 @@ from typing import Callable, Dict, Any, Optional
 from fastapi import Depends, Request
 
 from backend.services.config_service import ConfigService
-from backend.services.positions_service import fetch_live_positions_async
 from backend.services.bot_manager_async import BotManagerAsync, get_bot_manager_async
 from backend.services.exchange import ExchangeService
 from backend.services.exchange_async import (
@@ -47,9 +46,11 @@ from backend.services.portfolio_manager_async import (
     PortfolioManagerAsync,
     StrategyWeight
 )
+# Använd bara fetch_positions_async från positions_service_async
 from backend.services.positions_service_async import fetch_positions_async
 
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -59,21 +60,17 @@ config_service = ConfigService()
 
 
 # Exchange service
-def get_exchange_service(request: Request) -> Optional[ExchangeService]:
+def get_exchange_service() -> Optional[ExchangeService]:
     """
-    Get the exchange service from app state.
-    
-    Args:
-        request: FastAPI request object with app state
+    Get the exchange service.
     
     Returns:
     --------
     Optional[ExchangeService]: The exchange service instance or None if not available
     """
-    if hasattr(request.app, "state"):
-        if hasattr(request.app.state, "services"):
-            return request.app.state.services.get("exchange")
-    return None
+    # Import här för att undvika circular import
+    from backend.fastapi_app import exchange_service
+    return exchange_service
 
 
 # Config service dependencies
@@ -95,9 +92,9 @@ async def get_positions_service() -> Callable:
     
     Returns:
     --------
-    Callable: The fetch_live_positions_async function
+    Callable: The fetch_positions_async function
     """
-    return fetch_live_positions_async
+    return fetch_positions_async
 
 
 # Bot manager dependencies
@@ -153,7 +150,11 @@ async def get_bot_manager() -> BotManagerDependency:
     --------
     BotManagerDependency: The bot manager dependency
     """
-    bot_manager = await get_bot_manager_async()
+    # Kontrollera om vi är i utvecklingsläge
+    dev_mode = os.environ.get("FASTAPI_DEV_MODE", "false").lower() == "true"
+    
+    # Skapa bot manager med dev_mode
+    bot_manager = await get_bot_manager_async(dev_mode=dev_mode)
     return BotManagerDependency(bot_manager)
 
 
@@ -429,6 +430,6 @@ def get_positions_service_async() -> Callable:
     
     Returns:
     --------
-    Callable: The fetch_positions_async function
+    Callable: The fetch_positions_async function from positions_service_async
     """
     return fetch_positions_async

@@ -96,11 +96,22 @@ class AsyncBotState:
 class BotManagerAsync:
     """Asynchronous bot manager service."""
 
-    def __init__(self):
-        """Initialize the bot manager."""
+    def __init__(self, dev_mode: bool = False):
+        """
+        Initialize the bot manager.
+        
+        Args:
+            dev_mode: Whether to run in development mode with reduced functionality
+        """
         self.bot_state = AsyncBotState()
         self.operation_lock = asyncio.Lock()
         self.cycle_interval = 300  # 5 minutes between cycles
+        self.dev_mode = dev_mode
+        
+        if self.dev_mode:
+            logger.info("BotManagerAsync initialized in DEVELOPMENT mode")
+            # Shorter cycle interval in dev mode
+            self.cycle_interval = 60
 
     async def start_bot(self) -> Dict[str, Any]:
         """
@@ -127,10 +138,11 @@ class BotManagerAsync:
             await self.bot_state.set_running(True)
             await self.bot_state.set_task(bot_task)
             
-            logger.info("Trading bot started successfully with async implementation")
+            mode_info = " (DEVELOPMENT MODE)" if self.dev_mode else ""
+            logger.info(f"Trading bot started successfully with async implementation{mode_info}")
             return {
                 "success": True,
-                "message": "Bot started with trading logic",
+                "message": f"Bot started with trading logic{mode_info}",
                 "status": "running",
             }
         except Exception as e:
@@ -211,6 +223,7 @@ class BotManagerAsync:
             "thread_alive": task_alive,  # Keep name for compatibility
             "cycle_count": current_state.get("cycle_count", 0),
             "last_cycle_time": current_state.get("last_cycle_time"),
+            "dev_mode": self.dev_mode,  # Add dev_mode to status
         }
         
         # Include error if any
@@ -232,8 +245,13 @@ class BotManagerAsync:
             
             while await self.bot_state.is_running():
                 try:
-                    # Run one trading cycle using the asynchronous main_async function
-                    await main_async()
+                    if self.dev_mode:
+                        # In dev mode, just simulate a cycle without calling main_async
+                        logger.info("DEV MODE: Simulating bot cycle without executing trading logic")
+                        await asyncio.sleep(2)  # Short sleep to simulate work
+                    else:
+                        # Run one trading cycle using the asynchronous main_async function
+                        await main_async()
                     
                     await self.bot_state.increment_cycle()
                     cycle_count = (await self.bot_state.get_state())['cycle_count']
@@ -245,7 +263,7 @@ class BotManagerAsync:
                 
                 # Check if still should run
                 if await self.bot_state.is_running():
-                    # Wait between cycles
+                    # Wait between cycles - shorter in dev mode
                     await asyncio.sleep(self.cycle_interval)
         
         except asyncio.CancelledError:
@@ -261,9 +279,12 @@ _bot_manager_instance = None
 _init_lock = asyncio.Lock()
 
 
-async def get_bot_manager_async() -> BotManagerAsync:
+async def get_bot_manager_async(dev_mode: bool = False) -> BotManagerAsync:
     """
     Get or create a BotManagerAsync instance.
+    
+    Args:
+        dev_mode: Whether to run in development mode with reduced functionality
     
     Returns:
     --------
@@ -274,6 +295,10 @@ async def get_bot_manager_async() -> BotManagerAsync:
     if _bot_manager_instance is None:
         async with _init_lock:
             if _bot_manager_instance is None:
-                _bot_manager_instance = BotManagerAsync()
+                _bot_manager_instance = BotManagerAsync(dev_mode=dev_mode)
+    elif _bot_manager_instance.dev_mode != dev_mode:
+        # If dev_mode changed, create a new instance
+        async with _init_lock:
+            _bot_manager_instance = BotManagerAsync(dev_mode=dev_mode)
     
     return _bot_manager_instance 
