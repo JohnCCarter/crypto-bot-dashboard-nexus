@@ -33,16 +33,16 @@ async def get_bot_status_route(
     BotStatusResponse: Current bot status
     """
     try:
-        status = await bot_manager.get_status()
+        bot_status = await bot_manager.get_status()
         
         # Endast logga om det INTE är routine polling
         if not should_suppress_routine_log("/api/bot-status", "GET"):
             event_logger.log_event(
                 EventType.API_ERROR,  # Using available type
-                f"Bot status retrieved: {status.get('status', 'unknown')}"
+                f"Bot status retrieved: {bot_status.get('status', 'unknown')}"
             )
 
-        return status
+        return bot_status
         
     except Exception as e:
         # Fel ska alltid loggas

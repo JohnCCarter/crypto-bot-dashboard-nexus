@@ -28,99 +28,110 @@ def run_command(command):
         # PowerShell använder ; för att separera kommandon
         if isinstance(command, list):
             command = " ; ".join(command)
-        subprocess.run(command, shell=True)
     else:
         # Bash använder && för att separera kommandon
         if isinstance(command, list):
             command = " && ".join(command)
-        subprocess.run(command, shell=True)
+            
+    print(f"\n🚀 Kör: {command}\n")
+    subprocess.run(command, shell=True)
 
 
-def create_env_file(mode, reload_enabled=True):
-    """Skapa en .env.fastapi_dev fil med konfigurationsvariabler."""
-    env_path = os.path.join(project_root, ".env.fastapi_dev")
-    
-    # Basvariabler
-    env_vars = {
-        "FASTAPI_NO_RELOAD": str(not reload_enabled).lower(),
-        "FASTAPI_DEV_MODE": "true",  # Alltid i dev-läge när vi använder detta skript
-    }
-    
-    # Lägg till mode-specifika variabler
-    if mode == "minimal":
-        env_vars.update({
-            "FASTAPI_DISABLE_WEBSOCKETS": "true",
-            "FASTAPI_DISABLE_GLOBAL_NONCE_MANAGER": "true",
-        })
-    elif mode == "api":
-        env_vars.update({
-            "FASTAPI_DISABLE_WEBSOCKETS": "true",
-            "FASTAPI_DISABLE_GLOBAL_NONCE_MANAGER": "false",
-        })
-    elif mode == "websocket":
-        env_vars.update({
-            "FASTAPI_DISABLE_WEBSOCKETS": "false",
-            "FASTAPI_DISABLE_GLOBAL_NONCE_MANAGER": "true",
-        })
-    elif mode == "full":
-        env_vars.update({
-            "FASTAPI_DISABLE_WEBSOCKETS": "false",
-            "FASTAPI_DISABLE_GLOBAL_NONCE_MANAGER": "false",
-        })
-    
-    # Skriv till fil
-    with open(env_path, "w") as f:
+def create_env_file(env_vars):
+    """Skapa en temporär .env-fil med angivna miljövariabler."""
+    env_file_path = os.path.join(project_root, ".env.fastapi_dev")
+    with open(env_file_path, "w") as f:
         for key, value in env_vars.items():
             f.write(f"{key}={value}\n")
-    
-    print(f"📝 Laddar anpassade inställningar från: {os.path.abspath(env_path)}")
-    return env_path
+    return env_file_path
 
 
 def main():
-    """Huvudfunktion för att starta FastAPI-servern i olika lägen."""
-    parser = argparse.ArgumentParser(description="Starta FastAPI-servern i olika utvecklingslägen")
-    parser.add_argument("--mode", "-m", choices=["minimal", "api", "websocket", "full"], 
-                        default="minimal", help="Utvecklingsläge")
-    parser.add_argument("--no-reload", action="store_true", 
-                        help="Inaktivera hot reload (lägre CPU-användning)")
-    parser.add_argument("--port", "-p", type=int, default=8001, 
-                        help="Port för FastAPI-servern")
+    parser = argparse.ArgumentParser(description="Starta FastAPI-servern med olika konfigurationsalternativ")
+    
+    parser.add_argument(
+        "--mode", 
+        choices=["full", "api", "websocket", "minimal"],
+        default="minimal",
+        help=(
+            "Utvecklingsläge: "
+            "'full'=alla tjänster aktiverade, "
+            "'api'=endast API utan WebSockets, "
+            "'websocket'=API med WebSockets, "
+            "'minimal'=minimalt läge utan WebSockets eller GlobalNonceManager"
+        )
+    )
+    
+    parser.add_argument(
+        "--no-reload", 
+        action="store_true",
+        help="Inaktivera hot reload (reducerar CPU-användning betydligt)"
+    )
+    
+    parser.add_argument(
+        "--port", 
+        type=int,
+        default=8001,
+        help="Port för FastAPI-servern"
+    )
     
     args = parser.parse_args()
     
-    # Visa konfiguration
+    # Skapa miljövariabler baserat på valt läge
+    env_vars = {
+        "FASTAPI_PORT": str(args.port),
+    }
+    
     if args.mode == "minimal":
+        # Minimal konfiguration - inaktivera tjänster som kräver mycket resurser
+        env_vars["DISABLE_WEBSOCKET"] = "true"
+        env_vars["DISABLE_NONCE_MANAGER"] = "true"
+        env_vars["MOCK_EXCHANGE_SERVICE"] = "true"
         print("🔧 Minimal konfiguration: WebSockets och GlobalNonceManager inaktiverade")
+        
     elif args.mode == "api":
-        print("🔧 API-konfiguration: WebSockets inaktiverade, GlobalNonceManager aktiverad")
+        # API-fokuserat läge - inaktivera bara WebSockets
+        env_vars["DISABLE_WEBSOCKET"] = "true"
+        env_vars["MOCK_EXCHANGE_SERVICE"] = "true"
+        print("🔧 API-läge: WebSockets inaktiverade, GlobalNonceManager aktiverad")
+        
     elif args.mode == "websocket":
-        print("🔧 WebSocket-konfiguration: WebSockets aktiverade, GlobalNonceManager inaktiverad")
-    else:
-        print("🔧 Full konfiguration: Alla komponenter aktiverade")
+        # WebSocket-fokuserat läge
+        env_vars["MOCK_EXCHANGE_SERVICE"] = "true"
+        print("🔧 WebSocket-läge: WebSockets aktiverade, GlobalNonceManager aktiverad")
+        
+    else:  # full mode
+        print("🔧 Fullständigt läge: Alla tjänster aktiverade")
     
-    print(f"🔌 Port: {args.port}, Reload: {not args.no_reload}")
+    # Skapa .env-fil för development
+    env_file = create_env_file(env_vars)
     
-    # Skapa .env.fastapi_dev fil
-    env_file = create_env_file(args.mode, not args.no_reload)
+    # Sätt upp kommando för att starta FastAPI
+    cd_cmd = "cd " + project_root
+    env_cmd = f"set DOTENV_PATH={env_file}" if is_powershell() else f"export DOTENV_PATH={env_file}"
     
-    # Starta FastAPI-servern med rätt konfiguration
-    os.environ["FASTAPI_ENV_FILE"] = env_file
-    
-    # Kör direkt med Python istället för att använda run_command
-    # Detta löser problem med sökvägar i Windows
-    os.chdir(project_root)
-    
-    # Bygg kommandot - hantera reload-flaggan korrekt
-    cmd = f"python -m uvicorn backend.fastapi_app:app --host 0.0.0.0 --port {args.port}"
-    
-    # Hantera reload-flaggan korrekt - uvicorn använder --reload som en flagga utan värde
+    uvicorn_options = []
     if not args.no_reload:
-        cmd += " --reload"
+        uvicorn_options.append("--reload")
     
-    # Kör kommandot direkt
-    print(f"\n🚀 Kör: {cmd}\n")
-    subprocess.run(cmd, shell=True)
+    if is_powershell():
+        # Använd raw-strängar för att undvika escape-problem med sökvägar i PowerShell
+        # Använd dubbla citattecken runt sökvägar med mellanslag
+        escaped_project_root = project_root.replace('\\', '\\\\')
+        escaped_env_file = env_file.replace('\\', '\\\\')
+        
+        python_cmd = (
+            f"python -c \"import sys; "
+            f"sys.path.append(r'{escaped_project_root}'); "
+            f"from dotenv import load_dotenv; "
+            f"load_dotenv(r'{escaped_env_file}'); "
+            f"import uvicorn; "
+            f"uvicorn.run('backend.fastapi_app:app', host='0.0.0.0', port={args.port}, {'' if args.no_reload else 'reload=True'})\""
+        )
+        run_command([cd_cmd, env_cmd, python_cmd])
+    else:
+        python_cmd = f"cd {project_root} && python -m backend.fastapi_app"
+        run_command(f"{env_cmd} && {python_cmd}")
 
 
 if __name__ == "__main__":

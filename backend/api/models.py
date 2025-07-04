@@ -295,6 +295,7 @@ class BotStatusResponse(BaseModel):
     cycle_count: int = Field(..., description="Number of completed cycles")
     last_cycle_time: Optional[str] = Field(None, description="Last cycle timestamp")
     error: Optional[str] = Field(None, description="Error message if any")
+    dev_mode: Optional[bool] = Field(False, description="Whether the bot is running in development mode")
 
 
 class BotActionResponse(BaseModel):
@@ -303,6 +304,7 @@ class BotActionResponse(BaseModel):
     success: bool = Field(..., description="Whether the action was successful")
     message: str = Field(..., description="Response message")
     status: str = Field(..., description="Current bot status")
+    dev_mode: Optional[bool] = Field(False, description="Whether the bot is running in development mode")
 
 
 # Market data models

@@ -32,6 +32,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.*
 !.env.example
 
 # Python
@@ -92,3 +93,7 @@ scripts/testing/test_*.py
 # FastAPI
 __pycache__
 .pytest_cache
+
+# Development files
+mcp.json
+dev
