@@ -6,7 +6,8 @@ This module provides dependencies for FastAPI dependency injection system.
 
 from typing import Callable, Dict, Any, Optional
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, HTTPException, status
+from unittest.mock import MagicMock, AsyncMock
 
 from backend.services.config_service import ConfigService
 from backend.services.bot_manager_async import BotManagerAsync, get_bot_manager_async
@@ -51,6 +52,8 @@ from backend.services.positions_service_async import fetch_positions_async
 
 import logging
 import os
+import asyncio
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
@@ -117,8 +120,21 @@ class BotManagerDependency:
         Returns:
         --------
         Dict[str, Any]: The bot status
+        
+        Raises:
+        -------
+        HTTPException: If there's an error getting the status
         """
-        return await self.bot_manager.get_status()
+        try:
+            status_result = await self.bot_manager.get_status()
+            logger.debug(f"Bot status retrieved: {status_result.get('status', 'unknown')}")
+            return status_result
+        except Exception as e:
+            logger.error(f"Error getting bot status: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to get bot status: {str(e)}"
+            )
     
     async def start_bot(self) -> Dict[str, Any]:
         """
@@ -127,8 +143,21 @@ class BotManagerDependency:
         Returns:
         --------
         Dict[str, Any]: The result of the start operation
+        
+        Raises:
+        -------
+        HTTPException: If there's an error starting the bot
         """
-        return await self.bot_manager.start_bot()
+        try:
+            result = await self.bot_manager.start_bot()
+            logger.info(f"Bot start attempt: {result}")
+            return result
+        except Exception as e:
+            logger.error(f"Error starting bot: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to start bot: {str(e)}"
+            )
     
     async def stop_bot(self) -> Dict[str, Any]:
         """
@@ -137,8 +166,97 @@ class BotManagerDependency:
         Returns:
         --------
         Dict[str, Any]: The result of the stop operation
+        
+        Raises:
+        -------
+        HTTPException: If there's an error stopping the bot
         """
-        return await self.bot_manager.stop_bot()
+        try:
+            result = await self.bot_manager.stop_bot()
+            logger.info(f"Bot stop attempt: {result}")
+            return result
+        except Exception as e:
+            logger.error(f"Error stopping bot: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to stop bot: {str(e)}"
+            )
+    
+    @property
+    def dev_mode(self) -> bool:
+        """
+        Check if the bot is running in development mode.
+        
+        Returns:
+        --------
+        bool: True if in development mode, False otherwise
+        """
+        return self.bot_manager.dev_mode
+
+
+# Bot manager dependency provider with caching
+@lru_cache(maxsize=1)
+def get_cached_bot_manager_dependency(dev_mode: bool = False) -> BotManagerDependency:
+    """
+    Get a cached BotManagerDependency instance.
+    This helps avoid creating multiple instances during the request lifecycle.
+    
+    Args:
+        dev_mode: Whether to run in development mode
+        
+    Returns:
+    --------
+    BotManagerDependency: The cached bot manager dependency
+    """
+    # Använd asyncio.run för att anropa den asynkrona funktionen i en synkron kontext
+    # Detta används bara vid uppstart/cache-miss
+    bot_manager = asyncio.run(get_bot_manager_async(dev_mode=dev_mode))
+    return BotManagerDependency(bot_manager)
+
+
+# Skapa en asynkron mock för bot manager
+async def create_mock_bot_manager() -> AsyncMock:
+    """
+    Skapa en mock för BotManagerAsync som kan användas i utvecklingsläge.
+    
+    Returns:
+    --------
+    AsyncMock: En mock av BotManagerAsync
+    """
+    mock_bot_manager = AsyncMock(spec=BotManagerAsync)
+    mock_bot_manager.dev_mode = True
+    
+    # Konfigurera mock-funktioner
+    async def mock_get_status():
+        return {
+            "status": "mocked",
+            "uptime": 0.0,
+            "message": "Mocked bot manager in development mode",
+            "thread_alive": False,
+            "cycle_count": 0,
+            "dev_mode": True
+        }
+    
+    async def mock_start_bot():
+        return {
+            "success": True,
+            "message": "Mock bot started in development mode",
+            "status": "running"
+        }
+    
+    async def mock_stop_bot():
+        return {
+            "success": True,
+            "message": "Mock bot stopped in development mode",
+            "status": "stopped"
+        }
+    
+    # Sätt mock-funktioner
+    mock_bot_manager.get_status = mock_get_status
+    mock_bot_manager.start_bot = mock_start_bot
+    mock_bot_manager.stop_bot = mock_stop_bot
+    
+    return mock_bot_manager
 
 
 # Bot manager dependency provider
@@ -153,9 +271,20 @@ async def get_bot_manager() -> BotManagerDependency:
     # Kontrollera om vi är i utvecklingsläge
     dev_mode = os.environ.get("FASTAPI_DEV_MODE", "false").lower() == "true"
     
-    # Skapa bot manager med dev_mode
-    bot_manager = await get_bot_manager_async(dev_mode=dev_mode)
-    return BotManagerDependency(bot_manager)
+    try:
+        # Skapa bot manager med dev_mode
+        bot_manager = await get_bot_manager_async(dev_mode=dev_mode)
+        logger.debug(f"BotManagerAsync created with dev_mode={dev_mode}")
+        return BotManagerDependency(bot_manager)
+    except Exception as e:
+        logger.error(f"Failed to create BotManagerAsync: {e}")
+        # Fallback till en mock i utvecklingsläge
+        if dev_mode:
+            logger.warning("Using mock BotManagerAsync in development mode due to error")
+            mock_bot_manager = await create_mock_bot_manager()
+            return BotManagerDependency(mock_bot_manager)
+        # I produktionsläge, propagera felet
+        raise
 
 
 # Market data dependencies

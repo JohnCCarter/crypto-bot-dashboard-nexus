@@ -6,7 +6,7 @@ This module provides asynchronous wrapper functions around the ExchangeService.
 
 import asyncio
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock
 
 from backend.services.exchange import ExchangeService, ExchangeError
@@ -44,6 +44,29 @@ async def init_exchange_async() -> None:
         # Create a mock exchange service as fallback
         _exchange_instance = create_mock_exchange_service()
         logger.warning("⚠️ Using mock exchange service as fallback")
+
+
+async def fetch_balance_async(exchange: ExchangeService) -> Dict[str, Any]:
+    """
+    Fetch account balance asynchronously.
+    
+    Args:
+        exchange: ExchangeService instance
+        
+    Returns:
+        Dict containing balance information
+        
+    Raises:
+        ExchangeError: If balance fetching fails
+    """
+    try:
+        # Run the synchronous method in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, lambda: exchange.fetch_balance()
+        )
+    except Exception as e:
+        raise ExchangeError(f"Failed to fetch balance asynchronously: {str(e)}")
 
 
 async def fetch_ohlcv_async(
@@ -204,6 +227,131 @@ async def get_exchange_status_async(
     except Exception as e:
         msg = f"Failed to check exchange status: {str(e)}"
         raise ExchangeError(msg)
+
+
+async def create_order_async(
+    exchange: ExchangeService,
+    symbol: str,
+    order_type: str,
+    side: str,
+    amount: float,
+    price: Optional[float] = None,
+    position_type: str = "spot",
+) -> Dict[str, Any]:
+    """
+    Create a new order asynchronously.
+    
+    Args:
+        exchange: ExchangeService instance
+        symbol: Trading pair (e.g. 'BTC/USD')
+        order_type: 'market' or 'limit'
+        side: 'buy' or 'sell'
+        amount: Order size
+        price: Required for limit orders
+        position_type: 'margin' or 'spot'
+        
+    Returns:
+        Dict containing order details
+        
+    Raises:
+        ExchangeError: If order creation fails
+    """
+    try:
+        # Run the synchronous method in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, 
+            lambda: exchange.create_order(
+                symbol=symbol,
+                order_type=order_type,
+                side=side,
+                amount=amount,
+                price=price,
+                position_type=position_type
+            )
+        )
+    except Exception as e:
+        raise ExchangeError(f"Failed to create order asynchronously: {str(e)}")
+
+
+async def fetch_order_async(
+    exchange: ExchangeService, order_id: str, symbol: str
+) -> Dict[str, Any]:
+    """
+    Fetch order details asynchronously.
+    
+    Args:
+        exchange: ExchangeService instance
+        order_id: Exchange order ID
+        symbol: Trading pair
+        
+    Returns:
+        Dict containing order details
+        
+    Raises:
+        ExchangeError: If order fetch fails
+    """
+    try:
+        # Run the synchronous method in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, lambda: exchange.fetch_order(order_id, symbol)
+        )
+    except Exception as e:
+        raise ExchangeError(f"Failed to fetch order asynchronously: {str(e)}")
+
+
+async def cancel_order_async(
+    exchange: ExchangeService, order_id: str, symbol: Optional[str] = None
+) -> bool:
+    """
+    Cancel an order asynchronously.
+    
+    Args:
+        exchange: ExchangeService instance
+        order_id: Exchange order ID
+        symbol: Trading pair (optional)
+        
+    Returns:
+        True if order was cancelled successfully
+        
+    Raises:
+        ExchangeError: If order cancellation fails
+    """
+    try:
+        # Run the synchronous method in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, lambda: exchange.cancel_order(order_id, symbol)
+        )
+    except Exception as e:
+        raise ExchangeError(f"Failed to cancel order asynchronously: {str(e)}")
+
+
+async def fetch_open_orders_async(
+    exchange: ExchangeService, symbol: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """
+    Fetch open orders asynchronously.
+    
+    Args:
+        exchange: ExchangeService instance
+        symbol: Trading pair (optional)
+        
+    Returns:
+        List of open orders
+        
+    Raises:
+        ExchangeError: If fetching open orders fails
+    """
+    try:
+        # Run the synchronous method in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, lambda: exchange.fetch_open_orders(symbol)
+        )
+    except Exception as e:
+        raise ExchangeError(f"Failed to fetch open orders asynchronously: {str(e)}")
 
 
 def create_mock_exchange_service() -> MagicMock:

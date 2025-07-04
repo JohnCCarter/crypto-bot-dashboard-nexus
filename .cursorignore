@@ -1,1 +1,41 @@
-# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Virtual environments
+venv/
+*.egg-info/
+build/
+dist/
+
+# Node modules and NPM/Yarn cache
+node_modules/
+.npm/
+.yarn/
+.pnp.*
+
+# Local environment
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Build outputs
+*.min.js
+*.min.css
+frontend/dist/
+frontend/build/
+
+# Large databases and logs
+*.log
+local.db

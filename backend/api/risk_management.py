@@ -4,8 +4,8 @@ Risk management API for FastAPI.
 This module provides endpoints for risk management operations.
 """
 
-from typing import Optional
-import asyncio
+from typing import Optional, Dict, Any
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -22,9 +22,13 @@ from backend.api.dependencies import (
     get_order_service,
     get_exchange_service
 )
-from backend.services.risk_manager_async import RiskManagerAsync
+from backend.services.risk_manager_async import RiskManagerAsync, ProbabilityData
 from backend.services.order_service_async import OrderServiceAsync
+from backend.services.exchange_async import fetch_balance_async
 from backend.services.exchange import ExchangeService
+from backend.services.positions_service_async import fetch_positions_async
+
+logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter(
@@ -46,26 +50,18 @@ async def assess_portfolio_risk(
         RiskAssessmentResponse: Risk assessment data
     """
     try:
-        # Skapa en event loop om det inte finns någon
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            # Om ingen loop körs, skapa en ny
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
         # Fetch current positions
-        positions_resp = await order_service.get_positions()
-        positions = positions_resp.get("positions", {})
+        positions = await fetch_positions_async()
+        positions_dict = {p["symbol"]: p for p in positions}
         
         # Fetch pending orders
-        orders_resp = await order_service.get_open_orders()
-        orders = orders_resp.get("orders", {})
+        open_orders = await order_service.get_open_orders()
+        orders_dict = {order["id"]: order for order in open_orders}
         
         # Assess risk
         risk_assessment = await risk_manager.assess_portfolio_risk(
-            current_positions=positions,
-            pending_orders=orders
+            current_positions=positions_dict,
+            pending_orders=orders_dict
         )
         
         return {
@@ -74,6 +70,7 @@ async def assess_portfolio_risk(
             "risk_assessment": risk_assessment
         }
     except Exception as e:
+        logger.error(f"Failed to assess portfolio risk: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to assess portfolio risk: {str(e)}"
@@ -104,7 +101,7 @@ async def validate_order(
         
         if exchange_service:
             try:
-                balance_data = await exchange_service.fetch_balance_async()
+                balance_data = await fetch_balance_async(exchange_service)
                 if balance_data and "total" in balance_data:
                     # Use USDT or USD value if available
                     portfolio_value = float(
@@ -120,11 +117,11 @@ async def validate_order(
                             portfolio_value = btc_value * 30000.0  # Rough estimate
             except Exception as e:
                 # Log but continue with default value
-                print(f"Failed to get portfolio value: {e}")
+                logger.warning(f"Failed to get portfolio value: {e}")
         
         # Get current positions
-        positions_resp = await order_service.get_positions()
-        positions = positions_resp.get("positions", {})
+        positions = await fetch_positions_async()
+        positions_dict = {p["symbol"]: p for p in positions}
         
         # Prepare order_data in format expected by risk manager
         order_dict = order_data.dict()
@@ -132,7 +129,7 @@ async def validate_order(
         # Convert probability data if provided
         probability_obj = None
         if probability_data:
-            probability_obj = ProbabilityDataModel(
+            probability_obj = ProbabilityData(
                 probability_buy=probability_data.probability_buy,
                 probability_sell=probability_data.probability_sell,
                 probability_hold=probability_data.probability_hold,
@@ -144,14 +141,14 @@ async def validate_order(
             validation_result = await risk_manager.validate_order_with_probabilities(
                 order_data=order_dict,
                 portfolio_value=portfolio_value,
-                current_positions=positions,
+                current_positions=positions_dict,
                 probability_data=probability_obj
             )
         else:
             validation_result = await risk_manager.validate_order(
                 order_data=order_dict,
                 portfolio_value=portfolio_value,
-                current_positions=positions,
+                current_positions=positions_dict,
             )
         
         return {
@@ -162,6 +159,7 @@ async def validate_order(
             "risk_assessment": validation_result.get("risk_assessment", {})
         }
     except Exception as e:
+        logger.error(f"Failed to validate order: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to validate order: {str(e)}"
@@ -192,7 +190,7 @@ async def get_risk_score(
     """
     try:
         # Create probability data object
-        probability_data = ProbabilityDataModel(
+        probability_data = ProbabilityData(
             probability_buy=probability_buy,
             probability_sell=probability_sell,
             probability_hold=probability_hold,
@@ -208,9 +206,15 @@ async def get_risk_score(
             "symbol": symbol,
             "risk_score": risk_score,
             "risk_level": _get_risk_level(risk_score),
-            "probability_data": probability_data.dict()
+            "probability_data": {
+                "probability_buy": probability_buy,
+                "probability_sell": probability_sell,
+                "probability_hold": probability_hold,
+                "confidence": confidence
+            }
         }
     except Exception as e:
+        logger.error(f"Failed to calculate risk score: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to calculate risk score: {str(e)}"

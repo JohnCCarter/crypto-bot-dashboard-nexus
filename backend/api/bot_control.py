@@ -4,6 +4,7 @@ Bot control API endpoints.
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import Dict, Any
+import logging
 
 from backend.api.models import BotStatusResponse, BotActionResponse
 from backend.api.dependencies import get_bot_manager, BotManagerDependency
@@ -16,6 +17,9 @@ router = APIRouter(
     prefix="/api",
     tags=["bot-control"],
 )
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 @router.get("/bot-status", response_model=BotStatusResponse)
@@ -35,10 +39,15 @@ async def get_bot_status_route(
     try:
         bot_status = await bot_manager.get_status()
         
+        # Logga alltid dev_mode-information för debug
+        dev_mode = bot_manager.dev_mode
+        if dev_mode:
+            logger.debug(f"Bot status retrieved in DEV MODE: {bot_status.get('status', 'unknown')}")
+            
         # Endast logga om det INTE är routine polling
         if not should_suppress_routine_log("/api/bot-status", "GET"):
             event_logger.log_event(
-                EventType.API_ERROR,  # Using available type
+                EventType.API_ERROR,  # Korrekt event-typ från EventType enum
                 f"Bot status retrieved: {bot_status.get('status', 'unknown')}"
             )
 

@@ -76,4 +76,170 @@ Den nya implementationen har förbättrad felhantering:
 
 ## Slutsats
 
-Implementationen av asynkron order service är ett viktigt steg i FastAPI-migrationen. Den förbättrar prestanda, skalbarhet och robusthet i API:et för order-hantering. Den är också ett bra exempel på hur vi kan konvertera andra service-komponenter till asynkrona i framtiden. 
+Implementationen av asynkron order service är ett viktigt steg i FastAPI-migrationen. Den förbättrar prestanda, skalbarhet och robusthet i API:et för order-hantering. Den är också ett bra exempel på hur vi kan konvertera andra service-komponenter till asynkrona i framtiden.
+
+# Asynkron OrderService Implementation
+
+Detta dokument beskriver implementationen av asynkrona metoder för orderhantering i FastAPI-migrationen.
+
+## Bakgrund
+
+Som en del av migrationen från Flask till FastAPI behöver vi göra alla tjänster asynkrona för att dra full nytta av FastAPI:s asynkrona funktionalitet. En av dessa tjänster är OrderService, som hanterar orderplacering, orderstatus och avbrytande av ordrar.
+
+## Implementerade förbättringar
+
+### 1. Asynkrona metoder i exchange_async.py
+
+Vi har lagt till följande asynkrona metoder för orderhantering i `exchange_async.py`:
+
+- `create_order_async`: Skapar en order asynkront
+- `fetch_order_async`: Hämtar orderstatus asynkront
+- `cancel_order_async`: Avbryter en order asynkront
+- `fetch_open_orders_async`: Hämtar öppna ordrar asynkront
+
+Dessa metoder använder `asyncio.get_event_loop().run_in_executor()` för att köra de synkrona metoderna från ExchangeService i en separat trådpool, vilket gör dem asynkrona utan att behöva ändra den underliggande ExchangeService.
+
+```python
+async def create_order_async(
+    exchange: ExchangeService,
+    symbol: str,
+    order_type: str,
+    side: str,
+    amount: float,
+    price: Optional[float] = None,
+    position_type: str = "spot",
+) -> Dict[str, Any]:
+    """Create a new order asynchronously."""
+    try:
+        # Run the synchronous method in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, 
+            lambda: exchange.create_order(
+                symbol=symbol,
+                order_type=order_type,
+                side=side,
+                amount=amount,
+                price=price,
+                position_type=position_type
+            )
+        )
+    except Exception as e:
+        raise ExchangeError(f"Failed to create order asynchronously: {str(e)}")
+```
+
+### 2. Uppdatering av OrderServiceAsync
+
+Vi har uppdaterat `OrderServiceAsync` för att använda de nya asynkrona metoderna istället för att anropa de synkrona metoderna direkt. Detta gör att OrderServiceAsync nu är helt asynkron och kan dra nytta av FastAPI:s asynkrona funktionalitet.
+
+```python
+async def place_order(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    """Place a new order asynchronously."""
+    # ... validering och förberedelse ...
+    
+    try:
+        # Execute order on exchange using async method
+        exchange_order = await create_order_async(
+            exchange=self.exchange,
+            symbol=data["symbol"],
+            order_type=data["order_type"],
+            side=data["side"],
+            amount=float(data["amount"]),
+            price=float(data.get("price", 0)),
+        )
+        
+        # ... uppdatera och spara order ...
+        
+        return order
+    except Exception as e:
+        # ... felhantering ...
+        raise
+```
+
+### 3. Förbättrad hantering av öppna ordrar
+
+Vi har förbättrat metoden `get_open_orders` för att hämta öppna ordrar från både exchange och lokal cache, och uppdatera den lokala cachen med data från exchange. Detta ger en mer konsistent vy av öppna ordrar.
+
+```python
+async def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Get all open orders asynchronously."""
+    # First, try to get open orders from the exchange
+    try:
+        exchange_orders = await fetch_open_orders_async(
+            exchange=self.exchange,
+            symbol=symbol
+        )
+        
+        # Update local order cache with exchange data
+        for exchange_order in exchange_orders:
+            # ... uppdatera eller skapa order i lokal cache ...
+    except Exception:
+        # If exchange call fails, just use local cache
+        pass
+    
+    # Return orders from local cache
+    open_orders = [
+        order for order in self.orders.values() if order["status"] == "open"
+    ]
+
+    if symbol:
+        open_orders = [order for order in open_orders if order["symbol"] == symbol]
+
+    return open_orders
+```
+
+### 4. Omfattande testning
+
+Vi har skapat en testfil `test_order_service_async.py` som använder samma optimerade testmetodik som vi utvecklade för bot control-testerna. Testerna använder mockade asynkrona funktioner och verifierar att OrderServiceAsync fungerar korrekt.
+
+```python
+@pytest.mark.asyncio
+async def test_place_order(order_service_async, mock_exchange_service):
+    """Test för att placera en order."""
+    # Arrange
+    order_data = { ... }
+    
+    # Patcha create_order_async för att använda den mockade exchange_service
+    with patch("backend.services.order_service_async.create_order_async") as mock_create_order:
+        mock_create_order.return_value = { ... }
+        
+        # Act
+        order = await order_service_async.place_order(order_data)
+        
+        # Assert
+        assert order["symbol"] == "BTC/USD"
+        # ... fler assertions ...
+        
+        # Verify that create_order_async was called with correct parameters
+        mock_create_order.assert_called_once()
+        args, kwargs = mock_create_order.call_args
+        assert kwargs["exchange"] == mock_exchange_service
+        # ... fler verifieringar ...
+```
+
+## Resultat
+
+- OrderServiceAsync är nu helt asynkron och kan dra nytta av FastAPI:s asynkrona funktionalitet
+- Alla tester passerar och verifierar att OrderServiceAsync fungerar korrekt
+- Koden är mer läsbar och lättare att underhålla med tydliga asynkrona metoder
+
+## Nästa steg
+
+1. **Implementera asynkrona versioner av andra tjänster**:
+   - RiskManagerAsync (redan implementerad men behöver tester)
+   - PortfolioManagerAsync (redan implementerad men behöver tester)
+   - LiveDataServiceAsync (påbörjad)
+   - MainBotAsync
+
+2. **Förbättra testning av asynkrona tjänster**:
+   - Skapa tester för RiskManagerAsync
+   - Skapa tester för PortfolioManagerAsync
+   - Förbättra testningen av LiveDataServiceAsync
+
+3. **Integrera de asynkrona tjänsterna med FastAPI-endpoints**:
+   - Uppdatera API-endpoints för att använda de asynkrona tjänsterna
+   - Säkerställa att alla endpoints använder asynkrona tjänster konsekvent
+
+---
+
+Dokumentet uppdaterat: 2025-07-04 

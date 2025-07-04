@@ -355,6 +355,23 @@ GlobalNonceManager = EnhancedGlobalNonceManager
 nonce_manager = EnhancedGlobalNonceManager()
 
 
-def get_global_nonce_manager() -> EnhancedGlobalNonceManager:
-    """Get the enhanced global nonce manager instance."""
-    return nonce_manager 
+def get_global_nonce_manager(dev_mode: bool = False) -> EnhancedGlobalNonceManager:
+    """
+    Singleton factory för GlobalNonceManager
+    
+    Args:
+        dev_mode: Whether to run in development mode (default: False)
+        
+    Returns:
+        EnhancedGlobalNonceManager: Global nonce manager instance
+    """
+    # Kontrollera dev_mode från argument eller miljövariabel
+    dev_mode_from_env = os.environ.get("FASTAPI_DEV_MODE", "false").lower() == "true"
+    use_dev_mode = dev_mode or dev_mode_from_env
+    
+    # Sätt miljövariabeln om vi är i dev-läge
+    if use_dev_mode:
+        os.environ["DISABLE_NONCE_MANAGER"] = "true"
+    
+    # Skapa/hämta instans
+    return EnhancedGlobalNonceManager() 

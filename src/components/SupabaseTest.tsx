@@ -31,4 +31,4 @@ export const SupabaseTest = () => {
       {!error && orders.length === 0 && <div>Inga ordrar hittades.</div>}
     </div>
   );
-}; 
+};

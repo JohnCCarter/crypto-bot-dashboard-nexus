@@ -1,278 +1,171 @@
-# Implementation av Asynkrona Risk- och Portfoliotjänster
-
-Detta dokument beskriver implementationen av de asynkrona versionerna av RiskManager och PortfolioManager för FastAPI-migrationen.
+# Implementation av RiskManagerAsync och PortfolioManagerAsync
 
 ## Översikt
 
-Som en del av den pågående migrationen från Flask till FastAPI har vi implementerat asynkrona versioner av två kritiska tjänster:
-
-1. **RiskManagerAsync** - Hanterar riskbedömning och riskkontroll
-2. **PortfolioManagerAsync** - Hanterar portföljallokering och signalbehandling
-
-Dessa tjänster är centrala för handelssystemet och deras asynkrona implementationer möjliggör förbättrad prestanda och skalbarhet.
+Detta dokument beskriver implementationen av de asynkrona tjänsterna RiskManagerAsync och PortfolioManagerAsync, samt integrationen med FastAPI-endpoints. Dessa tjänster utgör kärnan i systemets riskhantering och portföljhantering.
 
 ## RiskManagerAsync
 
-### Funktionalitet
+### Arkitektur
 
-RiskManagerAsync tillhandahåller följande funktionalitet:
+RiskManagerAsync är en asynkron implementation av riskhanteringsfunktionalitet med fokus på:
 
-- Validering av order mot riskregler
-- Beräkning av positionsstorlek baserat på risktolerans
-- Riskbedömning av hela portföljen
-- Sannolikhetsbaserad riskbedömning
-- Dynamisk justering av risknivåer
+1. **Ordervalidering** - Validera att ordrar uppfyller riskkrav
+2. **Portföljriskbedömning** - Bedöma risknivån för hela portföljen
+3. **Sannolikhetsbaserad riskhantering** - Använda sannolikhetsmodeller för beslut
+4. **Positionsstorleksberäkning** - Intelligent beräkning av positionsstorlekar
 
-### Implementation
+### Huvudfunktioner
+
+- **validate_order** - Validerar en order mot riskparametrar
+- **validate_order_with_probabilities** - Validerar en order med sannolikhetsdata
+- **assess_portfolio_risk** - Bedömer risknivån för hela portföljen
+- **calculate_intelligent_position_size** - Beräknar optimal positionsstorlek
+- **calculate_dynamic_stop_loss** - Beräknar dynamiska stop loss-nivåer
+
+### Integration med FastAPI
+
+RiskManagerAsync integreras i FastAPI via dependency injection-systemet:
 
 ```python
-class RiskManagerAsync:
-    """Asynkron riskhanterare för trading-systemet."""
+async def get_risk_manager() -> RiskManagerAsync:
+    """
+    Get or create singleton instance of RiskManagerAsync.
+    """
+    global _risk_manager_async
+    if _risk_manager_async is None:
+        config = get_config_service()
+        risk_params = RiskParameters(
+            max_position_size=config.get("risk.max_position_size", 0.1),
+            max_leverage=config.get("risk.max_leverage", 3.0),
+            max_daily_loss=config.get("risk.max_daily_loss", 0.05),
+            max_positions=config.get("risk.max_positions", 5),
+            min_confidence=config.get("risk.min_confidence", 0.6),
+        )
+        _risk_manager_async = RiskManagerAsync(risk_params)
+    return _risk_manager_async
+```
 
-    def __init__(self, risk_params: RiskParameters):
-        """
-        Initialisera RiskManagerAsync med riskparametrar.
-        
-        Args:
-            risk_params: Riskparametrar för att konfigurera riskhantering
-        """
-        self.risk_params = risk_params
-        self.daily_pnl = 0.0
-        self.last_reset = datetime.now(UTC)
-        self._lock = asyncio.Lock()
+Endpoints använder sedan denna dependency för att utföra riskhantering:
 
-    async def validate_order(self, order: Dict[str, Any], positions: List[Dict[str, Any]]) -> Tuple[bool, str]:
-        """
-        Validera en order mot riskregler.
-        
-        Args:
-            order: Order att validera
-            positions: Nuvarande positioner
-            
-        Returns:
-            Tuple med (valid, reason)
-        """
-        # Implementation...
-
-    async def calculate_position_size(self, symbol: str, entry_price: float, 
-                                     stop_loss: float, account_balance: float) -> float:
-        """
-        Beräkna optimal positionsstorlek baserat på risk.
-        
-        Args:
-            symbol: Symbol att beräkna för
-            entry_price: Ingångspris
-            stop_loss: Stop-loss nivå
-            account_balance: Kontobalans
-            
-        Returns:
-            Optimal positionsstorlek
-        """
-        # Implementation...
-
-    async def assess_portfolio_risk(self, positions: List[Dict[str, Any]], 
-                                   account_balance: float) -> Dict[str, Any]:
-        """
-        Utför en fullständig riskbedömning av portföljen.
-        
-        Args:
-            positions: Lista med positioner
-            account_balance: Kontobalans
-            
-        Returns:
-            Riskbedömning
-        """
-        # Implementation...
+```python
+@router.post("/validate/order", response_model=OrderValidationResponse)
+async def validate_order(
+    order_data: OrderData,
+    probability_data: Optional[ProbabilityDataModel] = None,
+    risk_manager: RiskManagerAsync = Depends(get_risk_manager),
+    ...
+):
+    # Använd risk_manager för validering
+    validation_result = await risk_manager.validate_order(...)
 ```
 
 ## PortfolioManagerAsync
 
-### Funktionalitet
+### Arkitektur
 
-PortfolioManagerAsync tillhandahåller följande funktionalitet:
+PortfolioManagerAsync är en asynkron implementation av portföljhantering med fokus på:
 
-- Hantering av strategisignaler
-- Beräkning av portföljallokering
-- Rebalansering av portföljen
-- Statusrapportering för portföljen
+1. **Signalhantering** - Kombinera signaler från olika strategier
+2. **Positionshantering** - Hantera öppna positioner
+3. **Portföljallokering** - Beräkna optimal allokering av kapital
+4. **Rebalansering** - Rebalansera portföljen vid behov
 
-### Implementation
+### Huvudfunktioner
 
-```python
-class PortfolioManagerAsync:
-    """Asynkron portföljhanterare för att kombinera strategisignaler."""
+- **combine_strategy_signals** - Kombinerar signaler från olika strategier
+- **calculate_portfolio_position_size** - Beräknar optimal positionsstorlek
+- **should_execute_trade** - Avgör om en handel bör genomföras
+- **rebalance_portfolio** - Rebalanserar portföljen
+- **calculate_allocations** - Beräknar optimal allokering
 
-    def __init__(self, risk_manager: RiskManagerAsync, strategy_weights: List[StrategyWeight]):
-        """
-        Initialisera PortfolioManagerAsync.
-        
-        Args:
-            risk_manager: RiskManagerAsync-instans för riskhantering
-            strategy_weights: Lista med strategivikter
-        """
-        self.risk_manager = risk_manager
-        self.strategy_weights = {sw.strategy_name: sw for sw in strategy_weights}
-        self.last_signals = {}
-        self.portfolio_status = {}
-        self._lock = asyncio.Lock()
+### Integration med FastAPI
 
-    async def process_signals(self, signals: Dict[str, List[TradeSignal]]) -> CombinedSignal:
-        """
-        Bearbeta signaler från flera strategier.
-        
-        Args:
-            signals: Dictionary med strateginamn som nycklar och listor av signaler som värden
-            
-        Returns:
-            Kombinerad signal
-        """
-        # Implementation...
-
-    async def calculate_allocations(self, combined_signal: CombinedSignal, 
-                                   account_balance: float) -> Dict[str, float]:
-        """
-        Beräkna portföljallokering baserat på kombinerad signal.
-        
-        Args:
-            combined_signal: Kombinerad signal
-            account_balance: Kontobalans
-            
-        Returns:
-            Dictionary med symbol som nycklar och allokering som värden
-        """
-        # Implementation...
-
-    async def rebalance_portfolio(self, current_positions: Dict[str, Any], 
-                                 target_allocations: Dict[str, float]) -> List[Dict[str, Any]]:
-        """
-        Generera orders för att rebalansera portföljen.
-        
-        Args:
-            current_positions: Nuvarande positioner
-            target_allocations: Målallokeringar
-            
-        Returns:
-            Lista med orders för rebalansering
-        """
-        # Implementation...
-
-    async def get_portfolio_status(self, positions: Dict[str, Any], 
-                                  account_balance: float) -> Dict[str, Any]:
-        """
-        Hämta portföljstatus.
-        
-        Args:
-            positions: Nuvarande positioner
-            account_balance: Kontobalans
-            
-        Returns:
-            Portföljstatus
-        """
-        # Implementation...
-```
-
-## API-integrering
-
-De asynkrona tjänsterna har integrerats med FastAPI genom:
-
-1. Dependency injection i `backend/api/dependencies.py`
-2. API-endpoints i `backend/api/portfolio.py` och `backend/api/risk_management.py`
-
-### Dependency Injection
+PortfolioManagerAsync integreras i FastAPI via dependency injection:
 
 ```python
-# Exempel från dependencies.py
-async def get_risk_manager(config: ConfigService = Depends(get_config_service)) -> RiskManagerAsync:
-    """Hämta en RiskManagerAsync-instans."""
-    risk_params = config.get_risk_parameters()
-    return RiskManagerAsync(risk_params)
-
 async def get_portfolio_manager(
     risk_manager: RiskManagerAsync = Depends(get_risk_manager),
     config: ConfigService = Depends(get_config_service),
 ) -> PortfolioManagerAsync:
-    """Hämta en PortfolioManagerAsync-instans."""
-    strategy_weights = []
-    for name, weight_config in config.get_strategy_weights().items():
-        strategy_weights.append(
-            StrategyWeight(
-                strategy_name=name,
-                weight=weight_config.get("weight", 1.0),
-                min_confidence=weight_config.get("min_confidence", 0.5),
-                enabled=weight_config.get("enabled", True)
-            )
+    """
+    Get or create singleton instance of PortfolioManagerAsync.
+    """
+    global _portfolio_manager_async
+    if _portfolio_manager_async is None:
+        # Läs strategi-vikter från konfigurationen
+        strategy_weights = []
+        strategies_config = config.get("strategies", {})
+        for name, weight in strategies_config.items():
+            if isinstance(weight, (int, float)) and weight > 0:
+                strategy_weights.append(
+                    StrategyWeight(strategy_name=name, weight=float(weight))
+                )
+        
+        _portfolio_manager_async = PortfolioManagerAsync(
+            risk_manager=risk_manager,
+            strategy_weights=strategy_weights,
         )
-    return PortfolioManagerAsync(risk_manager, strategy_weights)
+    return _portfolio_manager_async
 ```
 
-## Endpoints
-
-### Portfolio Endpoints
+Endpoints använder denna dependency för portföljhantering:
 
 ```python
-@router.get("/status", response_model=PortfolioStatusResponse)
-async def get_portfolio_status(
+@router.post("/allocate", response_model=PortfolioAllocationResponse)
+async def allocate_portfolio(
+    request: PortfolioAllocationRequest,
     portfolio_manager: PortfolioManagerAsync = Depends(get_portfolio_manager),
-    positions_service: PositionsServiceAsync = Depends(get_positions_service_async),
-    exchange_service: ExchangeService = Depends(get_exchange_service),
-):
-    """Hämta portföljstatus."""
-    positions = await positions_service.get_positions()
-    balances = exchange_service.get_balances()
-    
-    # Beräkna total kontovärde
-    total_balance = sum(balance.get("total", 0) for balance in balances.values())
-    
-    portfolio_status = await portfolio_manager.get_portfolio_status(positions, total_balance)
-    return {
-        "status": "success",
-        "portfolio_status": portfolio_status,
-        "timestamp": datetime.now(UTC).isoformat()
-    }
-```
-
-### Risk Management Endpoints
-
-```python
-@router.get("/assessment", response_model=RiskAssessmentResponse)
-async def assess_portfolio_risk(
     risk_manager: RiskManagerAsync = Depends(get_risk_manager),
-    positions_service: PositionsServiceAsync = Depends(get_positions_service_async),
-    exchange_service: ExchangeService = Depends(get_exchange_service),
-):
-    """Utför en riskbedömning av nuvarande portfölj."""
-    positions = await positions_service.get_positions()
-    balances = exchange_service.get_balances()
-    
-    # Beräkna total kontovärde
-    total_balance = sum(balance.get("total", 0) for balance in balances.values())
-    
-    risk_assessment = await risk_manager.assess_portfolio_risk(positions, total_balance)
-    return {
-        "status": "success",
-        "risk_assessment": risk_assessment,
-        "timestamp": datetime.now(UTC).isoformat()
-    }
+) -> Dict[str, Any]:
+    # Använd portfolio_manager för allokering
+    allocations = await portfolio_manager.calculate_allocations(...)
 ```
 
-## Förbättringar och Fördelar
+## Testning
 
-1. **Prestanda**: Asynkrona tjänster möjliggör parallell exekvering av operationer
-2. **Skalbarhet**: Systemet kan hantera fler samtidiga förfrågningar
-3. **Responsivitet**: API:et förblir responsivt även under hög belastning
-4. **Kodkvalitet**: Tydligare separation av ansvar och bättre testbarhet
+### RiskManagerAsync
 
-## Kända Problem och Framtida Förbättringar
+RiskManagerAsync har omfattande tester som täcker:
 
-1. **Testning**: Behov av förbättrad testning av asynkrona tjänster
-2. **Felhantering**: Förbättra felhantering i asynkrona kontexter
-3. **Fullständig Asynkron Implementation**: Vissa delar använder fortfarande synkrona anrop
-4. **Caching**: Implementera caching för att minska beräkningsbelastning
+1. **ProbabilityData** - Test för sannolikhetsberäkningar
+2. **Grundläggande funktionalitet** - Initialisering och persistens
+3. **Ordervalidering** - Test för olika validerings-scenarios 
+4. **Avancerade funktioner** - Intelligent position sizing, dynamisk stop loss
 
-## Slutsats
+### PortfolioManagerAsync
 
-Implementationen av RiskManagerAsync och PortfolioManagerAsync representerar ett viktigt steg i migrationen till FastAPI. Dessa tjänster tillhandahåller kritisk funktionalitet för handelssystemet och deras asynkrona natur förbättrar systemets prestanda och skalbarhet.
+PortfolioManagerAsync har omfattande tester som täcker:
 
-Nästa steg är att implementera en fullständig BotManagerAsync-klass och förbättra testningen av de asynkrona tjänsterna.
+1. **Grundläggande funktionalitet** - Initialisering och viktvalidering
+2. **Signalhantering** - Kombinera strategisignaler
+3. **Positionsberäkning** - Beräkning av positionsstorlekar
+4. **Handelsutförande** - Utvärdering om handel bör genomföras
 
-Uppdaterad: 2025-07-02 
+## Asynkron datahantering
+
+Både RiskManagerAsync och PortfolioManagerAsync använder sig av asynkron datahantering:
+
+1. **IO-operationer** - Asynkrona anrop till exchange och databas
+2. **Filoperationer** - Asynkron persistens av data
+3. **Tidskrävande beräkningar** - Möjlighet att köra beräkningar asynkront
+
+## Förbättringar jämfört med synkrona implementationer
+
+1. **Bättre prestanda** - Asynkrona anrop blockerar inte server-tråden
+2. **Skalbarhet** - Kan hantera fler samtidiga anslutningar
+3. **Responsivitet** - Snabbare svarstider för användare
+4. **Flexibilitet** - Enklare att integrera med andra asynkrona tjänster
+
+## Kvarstående uppgifter
+
+1. **Förbättra felhantering** - Mer detaljerad felrapportering
+2. **Utökad loggning** - Bättre loggning för felsökning
+3. **Ytterligare integration** - Integration med websocket för realtidsuppdateringar
+4. **Prestandaoptimering** - Ytterligare optimering av kritiska funktioner
+
+## Sammanfattning
+
+Implementationen av RiskManagerAsync och PortfolioManagerAsync utgör en viktig del i migrationen till FastAPI och asynkron datahantering. Dessa tjänster ger en solid grund för riskhantering och portföljhantering med förbättrad prestanda och skalbarhet.
+
+Uppdaterad: 2025-07-05 

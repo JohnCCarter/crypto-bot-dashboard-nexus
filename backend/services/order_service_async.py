@@ -5,6 +5,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from backend.services.exchange import ExchangeService
+from backend.services.exchange_async import (
+    create_order_async,
+    fetch_order_async,
+    cancel_order_async,
+    fetch_open_orders_async
+)
 from backend.services.validation import validate_order_data, validate_trading_pair
 
 
@@ -64,10 +70,9 @@ class OrderServiceAsync:
         }
 
         try:
-            # Execute order on exchange
-            # Note: The exchange service call needs to be async in the future
-            # For now, we're wrapping the sync call
-            exchange_order = self.exchange.create_order(
+            # Execute order on exchange using async method
+            exchange_order = await create_order_async(
+                exchange=self.exchange,
                 symbol=data["symbol"],
                 order_type=data["order_type"],
                 side=data["side"],
@@ -112,10 +117,11 @@ class OrderServiceAsync:
         order = self.orders[order_id]
         if order["status"] == "open":
             try:
-                # Update order status from exchange
-                # Note: The exchange service call needs to be async in the future
-                exchange_order = self.exchange.fetch_order(
-                    order["exchange_order_id"], order["symbol"]
+                # Update order status from exchange using async method
+                exchange_order = await fetch_order_async(
+                    exchange=self.exchange,
+                    order_id=order["exchange_order_id"],
+                    symbol=order["symbol"]
                 )
 
                 order.update(
@@ -149,9 +155,12 @@ class OrderServiceAsync:
             return False
 
         try:
-            # Cancel order on exchange
-            # Note: The exchange service call needs to be async in the future
-            self.exchange.cancel_order(order["exchange_order_id"], order["symbol"])
+            # Cancel order on exchange using async method
+            await cancel_order_async(
+                exchange=self.exchange,
+                order_id=order["exchange_order_id"],
+                symbol=order["symbol"]
+            )
 
             order["status"] = "cancelled"
             order["cancelled_at"] = datetime.utcnow().isoformat()
@@ -171,6 +180,50 @@ class OrderServiceAsync:
         Returns:
             List of open orders
         """
+        # First, try to get open orders from the exchange
+        try:
+            exchange_orders = await fetch_open_orders_async(
+                exchange=self.exchange,
+                symbol=symbol
+            )
+            
+            # Update local order cache with exchange data
+            for exchange_order in exchange_orders:
+                order_id = None
+                # Find matching order in local cache by exchange_order_id
+                for local_id, local_order in self.orders.items():
+                    if local_order.get("exchange_order_id") == exchange_order["id"]:
+                        order_id = local_id
+                        break
+                
+                if order_id:
+                    # Update existing order
+                    self.orders[order_id].update({
+                        "status": exchange_order["status"],
+                        "filled_amount": exchange_order["filled"],
+                        "remaining_amount": exchange_order["remaining"],
+                    })
+                else:
+                    # Create new order entry if not in local cache
+                    new_id = str(uuid.uuid4())
+                    self.orders[new_id] = {
+                        "id": new_id,
+                        "exchange_order_id": exchange_order["id"],
+                        "symbol": exchange_order["symbol"],
+                        "type": exchange_order["type"],
+                        "side": exchange_order["side"],
+                        "amount": float(exchange_order["amount"]),
+                        "price": float(exchange_order.get("price", 0)),
+                        "status": exchange_order["status"],
+                        "filled_amount": float(exchange_order.get("filled", 0)),
+                        "remaining_amount": float(exchange_order.get("remaining", 0)),
+                        "created_at": datetime.utcnow().isoformat(),
+                    }
+        except Exception as e:
+            # If exchange call fails, just use local cache
+            pass
+        
+        # Return orders from local cache
         open_orders = [
             order for order in self.orders.values() if order["status"] == "open"
         ]

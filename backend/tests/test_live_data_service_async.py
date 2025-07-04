@@ -4,7 +4,7 @@ Test the async live data service.
 
 import pytest
 import pandas as pd
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 import asyncio
 
 from backend.services.live_data_service_async import (
@@ -27,9 +27,7 @@ async def mock_live_data_service():
         [1625097600000, 35000.0, 35100.0, 34900.0, 35050.0, 10.5],
         [1625097900000, 35050.0, 35200.0, 35000.0, 35150.0, 15.2]
     ]
-    async def mock_fetch_ohlcv(*args, **kwargs):
-        return mock_ohlcv_data
-    service.exchange.fetch_ohlcv = mock_fetch_ohlcv
+    service.exchange.fetch_ohlcv = AsyncMock(return_value=mock_ohlcv_data)
     
     # Mock fetch_ticker
     mock_ticker = {
@@ -39,23 +37,17 @@ async def mock_live_data_service():
         "change": 150.0,
         "percentage": 0.43
     }
-    async def mock_fetch_ticker(*args, **kwargs):
-        return mock_ticker
-    service.exchange.fetch_ticker = mock_fetch_ticker
+    service.exchange.fetch_ticker = AsyncMock(return_value=mock_ticker)
     
     # Mock fetch_order_book
     mock_orderbook = {
         "bids": [[35000.0, 1.5], [34900.0, 2.3]],
         "asks": [[35200.0, 1.2], [35300.0, 3.4]]
     }
-    async def mock_fetch_order_book(*args, **kwargs):
-        return mock_orderbook
-    service.exchange.fetch_order_book = mock_fetch_order_book
+    service.exchange.fetch_order_book = AsyncMock(return_value=mock_orderbook)
     
     # Mock close method
-    async def mock_close(*args, **kwargs):
-        pass
-    service.exchange.close = mock_close
+    service.exchange.close = AsyncMock()
     
     yield service
     

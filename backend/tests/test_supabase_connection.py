@@ -1,6 +1,5 @@
 from backend.supabase_client import supabase
 
-
 def test_supabase_connection():
     # Försök hämta data från tabellen 'orders' (byt till en existerande tabell)
     response = supabase.table("orders").select("*").limit(1).execute()

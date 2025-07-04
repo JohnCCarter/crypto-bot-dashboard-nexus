@@ -80,35 +80,64 @@ async def lifespan(app: FastAPI):
     
     # Initiera GlobalNonceManager om den inte är inaktiverad
     if not disable_nonce_manager:
-        gnm = await get_global_nonce_manager(dev_mode=dev_mode)
-        logger.info(f"🔐 Enhanced GlobalNonceManager initialized: {gnm.current_nonce}")
+        # get_global_nonce_manager är inte awaitable, så vi kallar den direkt
+        gnm = get_global_nonce_manager(dev_mode=dev_mode)
+        logger.info(f"🔐 Enhanced GlobalNonceManager initialized")
+    
+    # Initiera BotManagerAsync för att förbereda för API-anrop
+    # Denna import görs här för att undvika cirkulära imports
+    from backend.services.bot_manager_async import get_bot_manager_async
+    bot_manager = await get_bot_manager_async(dev_mode=dev_mode)
+    logger.info(f"🤖 BotManagerAsync initialized{' in development mode' if dev_mode else ''}")
     
     # Initiera WebSocket-tjänster om de inte är inaktiverade
     if not disable_websockets:
         # Importera här för att undvika cirkelberoenden
         from backend.services.websocket_market_service import get_websocket_client
-        from backend.services.websocket_user_data_service import get_websocket_user_data_service
         
         # Initiera WebSocket-tjänster
         ws_market = get_websocket_client()
-        ws_user = await get_websocket_user_data_service()
+        logger.info("🔌 WebSocket Market tjänst initierad")
         
-        logger.info("🔌 WebSocket-tjänster initierade")
+        try:
+            # Importera och initiera WebSocket User Data om tillgänglig
+            from backend.services.websocket_user_data_service import get_websocket_user_data_service
+            ws_user = await get_websocket_user_data_service()
+            logger.info("🔌 WebSocket User Data tjänst initierad")
+        except ImportError:
+            logger.warning("⚠️ WebSocket User Data tjänst kunde inte initieras (modulen saknas)")
     
     yield
     
-    # Stäng ner tjänster vid avstängning
+    # Stoppa BotManagerAsync om den är igång
+    try:
+        from backend.services.bot_manager_async import get_bot_manager_async
+        bot_manager = await get_bot_manager_async(dev_mode=dev_mode)
+        status = await bot_manager.get_status()
+        if status.get("status") == "running":
+            logger.info("🤖 Stopping BotManagerAsync")
+            await bot_manager.stop_bot()
+    except Exception as e:
+        logger.error(f"Error stopping BotManagerAsync: {e}")
+    
+    # Stäng ner WebSocket-tjänster vid avstängning
     if not disable_websockets:
-        # Importera här för att undvika cirkelberoenden
-        from backend.services.websocket_market_service import stop_websocket_service
-        from backend.services.websocket_user_data_service import get_websocket_user_data_service
-        
-        await stop_websocket_service()
-        
-        ws_user = await get_websocket_user_data_service()
-        await ws_user.close()
-        
-        logger.info("🔌 WebSocket-tjänster stängda")
+        try:
+            # Importera här för att undvika cirkelberoenden
+            from backend.services.websocket_market_service import stop_websocket_service
+            await stop_websocket_service()
+            logger.info("🔌 WebSocket Market tjänst stängd")
+            
+            # Stäng WebSocket User Data om tillgänglig
+            try:
+                from backend.services.websocket_user_data_service import get_websocket_user_data_service
+                ws_user = await get_websocket_user_data_service()
+                await ws_user.close()
+                logger.info("🔌 WebSocket User Data tjänst stängd")
+            except ImportError:
+                pass
+        except Exception as e:
+            logger.error(f"Error stopping WebSocket services: {e}")
 
 
 # Skapa FastAPI-applikationen
