@@ -30,6 +30,7 @@ from backend.api import risk_management as risk_management_api
 from backend.api import market_data as market_data_api
 from backend.api import websocket as websocket_api
 from backend.api import orderbook as orderbook_api
+from backend.api import trading_limitations as trading_limitations_api
 
 from backend.services.exchange import ExchangeService
 from backend.services.exchange_async import create_mock_exchange_service
@@ -170,6 +171,7 @@ app.include_router(portfolio_api.router)
 app.include_router(risk_management_api.router)
 app.include_router(market_data_api.router)
 app.include_router(orderbook_api.router)
+app.include_router(trading_limitations_api.router)
 
 # Lägg till WebSocket-router om den inte är inaktiverad
 if os.environ.get("FASTAPI_DISABLE_WEBSOCKETS", "false").lower() != "true":

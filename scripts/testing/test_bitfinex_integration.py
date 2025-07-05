@@ -13,17 +13,48 @@ Kräver att API-nycklar finns i miljövariabler:
     BITFINEX_API_SECRET
 """
 
-import os
-import sys
 import logging
+import os
+import platform
+import socket
+import sys
 import time
 
-# Lägg till projektets rot i Python-sökvägen
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-sys.path.insert(0, project_root)
 
-# Importera efter att sökvägen är uppdaterad
-from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
+# Detektera om vi kör på jobbdator eller hemdator
+def is_work_computer():
+    """Detekterar om skriptet körs på jobbdatorn baserat på datornamn."""
+    hostname = socket.gethostname().lower()
+    # Ändra dessa villkor baserat på ditt datornamn på jobbet
+    return "work" in hostname or "job" in hostname
+
+
+def is_home_computer():
+    """Detekterar om skriptet körs på hemdatorn baserat på datornamn."""
+    hostname = socket.gethostname().lower()
+    # Ändra dessa villkor baserat på ditt datornamn hemma
+    return "skynet" in hostname or "home" in hostname
+
+
+# Konfigurera miljön baserat på dator
+def setup_environment():
+    """Konfigurerar miljön baserat på om det är jobbdator eller hemdator."""
+    # Lägg till projektets rot i Python-sökvägen
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    sys.path.insert(0, project_root)
+    
+    logger.info(f"Datornamn: {socket.gethostname()}")
+    logger.info(f"Operativsystem: {platform.system()}")
+    
+    if is_work_computer():
+        logger.info("Detekterad miljö: JOBBDATOR")
+        # Specifika inställningar för jobbdator om det behövs
+    elif is_home_computer():
+        logger.info("Detekterad miljö: HEMDATOR")
+        # Specifika inställningar för hemdator om det behövs
+    else:
+        logger.info("Detekterad miljö: OKÄND")
+
 
 # Konfigurera loggning
 logging.basicConfig(
@@ -121,6 +152,12 @@ def test_websocket(client):
 
 def main():
     """Huvudfunktion."""
+    # Konfigurera miljön
+    setup_environment()
+    
+    # Importera efter att sökvägen är uppdaterad
+    from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
+
     # Hämta API-nycklar från miljövariabler
     api_key = os.environ.get("BITFINEX_API_KEY", "")
     api_secret = os.environ.get("BITFINEX_API_SECRET", "")

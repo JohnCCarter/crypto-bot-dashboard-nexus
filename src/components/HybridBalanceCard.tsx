@@ -65,14 +65,14 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
   }, [ticker?.price, symbol]); // Only update when price changes significantly
   
   // Get balance data via REST
-  const { data: balances = [], isLoading, error, refetch } = useQuery<Balance[]>({
+  const { data: balancesResponse, isLoading, error, refetch } = useQuery<{balances: Balance[]}>({
     queryKey: ['balances'],
     queryFn: async () => {
       console.log(`💰 [Balance] Fetching balance data from API...`);
       try {
         const result = await api.getBalances();
-        console.log(`✅ [Balance] Balance data received: ${result.length} currencies`);
-        console.log(`💰 [Balance] Currencies: ${result.map(b => b.currency).join(', ')}`);
+        console.log(`✅ [Balance] Balance data received: ${result.balances?.length || 0} currencies`);
+        console.log(`💰 [Balance] Currencies: ${result.balances?.map(b => b.currency).join(', ') || 'none'}`);
         return result;
       } catch (error) {
         console.error(`❌ [Balance] Failed to fetch balance data:`, error);
@@ -86,6 +86,9 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
       console.error(`❌ [Balance] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
     }
   });
+
+  // Extract balances from response
+  const balances = balancesResponse?.balances || [];
 
   // Calculate live portfolio values (optimized)
   const portfolioData = useMemo(() => {

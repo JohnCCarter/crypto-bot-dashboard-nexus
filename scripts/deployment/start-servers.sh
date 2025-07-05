@@ -17,11 +17,27 @@ if [ ! -f "package.json" ] || [ ! -d "backend" ]; then
     exit 1
 fi
 
-# Kontrollera Python virtual environment
-if [ ! -d "backend/venv" ]; then
-    echo "❌ FEL: Python virtual environment saknas i backend/venv"
-    echo "💡 Kör: cd backend && python -m venv venv && source venv/Scripts/activate && pip install -r requirements.txt"
-    exit 1
+# Kontrollera om virtuell miljö finns
+if [ -d "venv" ]; then
+    echo "✅ Använder virtuell miljö i rotmappen"
+    source venv/Scripts/activate
+elif [ -d "backend/venv" ]; then
+    echo "⚠️ Använder virtuell miljö i backend-mappen (legacy)"
+    echo "⚠️ Rekommendation: Migrera till virtuell miljö i rotmappen enligt docs/guides/environment/VENV_MIGRATION_GUIDE.md"
+    source backend/venv/Scripts/activate
+else
+    echo "❌ Ingen virtuell miljö hittades. Skapar en ny i rotmappen..."
+    python -m venv venv
+    source venv/Scripts/activate
+    pip install -r backend/requirements.txt
+fi
+
+# Kontrollera Python-version
+PYTHON_VERSION=$(python -V 2>&1)
+echo "🐍 Python-version: $PYTHON_VERSION"
+if [[ ! "$PYTHON_VERSION" == *"3.11"* ]]; then
+    echo "⚠️ Varning: Rekommenderad Python-version är 3.11.9. Du använder $PYTHON_VERSION"
+    echo "💡 Se docs/guides/ENVIRONMENT_SETUP_GUIDE.md för instruktioner om hur du installerar rätt version."
 fi
 
 # Kontrollera npm dependencies
@@ -33,74 +49,66 @@ fi
 
 echo "✅ Förkunskaper kontrollerade"
 
-# Funktion för att starta backend
-start_backend() {
-    echo "🐍 Startar backend (Flask)..."
-    cd "$(dirname "$0")"  # Säkerställ att vi är i projektets rot
-    
-    # Aktivera virtual environment och starta Flask
-    export FLASK_APP=backend/app.py
+# Funktion för att starta Flask
+start_flask() {
+    echo "🔄 Startar Flask backend..."
+    export FLASK_APP=backend.app
     export FLASK_ENV=development
-    export FLASK_DEBUG=true
     
+    # Starta Flask från projektets rot (viktigt för SQLite-sökvägen)
     echo "📂 Working directory: $(pwd)"
     echo "🔗 Flask app: $FLASK_APP"
     echo "🌐 Backend startar på: http://localhost:5000"
     echo ""
     
-    # Starta Flask från projektets rot (viktigt för SQLite-sökvägen)
-    source backend/venv/Scripts/activate
     python -m flask run --host=0.0.0.0 --port=5000
+}
+
+# Funktion för att starta FastAPI
+start_fastapi() {
+    echo "🔄 Startar FastAPI backend..."
+    cd "$(pwd)" || exit
+    python -m backend.fastapi_app
 }
 
 # Funktion för att starta frontend
 start_frontend() {
-    echo "⚛️ Startar frontend (Vite)..."
-    echo "🌐 Frontend startar på: http://localhost:8081"
-    echo ""
+    echo "🔄 Startar frontend..."
+    cd "$(pwd)" || exit
     npm run dev
 }
 
-# Hantera kommandoradsargument
-case "${1:-both}" in
-    "backend")
-        start_backend
-        ;;
-    "frontend")
-        start_frontend
-        ;;
-    "both"|"")
-        echo "🚀 Startar båda servrarna..."
-        echo "🛑 Tryck Ctrl+C för att stoppa båda"
-        echo ""
-        
-        # Starta backend i bakgrunden
-        start_backend &
-        BACKEND_PID=$!
-        
-        # Vänta lite för backend att starta
-        sleep 3
-        
-        # Kontrollera att backend startade
-        if curl -s http://localhost:5000/api/status > /dev/null 2>&1; then
-            echo "✅ Backend igång på port 5000"
-        else
-            echo "⚠️ Backend kanske inte startade korrekt"
-        fi
-        
-        # Starta frontend
-        start_frontend
-        
-        # Cleanup när skriptet avslutas
-        trap "echo '🛑 Stoppar servrar...'; kill $BACKEND_PID 2>/dev/null; exit" INT TERM
-        ;;
-    *)
-        echo "❓ Användning: $0 [backend|frontend|both]"
-        echo ""
-        echo "Exempel:"
-        echo "  $0           # Startar båda (standard)"
-        echo "  $0 backend   # Startar endast backend" 
-        echo "  $0 frontend  # Startar endast frontend"
-        exit 1
-        ;;
-esac
+# Starta alla tjänster i bakgrunden
+start_flask &
+FLASK_PID=$!
+
+# Vänta lite för att låta Flask starta
+sleep 2
+
+start_fastapi &
+FASTAPI_PID=$!
+
+# Vänta lite för att låta FastAPI starta
+sleep 2
+
+start_frontend &
+FRONTEND_PID=$!
+
+echo "✅ Alla servrar startade!"
+echo "- Backend (Flask): http://localhost:5000"
+echo "- Backend (FastAPI): http://localhost:8001"
+echo "- Frontend: http://localhost:5173"
+
+# Funktion för att städa upp processer vid avslut
+cleanup() {
+    echo "🛑 Avslutar processer..."
+    kill $FLASK_PID $FASTAPI_PID $FRONTEND_PID 2>/dev/null
+    exit 0
+}
+
+# Registrera cleanup-funktionen för att köras vid avslut
+trap cleanup SIGINT SIGTERM
+
+# Håll skriptet igång
+echo "⚠️ Tryck Ctrl+C för att avsluta alla processer."
+wait

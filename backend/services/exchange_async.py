@@ -202,6 +202,31 @@ async def get_markets_async(
         raise ExchangeError(f"Failed to fetch markets: {str(e)}")
 
 
+async def get_trading_limitations_async(
+    exchange: ExchangeService
+) -> Dict[str, Any]:
+    """
+    Get trading limitations asynchronously.
+    
+    Args:
+        exchange: ExchangeService instance
+        
+    Returns:
+        Dictionary of trading limitations
+        
+    Raises:
+        ExchangeError: If getting limitations fails
+    """
+    try:
+        # Run the synchronous method in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, lambda: exchange.get_trading_limitations()
+        )
+    except Exception as e:
+        raise ExchangeError(f"Failed to get trading limitations: {str(e)}")
+
+
 async def get_exchange_status_async(
     exchange: ExchangeService
 ) -> Dict[str, Any]:
@@ -384,6 +409,12 @@ def create_mock_exchange_service() -> MagicMock:
     ]
     mock.get_markets.return_value = {
         "tBTCUSD": {"symbol": "tBTCUSD", "base": "BTC", "quote": "USD"}
+    }
+    mock.get_trading_limitations.return_value = {
+        "is_paper_trading": False,
+        "margin_trading_available": True,
+        "supported_order_types": ["spot", "margin"],
+        "limitations": []
     }
     # Skapa en nested mock för exchange-attributet
     mock.exchange = MagicMock()

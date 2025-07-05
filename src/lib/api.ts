@@ -1,9 +1,9 @@
 import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, OrderBook, OrderHistoryItem, Trade, TradingConfig } from '@/types/trading';
 
 // Use Vite proxy instead of direct backend connection
-// In development: requests go to '/api/*' which Vite proxies to http://127.0.0.1:5000
+// In development: requests go to '/api/*' which Vite proxies to http://127.0.0.1:8001
 // In production: API requests will go to same origin
-const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:5000' : '';
+const API_BASE_URL = '';
 
 // Generate mock OHLCV data (fallback)
 const generateMockOHLCVData = (): OHLCVData[] => {
@@ -84,7 +84,8 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/api/positions`);
     
     if (!res.ok) throw new Error('Failed to fetch trades');
-    return await res.json();
+    const data = await res.json();
+    return data.positions || [];
   },
 
   // Get Chart Data (Live Bitfinex)

@@ -2,12 +2,45 @@
 """Test script för att verifiera Bitfinex API-anslutning."""
 
 import os
+import platform
+import socket
 import sys
 
 from dotenv import load_dotenv
 
-# Ladda environment variables från .env
-load_dotenv()
+
+# Detektera om vi kör på jobbdator eller hemdator
+def is_work_computer():
+    """Detekterar om skriptet körs på jobbdatorn baserat på datornamn."""
+    hostname = socket.gethostname().lower()
+    # Ändra dessa villkor baserat på ditt datornamn på jobbet
+    return "work" in hostname or "job" in hostname
+
+
+def is_home_computer():
+    """Detekterar om skriptet körs på hemdatorn baserat på datornamn."""
+    hostname = socket.gethostname().lower()
+    # Ändra dessa villkor baserat på ditt datornamn hemma
+    return "skynet" in hostname or "home" in hostname
+
+
+# Anpassa sökvägar baserat på miljö
+def setup_environment():
+    """Konfigurerar miljön baserat på om det är jobbdator eller hemdator."""
+    print(f"🖥️ Datornamn: {socket.gethostname()}")
+    print(f"💻 Operativsystem: {platform.system()}")
+    
+    if is_work_computer():
+        print("🏢 Detekterad miljö: JOBBDATOR")
+        # Specifika inställningar för jobbdator
+    elif is_home_computer():
+        print("🏠 Detekterad miljö: HEMDATOR")
+        # Specifika inställningar för hemdator
+    else:
+        print("❓ Detekterad miljö: OKÄND")
+        
+    # Ladda environment variables från .env
+    load_dotenv()
 
 
 def test_bitfinex_connection():
@@ -15,6 +48,9 @@ def test_bitfinex_connection():
 
     print("🧪 TESTAR BITFINEX API-ANSLUTNING...")
     print("=" * 50)
+
+    # Konfigurera miljön
+    setup_environment()
 
     # Kontrollera environment variables
     exchange_id = os.getenv("EXCHANGE_ID")
@@ -84,7 +120,7 @@ def test_bitfinex_connection():
 
     print("\n🎉 BITFINEX ANSLUTNING LYCKAD!")
     print("Du kan nu använda dashboard med riktig data från Bitfinex")
-    return None
+    return True
 
 
 if __name__ == "__main__":

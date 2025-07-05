@@ -81,7 +81,7 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
   }, [symbol, subscribeToSymbol, showOnlySymbol, maxPositions, connected]);
   
   // Fetch active positions from correct API endpoint
-  const { data: positions = [], isLoading, error, refetch } = useQuery<Position[]>({
+  const { data: positionsResponse, isLoading, error, refetch } = useQuery<{positions: Position[]}>({
     queryKey: ['active-positions'],
     queryFn: async () => {
       console.log(`🎯 [Positions] Fetching positions from API...`);
@@ -92,7 +92,7 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
           throw new Error('Failed to fetch positions');
         }
         const data = await res.json();
-        console.log(`✅ [Positions] Received ${data.length} positions from API`);
+        console.log(`✅ [Positions] Received ${data.positions?.length || 0} positions from API`);
         console.log(`🎯 [Positions] Position data:`, data);
         return data;
       } catch (error) {
@@ -110,6 +110,9 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
       console.error(`❌ [Positions] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
     }
   });
+
+  // Extract positions from response
+  const positions = positionsResponse?.positions || [];
 
   // Process positions med live pricing
   const processedPositions = useMemo(() => {

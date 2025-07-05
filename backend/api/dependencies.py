@@ -18,6 +18,7 @@ from backend.services.exchange_async import (
     fetch_ticker_async,
     fetch_recent_trades_async,
     get_markets_async,
+    get_trading_limitations_async,
     get_exchange_status_async,
     create_mock_exchange_service
 )
@@ -66,6 +67,20 @@ config_service = ConfigService()
 def get_exchange_service() -> Optional[ExchangeService]:
     """
     Get the exchange service.
+    
+    Returns:
+    --------
+    Optional[ExchangeService]: The exchange service instance or None if not available
+    """
+    # Import här för att undvika circular import
+    from backend.fastapi_app import exchange_service
+    return exchange_service
+
+
+# Async exchange service
+async def get_exchange_service_async() -> Optional[ExchangeService]:
+    """
+    Get the exchange service asynchronously.
     
     Returns:
     --------
