@@ -1,12 +1,29 @@
 # 🚀 Crypto Trading Bot Dashboard Nexus
 
-[![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.11.9-blue.svg)](https://www.python.org/downloads/)
 [![React](https://img.shields.io/badge/react-18+-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/typescript-5+-blue.svg)](https://www.typescriptlang.org/)
 [![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
 [![Bitfinex](https://img.shields.io/badge/exchange-bitfinex-orange.svg)](https://www.bitfinex.com/)
+[![Status](https://img.shields.io/badge/status-under%20development-yellow.svg)](https://github.com/your-username/crypto-bot-dashboard-nexus)
 
 > **Advanced cryptocurrency trading bot with real-time dashboard, live data integration, and comprehensive risk management.**
+
+## ⚠️ **Project Status: Under Active Development**
+
+This project is currently **under active development** and may contain experimental features, breaking changes, and incomplete functionality. 
+
+**⚠️ Important Notes:**
+- This is **not production-ready** software
+- API endpoints and features may change without notice
+- Use at your own risk for trading activities
+- Always test thoroughly in a safe environment before using with real funds
+
+**🎯 Current Development Focus:**
+- FastAPI migration from Flask
+- Enhanced WebSocket integration
+- Improved risk management features
+- Frontend dashboard enhancements
 
 ---
 
@@ -24,6 +41,7 @@
 10. [📊 Trading Strategies](#trading-strategies)
 11. [🔍 Troubleshooting](#troubleshooting)
 12. [🤝 Contributing](#contributing)
+13. [🚀 Testning & Optimering](#testning--optimering)
 
 ---
 
@@ -81,14 +99,148 @@ Open **http://localhost:8080** for the dashboard and **http://localhost:5000** f
 
 ```mermaid
 graph TB
-    UI[React Dashboard] --> API[Flask API]
-    API --> Exchange[Bitfinex API]
-    API --> DB[(Supabase DB)]
-    API --> WS[WebSocket Service]
-    WS --> Market[Market Data]
-    API --> Bot[Trading Bot]
-    Bot --> Risk[Risk Manager]
-    Bot --> Strategy[Strategy Engine]
+    %% Frontend
+    subgraph "🎨 Frontend"
+        UI["⚛️ React UI<br/>TypeScript + Tailwind"]
+        WS["🔌 WebSocket Client"]
+        API["🌐 API Client"]
+    end
+
+    %% API Layer
+    subgraph "🚀 API Gateway"
+        FastAPI["⚡ FastAPI<br/>Port 8001"]
+        Flask["🐍 Flask<br/>Port 5000"]
+        WS_API["📡 WebSocket API"]
+    end
+
+    %% Core Services
+    subgraph "🧠 Core Services"
+        BotManager["🤖 Bot Manager"]
+        MainBot["🎯 Main Bot"]
+        Config["⚙️ Config Service"]
+    end
+
+    %% Trading Services
+    subgraph "📈 Trading Engine"
+        LiveData["🔥 Live Data"]
+        OrderService["📋 Order Service"]
+        Positions["💼 Positions"]
+        Portfolio["📊 Portfolio"]
+        Risk["🛡️ Risk Manager"]
+    end
+
+    %% Exchange
+    subgraph "🔗 Exchange Hub"
+        BitfinexWrapper["🔄 Bitfinex Wrapper"]
+        ExchangeAsync["⚡ Exchange Async"]
+    end
+
+    %% Strategies
+    subgraph "🎯 Strategies"
+        EMA["📈 EMA Strategy"]
+        RSI["📊 RSI Strategy"]
+        FVG["🎯 FVG Strategy"]
+    end
+
+    %% External
+    subgraph "🌍 External"
+        BitfinexAPI["🏦 Bitfinex API"]
+        Supabase["🗄️ Supabase DB"]
+    end
+
+    %% Connections
+    UI --> FastAPI
+    UI --> Flask
+    WS --> WS_API
+
+    FastAPI --> BotManager
+    FastAPI --> LiveData
+    FastAPI --> OrderService
+    FastAPI --> Positions
+    FastAPI --> Portfolio
+    FastAPI --> Risk
+
+    Flask --> BotManager
+    Flask --> LiveData
+    Flask --> OrderService
+    Flask --> Positions
+    Flask --> Portfolio
+    Flask --> Risk
+
+    BotManager --> MainBot
+    MainBot --> LiveData
+    MainBot --> OrderService
+    MainBot --> Positions
+    MainBot --> Portfolio
+    MainBot --> Risk
+    MainBot --> Config
+
+    LiveData --> ExchangeAsync
+    OrderService --> ExchangeAsync
+    Positions --> ExchangeAsync
+    Portfolio --> ExchangeAsync
+
+    ExchangeAsync --> BitfinexWrapper
+    BitfinexWrapper --> BitfinexAPI
+
+    MainBot --> EMA
+    MainBot --> RSI
+    MainBot --> FVG
+```
+
+### 🔄 Trading Flow
+
+```mermaid
+sequenceDiagram
+    participant UI as "🎨 React UI"
+    participant API as "🚀 FastAPI"
+    participant Bot as "🤖 Bot Manager"
+    participant Main as "🎯 Main Bot"
+    participant Data as "🔥 Live Data"
+    participant Exchange as "⚡ Exchange"
+    participant Strategy as "🎯 Strategies"
+    participant Risk as "🛡️ Risk Manager"
+    participant Orders as "📋 Orders"
+    participant Bitfinex as "🏦 Bitfinex"
+
+    Note over UI,Bitfinex: 🚀 Trading Bot Startup
+    UI->>API: 🚀 Start Bot Request
+    API->>Bot: ⚡ start_bot()
+    Bot->>Main: 🎯 main_async()
+    
+    Note over Main,Bitfinex: 📈 Trading Cycle Begins
+    loop 🔄 Every 5 Minutes
+        Main->>Data: 📊 Get Live Market Context
+        Data->>Exchange: 🔥 Fetch OHLCV Data
+        Exchange->>Bitfinex: 🌐 REST API Calls
+        Bitfinex-->>Exchange: 📈 Real-time Market Data
+        Exchange-->>Data: ⚡ Processed Data
+        Data-->>Main: 🎯 Market Context Ready
+        
+        Note over Main,Strategy: 🧠 Strategy Analysis
+        Main->>Strategy: 🎯 Run EMA, RSI, FVG
+        Strategy-->>Main: 📊 Trading Signals Generated
+        
+        Note over Main,Risk: 🛡️ Risk Assessment
+        Main->>Risk: 🛡️ Calculate Position Size
+        Risk-->>Main: ✅ Position Size & Validation
+        
+        alt 🎯 Valid Trading Signal
+            Note over Main,Orders: 📋 Order Execution
+            Main->>Orders: 📋 Place Order
+            Orders->>Exchange: ⚡ Submit Order
+            Exchange->>Bitfinex: 🏦 Order API Call
+            Bitfinex-->>Exchange: ✅ Order Confirmation
+            Exchange-->>Orders: 📊 Order Result
+            Orders-->>Main: 🎯 Order Status Update
+        else ⚠️ Invalid Signal
+            Main->>Main: ⏸️ Skip Trading Cycle
+        end
+        
+        Main->>Bot: 📈 Increment Cycle Counter
+    end
+    
+    Note over UI,Bitfinex: 🎉 Trading Cycle Complete
 ```
 
 ### Technology Stack
@@ -96,7 +248,7 @@ graph TB
 | Layer | Technology | Purpose |
 |-------|------------|---------|
 | **Frontend** | React 18 + TypeScript | Modern UI with real-time updates |
-| **Backend** | Flask 3.0 + Python 3.13 | RESTful API and trading logic |
+| **Backend** | Flask 3.0 + Python 3.11.9 | RESTful API and trading logic |
 | **Database** | Supabase (PostgreSQL) | Persistent data storage |
 | **Exchange** | Bitfinex API + WebSocket | Live market data and trading |
 | **Testing** | Pytest + Vitest + MSW | Comprehensive test coverage |
@@ -143,7 +295,7 @@ crypto-bot-dashboard-nexus/
 
 ### Prerequisites
 
-- **Python 3.13+** ([Download](https://www.python.org/downloads/))
+- **Python 3.11.9** ([Download](https://www.python.org/downloads/))
 - **Node.js 18+** ([Download](https://nodejs.org/))
 - **Git** ([Download](https://git-scm.com/))
 - **Bitfinex Account** with API access
@@ -319,6 +471,15 @@ npm run lint
 - ✅ Integration tests with MSW
 - ✅ User interaction testing
 - ✅ API response handling
+
+> **Note:** Due to a limitation in FastAPI's dependency override system, some error-path tests for the positions API (e.g. simulating ExchangeError/Exception via query params) are currently skipped. See `backend/tests/test_fastapi_positions.py` and the FastAPI migration status documentation for details.
+
+### Teststatus (2024-07-07)
+
+- Unit-tester och mockade API-tester: 100% grönt
+- API-tester (bot control): 2 fail (status: 'running' istället för 'stopped')
+- WebSocket-tester: 11/14 gröna, 1 xfail (förväntat), 1 error (NameError), 1 fail (TypeError)
+- Se [docs/guides/TESTING_OPTIMIZATION_GUIDE.md](docs/guides/TESTING_OPTIMIZATION_GUIDE.md) för detaljerad status, kända problem och åtgärdslista.
 
 ---
 
@@ -608,3 +769,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **🚀 Happy Trading!** Built with ❤️ for the crypto community.
+
+## 🚀 Testning & Optimering
+
+Projektet har nu en optimerad teststruktur med:
+- Snabba unit- och mock-tester
+- Markerade testkategorier (unit, mock, api, integration, e2e, fast, slow)
+- Nya test-runner-skript för snabb och CI-optimerad körning
+
+### Exempel på testkommandon
+
+```bash
+python scripts/testing/run_tests_fast.py --fast-only      # Endast snabba tester
+python scripts/testing/run_tests_fast.py --mock-only      # Endast mock-tester
+python scripts/testing/run_tests_fast.py --api-only       # Endast API-tester
+python scripts/testing/run_tests_fast.py --slow-only      # Endast långsamma tester
+python scripts/testing/run_tests_ci.py --all              # Kör alla tester i optimal ordning
+```
+
+Se [docs/guides/TESTING_OPTIMIZATION_GUIDE.md](docs/guides/TESTING_OPTIMIZATION_GUIDE.md) för fullständig dokumentation och rekommenderad arbetsordning.

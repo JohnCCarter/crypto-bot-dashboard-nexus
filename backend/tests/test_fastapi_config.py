@@ -97,19 +97,20 @@ def mock_config_service():
 
 
 @pytest.fixture
-def client(mock_config_service):
+def client(test_client, mock_config_service):
     """Create a test client with mocked dependencies."""
-    
-    app.dependency_overrides = {}
     
     # Override the get_config_service dependency
     def get_mock_config_service():
         return mock_config_service
     
     from backend.api.dependencies import get_config_service
-    app.dependency_overrides[get_config_service] = get_mock_config_service
+    test_client.app.dependency_overrides[get_config_service] = get_mock_config_service
     
-    return TestClient(app)
+    yield test_client
+    
+    # Cleanup
+    test_client.app.dependency_overrides.clear()
 
 
 def test_get_config(client, mock_config_service):

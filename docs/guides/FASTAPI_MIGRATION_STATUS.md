@@ -257,3 +257,9 @@ Följande dokument ger mer information om migrationen:
 - Förbättrat felhantering med logging i portfolio- och risk-endpoints
 - Dokumenterat implementationen av RiskManagerAsync och PortfolioManagerAsync
 - Uppdaterat FASTAPI_MIGRATION_STATUS.md med nya framsteg 
+
+## ⚠️ Test limitation: Error-path tests for positions API
+
+Due to a limitation in FastAPI's dependency override system, it is currently not possible to test error-paths that depend on endpoint parameters (such as simulating ExchangeError or Exception by passing special symbols via query params) using dependency overrides. The dependency provider does not receive endpoint parameters, so the mock never triggers the error path.
+
+As a result, these tests are marked as skipped in `backend/tests/test_fastapi_positions.py`. See the README for a summary and the test file for details and discussion. 

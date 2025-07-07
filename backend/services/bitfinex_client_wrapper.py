@@ -71,28 +71,13 @@ class BitfinexClientWrapper:
 
     def _setup_ws_handlers(self):
         """Konfigurera grundläggande WebSocket-händelsehanterare"""
-        # Hantera anslutningshändelser
+        # Hantera anslutningshändelser - endast 'open' stöds av bfxapi
         self.client.wss.on('open', self._handle_ws_connected)
         
-        # Försök registrera close-händelse, eller använd closed om det är tillgängligt
-        try:
-            self.client.wss.on('close', self._handle_ws_disconnected)
-        except Exception as e:
-            logger.warning(f"Kunde inte registrera 'close' event: {e}")
-            try:
-                # Prova med 'closed' event istället, som är vanligt i vissa WebSocket implementationer
-                self.client.wss.on('closed', self._handle_ws_disconnected)
-            except Exception as e2:
-                logger.warning(f"Kunde inte registrera 'closed' event heller: {e2}")
-                # Använd istället error-händelsen för att upptäcka potentiella frånkopplingar
-                logger.warning("Använder 'error' event för att detektera frånkopplingar")
-
-        # Hantera fel-händelser
-        self.client.wss.on('error', self._handle_ws_error)
-
-        # Hantera autentiseringshändelser
-        self.client.wss.on('auth', self._handle_ws_authenticated)
-        self.client.wss.on('auth_error', self._handle_ws_auth_failed)
+        # Använd notify för att hantera andra händelser som inte stöds som events
+        # bfxapi stöder endast: 'open', 'notification'
+        # Andra händelser hanteras via notify-callback istället
+        logger.info("Bitfinex WebSocket handlers konfigurerade - använder notify för händelser")
 
     def _handle_ws_connected(self, *args, **kwargs):
         """Hantera WebSocket-anslutning"""
