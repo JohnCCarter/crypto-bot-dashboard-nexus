@@ -51,6 +51,7 @@ backend/__pycache__/
 *.sqlite
 *.sqlite3
 local.db
+backend/local.db
 
 # Temporary files and test outputs
 temp/
