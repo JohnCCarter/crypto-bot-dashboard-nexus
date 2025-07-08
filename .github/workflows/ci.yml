@@ -9,6 +9,10 @@ on:
     # Run daily at 06:00 UTC to catch dependency issues
     - cron: '0 6 * * *'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   PYTHON_VERSION: '3.13'
   NODE_VERSION: '18'
