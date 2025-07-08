@@ -5,7 +5,7 @@ Pydantic models for API request and response validation.
 from typing import Dict, Optional, Any, List
 from enum import Enum
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class StatusResponse(BaseModel):
@@ -104,7 +104,7 @@ class OrderRequest(BaseModel):
     symbol: str = Field(..., description="Trading pair symbol")
     type: OrderType = Field(..., description="Order type")
     side: OrderSide = Field(..., description="Order side")
-    price: float = Field(..., description="Order price")
+    price: Optional[float] = Field(None, description="Order price")
     amount: float = Field(..., description="Order amount")
     stop_price: Optional[float] = Field(
         None, description="Stop price for stop orders"
@@ -112,6 +112,13 @@ class OrderRequest(BaseModel):
     trailing_amount: Optional[float] = Field(
         None, description="Trailing amount for trailing stop orders"
     )
+
+    @validator('price', always=True)
+    def price_required_for_limit(cls, v, values):
+        order_type = values.get('type')
+        if order_type == 'limit' and v is None:
+            raise ValueError('price is required for limit orders')
+        return v
 
 
 # Alias for OrderRequest for backward compatibility

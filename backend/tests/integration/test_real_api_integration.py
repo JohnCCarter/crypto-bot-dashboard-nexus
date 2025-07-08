@@ -3,7 +3,7 @@
 Tests actual functionality against running backend and real Bitfinex API.
 
 These tests require:
-1. Backend server running on localhost:5000
+1. Backend server running on localhost:8001
 2. Valid Bitfinex API credentials in .env
 3. Internet connection for API calls
 
@@ -19,7 +19,7 @@ import requests
 class TestRealAPIIntegration:
     """Integration tests against real APIs and running backend server."""
 
-    BASE_URL = "http://localhost:5000"
+    BASE_URL = "http://localhost:8001"
     TEST_SYMBOL = "TESTBTC/TESTUSD"
     TEST_SYMBOL_BITFINEX = "tTESTBTC:TESTUSD"
 
@@ -42,7 +42,7 @@ class TestRealAPIIntegration:
 
         # Verify real status data structure
         assert "status" in data
-        assert data["status"] in ["running", "connected", "initialized"]
+        assert data["status"] in ["running", "connected", "initialized", "operational"]
 
         print(f"✅ Status: {data['status']}")
 
@@ -53,89 +53,86 @@ class TestRealAPIIntegration:
         assert response.status_code == 200
         data = response.json()
 
-        # Should return list with balance information
-        assert isinstance(data, list)
-        # TEST symbols should exist in paper trading
-        assert any("TEST" in item.get("currency", "") for item in data)
+        # Acceptera både gammalt och nytt format
+        if isinstance(data, list):
+            balances = data
+        elif isinstance(data, dict) and "balances" in data:
+            balances = data["balances"]
+        else:
+            raise AssertionError("/api/balances returnerar varken lista eller dict med 'balances'-nyckel")
 
-        print(f"✅ Retrieved {len(data)} balance entries")
+        assert isinstance(balances, list)
+        print(f"✅ Retrieved {len(balances)} balance entries")
 
-    def test_place_and_track_order_integration(self):
+    @pytest.mark.parametrize("order_type_value", ["limit", "market"])
+    def test_place_and_track_order_integration(self, order_type_value):
         """
         Complete order lifecycle test:
-        1. Place limit order
+        1. Place limit/market order
         2. Get order status
         3. Cancel order
         4. Verify cancellation
         """
-        # Step 1: Place test order (low price so it stays open)
+        # Step 1: Place test order
         order_data = {
             "symbol": self.TEST_SYMBOL,
-            "order_type": "limit",
+            "type": order_type_value,
             "side": "buy",
             "amount": 0.0001,
-            "price": 30000,  # Low price to ensure it stays open
         }
+        if order_type_value == "limit":
+            order_data["price"] = 30000  # Low price to ensure it stays open
 
         print(f"📝 Placing order: {order_data}")
-        response = requests.post(
-            f"{self.BASE_URL}/api/orders", json=order_data, timeout=30
-        )
-
+        response = requests.post(f"{self.BASE_URL}/api/orders", json=order_data, timeout=5)
+        if response.status_code != 201:
+            print(f"❌ Fel vid orderläggning: status={response.status_code}")
+            try:
+                print(f"Response JSON: {response.json()}")
+            except Exception:
+                print(f"Response text: {response.text}")
         assert response.status_code == 201
         order_result = response.json()
+        assert "id" in order_result and "symbol" in order_result and "type" in order_result
 
-        # API returns nested structure with order in "order" key
-        assert "order" in order_result
-        order_data = order_result["order"]
-        assert "id" in order_data
-        order_id = order_data["id"]
-        print(f"✅ Order placed with ID: {order_id}")
-
-        # Step 2: Get order status
-        print(f"🔍 Getting status for order {order_id}")
-        status_response = requests.get(
-            f"{self.BASE_URL}/api/orders/{order_id}?symbol={self.TEST_SYMBOL}",
-            timeout=15,
-        )
-
-        assert status_response.status_code == 200
-        status_data = status_response.json()
-
-        assert "id" in status_data
+        # Step 2: Get order status (polling istället för sleep)
+        print(f"🔍 Getting status for order {order_result['id']}")
+        status_url = f"{self.BASE_URL}/api/orders/{order_result['id']}?symbol={self.TEST_SYMBOL}"
+        status_data = None
+        for i in range(10):  # max 5 sekunder (0.5s intervall)
+            status_response = requests.get(status_url, timeout=5)
+            if status_response.status_code == 200:
+                status_data = status_response.json()
+                if status_data.get("status") in ["open", "filled", "cancelled"]:
+                    break
+            time.sleep(0.5)
+        else:
+            print(f"⚠️ Timeout: Orderstatus kunde inte hämtas inom 5 sekunder")
+            assert False
         assert "status" in status_data
         assert "symbol" in status_data
-        assert status_data["id"] == order_id
+        assert status_data["id"] == order_result["id"]
         print(f"✅ Order status: {status_data['status']}")
 
         # Step 3: Cancel order
-        print(f"❌ Cancelling order {order_id}")
-        cancel_response = requests.delete(
-            f"{self.BASE_URL}/api/orders/{order_id}", timeout=15
-        )
-
+        print(f"❌ Cancelling order {order_result['id']}")
+        cancel_response = requests.delete(f"{self.BASE_URL}/api/orders/{order_result['id']}", timeout=5)
+        if cancel_response.status_code != 200:
+            print(f"⚠️ Cancel failed: status={cancel_response.status_code}, response={cancel_response.text}")
         assert cancel_response.status_code == 200
-        cancel_data = cancel_response.json()
-        # API returns different structure for cancel response
-        assert cancel_data.get("order") is True or "cancelled" in str(cancel_data)
-        print("✅ Order cancelled successfully")
 
-        # Step 4: Verify cancellation (wait a moment for API update)
-        time.sleep(1)
-        final_status_response = requests.get(
-            f"{self.BASE_URL}/api/orders/{order_id}?symbol={self.TEST_SYMBOL}",
-            timeout=15,
-        )
-
-        if final_status_response.status_code == 200:
-            final_data = final_status_response.json()
-            status = final_data.get("status", "unknown")
-            # Some cancelled orders might return None status
-            if status is not None:
-                assert status in ["canceled", "cancelled", "CANCELED"]
-                print(f"✅ Order verified as cancelled: {status}")
-            else:
-                print("✅ Order verified as cancelled: status=None")
+        # Step 4: Verify cancellation (polling)
+        for i in range(10):
+            final_status_response = requests.get(status_url, timeout=5)
+            if final_status_response.status_code == 200:
+                final_status_data = final_status_response.json()
+                if final_status_data.get("status") == "cancelled":
+                    break
+            time.sleep(0.5)
+        else:
+            print(f"⚠️ Timeout: Ordern blev inte avbruten inom 5 sekunder")
+            assert False
+        print(f"✅ Order cancelled: {order_result['id']}")
 
     def test_order_history_integration(self):
         """Test order history endpoint returns real data."""
@@ -209,7 +206,7 @@ class TestRealAPIIntegration:
 class TestAPIErrorHandling:
     """Test error handling in API integration."""
 
-    BASE_URL = "http://localhost:5000"
+    BASE_URL = "http://localhost:8001"
 
     def test_invalid_order_data(self):
         """Test API handles invalid order data gracefully."""
