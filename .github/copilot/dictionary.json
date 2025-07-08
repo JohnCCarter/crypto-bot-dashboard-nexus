@@ -12,7 +12,7 @@
     "portfolio",
     "positions",
     "margin",
-    "Flask",
+    "FastAPI",
     "React",
     "TypeScript",
     "trading_window",

@@ -8,7 +8,7 @@ interface WebSocketHook<T = unknown> {
 }
 
 /**
- * Generisk WebSocket hook som kan användas för både Flask och FastAPI endpoints
+ * Generisk WebSocket hook som kan användas för FastAPI endpoints
  * 
  * @param url WebSocket URL att ansluta till
  * @param onMessage Callback som anropas när ett meddelande tas emot

@@ -1,4 +1,5 @@
-FROM python:3.13-slim
+# Backend Dockerfile för FastAPI
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -9,6 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Kopiera all kod
 COPY . .
 
-# Ange Flask-app och startkommando
-ENV FLASK_APP=app.py
-CMD ["flask", "run", "--host=0.0.0.0"]
+EXPOSE 8000
+
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

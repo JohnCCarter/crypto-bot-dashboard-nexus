@@ -1,32 +1,25 @@
-# Frontend Dockerfile for React/Vite application
+# Frontend Dockerfile för React/Vite application
 FROM node:18-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Kopiera package.json och lock-fil först för cache
 COPY package*.json ./
 
-# Install dependencies
+# Installera beroenden
 RUN npm ci
 
-# Copy source code
-COPY . .
+# Kopiera endast src och offentliga filer
+COPY src ./src
+COPY public ./public
+COPY vite.config.* ./
+COPY index.html ./
 
-# Build the application
+# Bygg applikationen
 RUN npm run build
 
-# Production stage with nginx
+# Produktion: servera med nginx
 FROM nginx:alpine
-
-# Copy built files to nginx
 COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration (optional)
-# COPY nginx.conf /etc/nginx/nginx.conf
-
-# Expose port 80
 EXPOSE 80
-
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]

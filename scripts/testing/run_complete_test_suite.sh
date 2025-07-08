@@ -63,7 +63,7 @@ INTEGRATION_RESULT=0
 # Function to check if backend server is running
 check_backend_server() {
     echo -e "${YELLOW}🔍 Checking if backend server is running...${NC}"
-    if curl -s http://localhost:5000/api/status > /dev/null 2>&1; then
+    if curl -s http://localhost:8001/api/status > /dev/null 2>&1; then
         echo -e "${GREEN}✅ Backend server is running${NC}"
         return 0
     else

@@ -7,16 +7,17 @@ services:
     env_file:
       - .env
     ports:
-      - "5000:5000"
+      - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./backend/local.db:/app/local.db  # Mounta SQLite för persistens
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "8080:80"
-    # Vi serverar den redan byggda katalogen dist/ via nginx
-    volumes:
-      - ./dist:/usr/share/nginx/html:ro
+      - "3000:80"
+    # Volym för utveckling kan läggas till vid behov
+    environment:
+      - NODE_ENV=production

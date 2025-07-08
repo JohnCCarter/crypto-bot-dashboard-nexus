@@ -4,8 +4,8 @@ from backend.services.cache_service import get_cache_service
 
 
 def get_shared_exchange_service():
-    """Get shared exchange service (Flask context is removed)."""
-    # Flask context is removed; this function should be refactored if needed.
+    """Get shared exchange service (FastAPI context)."""
+    # FastAPI context; this function should be refactored if needed.
     return None
 
 

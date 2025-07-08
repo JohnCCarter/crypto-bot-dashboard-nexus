@@ -49,26 +49,13 @@ fi
 
 echo "✅ Förkunskaper kontrollerade"
 
-# Funktion för att starta Flask
-start_flask() {
-    echo "🔄 Startar Flask backend..."
-    export FLASK_APP=backend.app
-    export FLASK_ENV=development
-    
-    # Starta Flask från projektets rot (viktigt för SQLite-sökvägen)
-    echo "📂 Working directory: $(pwd)"
-    echo "🔗 Flask app: $FLASK_APP"
-    echo "🌐 Backend startar på: http://localhost:5000"
-    echo ""
-    
-    python -m flask run --host=0.0.0.0 --port=5000
-}
-
 # Funktion för att starta FastAPI
 start_fastapi() {
-    echo "🔄 Startar FastAPI backend..."
-    cd "$(pwd)" || exit
-    python -m backend.fastapi_app
+  echo "🔄 Startar FastAPI backend..."
+  cd backend
+  source ../venv/Scripts/activate
+  echo "🌐 FastAPI backend startar på: http://localhost:8001"
+  python -m uvicorn fastapi_app:app --host 0.0.0.0 --port 8001 --reload
 }
 
 # Funktion för att starta frontend

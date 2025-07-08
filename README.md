@@ -11,15 +11,17 @@
 
 ## ⚠️ **Project Status: Under Active Development**
 
-This project is currently **under active development** and may contain experimental features, breaking changes, and incomplete functionality. 
+This project is currently **under active development** and may contain experimental features, breaking changes, and incomplete functionality.
 
 **⚠️ Important Notes:**
+
 - This is **not production-ready** software
 - API endpoints and features may change without notice
 - Use at your own risk for trading activities
 - Always test thoroughly in a safe environment before using with real funds
 
 **🎯 Current Development Focus:**
+
 - FastAPI migration from Flask
 - Enhanced WebSocket integration
 - Improved risk management features
@@ -61,6 +63,7 @@ This project is currently **under active development** and may contain experimen
 - 🐳 **Docker Ready**: Complete containerization support
 
 ### 🎯 Supported Exchanges
+
 - **Bitfinex** (Primary) - Full REST + WebSocket integration
 - Extensible architecture for additional exchanges
 
@@ -91,7 +94,7 @@ cp .env.example .env
 ./scripts/deployment/start-dev.sh
 ```
 
-Open **http://localhost:8080** for the dashboard and **http://localhost:5000** for API docs.
+Open **<http://localhost:8080>** for the dashboard and **<http://localhost:8001>** for API docs.
 
 ---
 
@@ -109,7 +112,7 @@ graph TB
     %% API Layer
     subgraph "🚀 API Gateway"
         FastAPI["⚡ FastAPI<br/>Port 8001"]
-        Flask["🐍 Flask<br/>Port 5000"]
+        FastAPI["⚡ FastAPI<br/>Port 8001"]
         WS_API["📡 WebSocket API"]
     end
 
@@ -150,7 +153,7 @@ graph TB
 
     %% Connections
     UI --> FastAPI
-    UI --> Flask
+    UI --> FastAPI
     WS --> WS_API
 
     FastAPI --> BotManager
@@ -160,12 +163,12 @@ graph TB
     FastAPI --> Portfolio
     FastAPI --> Risk
 
-    Flask --> BotManager
-    Flask --> LiveData
-    Flask --> OrderService
-    Flask --> Positions
-    Flask --> Portfolio
-    Flask --> Risk
+    FastAPI --> BotManager
+    FastAPI --> LiveData
+    FastAPI --> OrderService
+    FastAPI --> Positions
+    FastAPI --> Portfolio
+    FastAPI --> Risk
 
     BotManager --> MainBot
     MainBot --> LiveData
@@ -248,7 +251,7 @@ sequenceDiagram
 | Layer | Technology | Purpose |
 |-------|------------|---------|
 | **Frontend** | React 18 + TypeScript | Modern UI with real-time updates |
-| **Backend** | Flask 3.0 + Python 3.11.9 | RESTful API and trading logic |
+| **Backend** | FastAPI + Python 3.11.9 | RESTful API and trading logic |
 | **Database** | Supabase (PostgreSQL) | Persistent data storage |
 | **Exchange** | Bitfinex API + WebSocket | Live market data and trading |
 | **Testing** | Pytest + Vitest + MSW | Comprehensive test coverage |
@@ -260,13 +263,13 @@ sequenceDiagram
 
 ```
 crypto-bot-dashboard-nexus/
-├── backend/                    # 🐍 Python Flask Backend
+├── backend/                    # 🐍 Python FastAPI Backend
 │   ├── routes/                # API endpoint definitions
 │   ├── services/              # Business logic & external APIs
 │   ├── strategies/            # Trading strategy implementations
 │   ├── tests/                 # Backend test suite (62+ tests)
 │   │   └── integration/       # Real API integration tests (9 tests)
-│   ├── app.py                 # Flask application entry point
+│   ├── fastapi_app.py         # FastAPI application entry point
 │   └── requirements.txt       # Python dependencies
 ├── src/                       # ⚛️ React Frontend
 │   ├── components/            # Reusable UI components
@@ -398,16 +401,15 @@ DEBUG=true
 cd crypto-bot-dashboard-nexus
 
 # Terminal 1 - Backend
-export FLASK_APP=backend/app.py
-export FLASK_ENV=development
+cd backend
 source venv/Scripts/activate  # Windows Git Bash
-python -m flask run --host=0.0.0.0 --port=5000
+python -m uvicorn fastapi_app:app --host 0.0.0.0 --port 8001 --reload
 
 # Terminal 2 - Frontend  
 npm run dev
 ```
 
-> **🚨 Important:** Flask must run from project root for SQLite database path resolution!
+> **🚨 Important:** FastAPI must run from backend directory for proper module resolution!
 
 ### Docker Deployment
 
@@ -423,9 +425,9 @@ docker-compose up -d
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| **Dashboard** | http://localhost:8080 | Main trading interface |
-| **API** | http://localhost:5000 | Backend API endpoints |
-| **API Docs** | http://localhost:5000/api | Interactive API documentation |
+| **Dashboard** | <http://localhost:8080> | Main trading interface |
+| **API** | <http://localhost:8001> | Backend API endpoints |
+| **API Docs** | <http://localhost:8001/docs> | Interactive API documentation |
 
 ---
 
@@ -444,6 +446,7 @@ pytest backend/tests/test_routes.py -v        # API endpoints
 ```
 
 **Test Coverage:** 62+ tests covering:
+
 - ✅ Trading strategies and signals
 - ✅ Technical indicators (EMA, RSI, FVG)
 - ✅ API endpoints and responses
@@ -467,6 +470,7 @@ npm run lint
 ```
 
 **Test Coverage:** Comprehensive testing with:
+
 - ✅ Component unit tests
 - ✅ Integration tests with MSW
 - ✅ User interaction testing
@@ -522,19 +526,19 @@ npm run lint
 ```bash
 # Get account balances
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-     http://localhost:5000/api/balances
+     http://localhost:8001/api/balances
 
 # Place a market order
 curl -X POST \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer YOUR_TOKEN" \
      -d '{"symbol":"BTC/USD","type":"market","side":"buy","amount":0.001}' \
-     http://localhost:5000/api/orders
+     http://localhost:8001/api/orders
 
 # Start trading bot
 curl -X POST \
      -H "Authorization: Bearer YOUR_TOKEN" \
-     http://localhost:5000/api/bot/start
+     http://localhost:8001/api/bot/start
 ```
 
 ---
@@ -589,7 +593,7 @@ SUPABASE_ANON_KEY=your_key
 # Application
 ENVIRONMENT=development
 DEBUG=true
-FLASK_ENV=development
+FASTAPI_ENV=development
 ```
 
 ---
@@ -631,7 +635,7 @@ def run_strategy(data: pd.DataFrame) -> TradeSignal:
 curl -X POST \
      -H "Content-Type: application/json" \
      -d '{"strategy":"ema_crossover","symbol":"BTC/USD","timeframe":"1h"}' \
-     http://localhost:5000/api/backtest
+     http://localhost:8001/api/backtest
 ```
 
 ---
@@ -641,6 +645,7 @@ curl -X POST \
 ### Common Issues
 
 #### Backend Won't Start
+
 ```bash
 # Check if running from project root
 pwd  # Should show crypto-bot-dashboard-nexus
@@ -649,26 +654,29 @@ pwd  # Should show crypto-bot-dashboard-nexus
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 
-# Check Flask app path
-export FLASK_APP=backend/app.py
+# Check FastAPI app path
+cd backend
 ```
 
 #### Frontend Proxy Errors
+
 ```bash
-# Ensure backend is running on port 5000
-curl http://localhost:5000/api/status
+# Ensure backend is running on port 8001
+curl http://localhost:8001/api/status
 
 # Check Vite proxy configuration in vite.config.ts
 ```
 
 #### Database Issues
+
 ```bash
-# Reset SQLite database
+# Reset SQLite database (if using SQLite)
 rm local.db
-python -c "from backend.app import create_app; create_app()"
+python -c "from backend.persistence.models import init_db; init_db()"
 ```
 
 #### Virtual Environment Issues
+
 ```bash
 # Recreate virtual environment
 rm -rf venv
@@ -684,14 +692,14 @@ Enable debug logging:
 ```env
 # In .env file
 DEBUG=true
-FLASK_DEBUG=true
+FASTAPI_DEBUG=true
 ```
 
 ### Health Checks
 
 ```bash
 # Backend health
-curl http://localhost:5000/api/status
+curl http://localhost:8001/api/status
 
 # Frontend health
 curl http://localhost:8080
@@ -755,7 +763,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Bitfinex** for comprehensive API and WebSocket support
 - **React + TypeScript** community for excellent tooling
-- **Flask** ecosystem for robust backend framework
+- **FastAPI** ecosystem for robust backend framework
 - **ccxt** library for exchange integration
 
 ---
@@ -773,6 +781,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🚀 Testning & Optimering
 
 Projektet har nu en optimerad teststruktur med:
+
 - Snabba unit- och mock-tester
 - Markerade testkategorier (unit, mock, api, integration, e2e, fast, slow)
 - Nya test-runner-skript för snabb och CI-optimerad körning
@@ -797,14 +806,17 @@ Se [docs/guides/TESTING_OPTIMIZATION_GUIDE.md](docs/guides/TESTING_OPTIMIZATION_
 - The test suite is free from Flask- and marker-blockers. Remaining test failures are due to logic, data, or mocking issues and will be addressed stepwise.
 - **Recommendation:** New API tests should be written using FastAPI's TestClient and modern async patterns.
 
-Backend (FastAPI): http://localhost:8001
+Backend (FastAPI): <http://localhost:8001>
 
 # Example: Start backend (FastAPI)
+
 python -m uvicorn backend.fastapi_app:app --host 0.0.0.0 --port 8001
 
 # Environment variables (FastAPI only)
+
 FASTAPI_ENV_FILE=.env
 FASTAPI_DEV_MODE=true
 
 ## Known Issues
+
 - WebSocket User Data: "Cannot run the event loop while another loop is running" may appear in logs. This does not block core functionality but is under investigation.

@@ -22,7 +22,7 @@ async def get_position_type_from_metadata_async(symbol: str) -> str:
     """
     # OBS: Detta är en förenklad implementation som använder statisk data
     # I en fullständig implementation skulle vi använda en databas eller annan persistent lagring
-    # istället för att förlita oss på Flask app context
+    # istället för att förlita oss på FastAPI app context
     
     # För närvarande, returnera alltid "spot" som en förenkling
     # Detta kan utökas i framtiden för att hämta data från en databas
@@ -106,17 +106,15 @@ async def fetch_positions_async(symbols: Optional[List[str]] = None) -> List[Dic
                     symbol = f"{base_currency}/USD"
                     
                     # Skapa en task för att hämta ticker-data
-                    ticker_tasks[crypto] = loop.create_task(
-                        loop.run_in_executor(
-                            None,
-                            lambda s=symbol: async_exchange_instance.fetch_ticker(s)
-                        )
+                    ticker_tasks[crypto] = loop.run_in_executor(
+                        None,
+                        lambda s=symbol: async_exchange_instance.fetch_ticker(s)
                     )
             
             # Vänta på att alla ticker-tasks ska slutföras
-            for crypto, task in ticker_tasks.items():
+            for crypto, future in ticker_tasks.items():
                 try:
-                    ticker = await task
+                    ticker = await future
                     amount = balances[crypto]
                     current_price = ticker["last"]
                     current_value = amount * current_price

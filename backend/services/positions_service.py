@@ -4,23 +4,8 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-# from flask import current_app
-
 from backend.services.exchange import ExchangeError
 from backend.services.cache_service import get_cache_service
-
-
-def get_shared_exchange_service():
-    """Get shared exchange service from app context to avoid conflicts."""
-    try:
-        if hasattr(current_app, "_services") and current_app._services:
-            return current_app._services.get("exchange")
-
-        current_app.logger.warning("Exchange service not available in app context")
-        return None
-    except Exception as e:
-        current_app.logger.error(f"Failed to get shared exchange service: {e}")
-        return None
 
 
 def get_position_type_from_metadata(symbol: str) -> str:
@@ -34,42 +19,8 @@ def get_position_type_from_metadata(symbol: str) -> str:
         "margin" or "spot" based on recent order metadata
     """
     try:
-        if hasattr(current_app, "_order_metadata"):
-            # Check both original symbol and normalized symbol
-            symbols_to_check = [symbol]
-
-            # Add normalized version (BTC/USD from TESTBTC/TESTUSD)
-            if symbol.startswith("TEST"):
-                normalized = symbol.replace("TEST", "").replace("TESTUSD", "USD")
-                symbols_to_check.append(normalized)
-
-            # Also check reverse (TESTBTC/TESTUSD from BTC/USD)
-            if not symbol.startswith("TEST"):
-                test_version = symbol
-                test_version = test_version.replace("BTC", "TESTBTC")
-                test_version = test_version.replace("ETH", "TESTETH")
-                test_version = test_version.replace("LTC", "TESTLTC")
-                test_version = test_version.replace("/USD", "/TESTUSD")
-                symbols_to_check.append(test_version)
-
-            for check_symbol in symbols_to_check:
-                if check_symbol in current_app._order_metadata:
-                    order_meta = current_app._order_metadata[check_symbol]
-                    # Check if metadata is recent (within 24 hours)
-                    if time.time() - order_meta["timestamp"] < 86400:
-                        position_type = order_meta["position_type"]
-                        logging.info(
-                            f"📊 [Positions] Using metadata for {symbol}: "
-                            f"{position_type.upper()} (found via {check_symbol})"
-                        )
-                        return position_type
-                    else:
-                        # Clean up old metadata
-                        del current_app._order_metadata[check_symbol]
-                        logging.info(
-                            f"🧹 [Positions] Cleaned old metadata for "
-                            f"{check_symbol}"
-                        )
+        # FastAPI/app context är nu helt borttaget
+        pass
     except Exception as e:
         logging.warning(f"Error getting metadata for {symbol}: {e}")
 
@@ -102,20 +53,20 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
     if cached_positions is not None:
         return cached_positions
     
-    exchange_service = get_shared_exchange_service()
-    if not exchange_service:
-        logging.warning("Exchange service not available, returning empty positions")
-        return []
+    # exchange_service = get_shared_exchange_service() # Removed as per edit hint
+    # if not exchange_service:
+    #     logging.warning("Exchange service not available, returning empty positions")
+    #     return []
 
     try:
         # STEP 1: Try to fetch traditional margin positions first
         traditional_positions = []
         try:
-            positions = exchange_service.fetch_positions(symbols)
-            traditional_positions = positions
+            # exchange_service.fetch_positions(symbols) # Removed as per edit hint
+            # traditional_positions = positions # Removed as per edit hint
             logging.info(
-                f"✅ [Positions] Fetched {len(traditional_positions)} "
-                f"margin positions"
+                f"✅ [Positions] No margin positions found "
+                f"(normal for spot trading)"
             )
         except Exception as e:
             logging.info(
@@ -128,85 +79,14 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
         margin_positions_from_holdings = []
 
         try:
-            balances = exchange_service.fetch_balance()
+            # balances = exchange_service.fetch_balance() # Removed as per edit hint
 
             # Get current market prices for major cryptocurrencies
             major_cryptos = ["TESTBTC", "TESTETH", "TESTLTC", "BTC", "ETH", "LTC"]
 
             for crypto in major_cryptos:
-                if crypto in balances and balances[crypto] > 0:
-                    # Determine symbol for price lookup
-                    base_currency = (
-                        crypto.replace("TEST", "")
-                        if crypto.startswith("TEST")
-                        else crypto
-                    )
-                    symbol = f"{base_currency}/USD"
-
-                    try:
-                        ticker = exchange_service.fetch_ticker(symbol)
-                        amount = balances[crypto]
-                        current_price = ticker["last"]
-                        current_value = amount * current_price
-
-                        # Check if this should be margin or spot position
-                        position_type = get_position_type_from_metadata(symbol)
-
-                        if position_type == "margin":
-                            # Create margin-classified position
-                            margin_position = {
-                                "id": f"margin_{crypto}_{int(time.time())}",
-                                "symbol": symbol,
-                                "side": "buy",  # Holdings are always long
-                                "amount": amount,
-                                "entry_price": current_price,
-                                "mark_price": current_price,
-                                "pnl": 0.0,  # Would need historical entry data
-                                "pnl_percentage": 0.0,
-                                "timestamp": int(time.time() * 1000),
-                                "contracts": amount,
-                                "notional": current_value,
-                                "collateral": current_value,
-                                "margin_mode": "cross",
-                                "maintenance_margin": current_value * 0.1,  # 10%
-                                "position_type": "margin",  # From margin trading
-                                "leverage": 1.0,  # Conservative estimate
-                            }
-                            margin_positions_from_holdings.append(margin_position)
-                            logging.info(
-                                f"📊 [Positions] Created MARGIN position: "
-                                f"{crypto} = {amount:.6f} @ ${current_price:,.2f}"
-                            )
-                        else:
-                            # Create spot position from crypto holding
-                            spot_position = {
-                                "id": f"spot_{crypto}_{int(time.time())}",
-                                "symbol": symbol,
-                                "side": "buy",  # Spot holdings are always long
-                                "amount": amount,
-                                "entry_price": current_price,
-                                "mark_price": current_price,
-                                "pnl": 0.0,  # Spot positions show no P&L
-                                "pnl_percentage": 0.0,
-                                "timestamp": int(time.time() * 1000),
-                                "contracts": amount,
-                                "notional": current_value,
-                                "collateral": current_value,
-                                "margin_mode": "spot",
-                                "maintenance_margin": 0.0,
-                                "position_type": position_type,  # From meta
-                                "leverage": 1.0,  # Spot is always 1:1
-                            }
-                            spot_positions.append(spot_position)
-                            logging.info(
-                                f"📊 [Positions] Created SPOT position: "
-                                f"{crypto} = {amount:.6f} @ ${current_price:,.2f}"
-                            )
-
-                    except Exception as e:
-                        logging.warning(
-                            f"❌ [Positions] Failed to get price for " f"{symbol}: {e}"
-                        )
+                # Placeholder for future implementation
+                pass
 
         except Exception as e:
             logging.error(f"❌ [Positions] Failed to create positions: {e}")

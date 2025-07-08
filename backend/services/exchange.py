@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import ccxt
-# from flask import current_app  # Ta bort denna rad
 from backend.services.global_nonce_manager import get_global_nonce_manager
 from backend.services.symbol_converter import BitfinexSymbolConverter
 from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper

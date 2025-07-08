@@ -2,8 +2,8 @@
   "install": "cd backend; pip install -r requirements.txt; cd ..; npm install",
   "terminals": [
     {
-      "name": "Starta backend (Flask)",
-      "command": "cd backend; flask run --host=0.0.0.0"
+      "name": "Starta backend (FastAPI)",
+      "command": "cd backend; python -m uvicorn fastapi_app:app --host 0.0.0.0 --port 8001 --reload"
     },
     {
       "name": "Starta frontend (Vite)",

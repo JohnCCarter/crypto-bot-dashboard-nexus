@@ -18,7 +18,7 @@ export const FastAPIDemo: React.FC = () => {
             <h3 className="text-lg font-medium mb-2">Om FastAPI-migrationen</h3>
             <p className="mb-4">
               Detta är en demonstration av WebSocket-funktionalitet i FastAPI-migrationen.
-              FastAPI-servern körs parallellt med den befintliga Flask-servern på port 8001.
+              FastAPI-servern körs på port 8001.
             </p>
             
             <h3 className="text-lg font-medium mb-2">Fördelar med FastAPI</h3>

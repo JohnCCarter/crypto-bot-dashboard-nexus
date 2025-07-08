@@ -7,18 +7,18 @@ echo "====================================="
 # Test 1: Backend WebSocket Proxy Response Time
 echo "📊 Testing Backend WebSocket Proxy..."
 echo "Status endpoint:"
-time curl -s http://localhost:5000/api/ws-proxy/status | jq '.'
+time curl -s http://localhost:8001/api/ws-proxy/status | jq '.'
 
 echo -e "\nTicker endpoint:"
-time curl -s http://localhost:5000/api/ws-proxy/ticker | jq '.'
+time curl -s http://localhost:8001/api/ws-proxy/ticker | jq '.'
 
 # Test 2: API Response Times
 echo -e "\n📈 Testing API Endpoints..."
 echo "Status API:"
-time curl -s http://localhost:5000/api/status | jq '.status'
+time curl -s http://localhost:8001/api/status | jq '.status'
 
 echo -e "\nTicker API:"
-time curl -s http://localhost:5000/api/market/ticker/BTCUSD | jq '.last'
+time curl -s http://localhost:8001/api/market/ticker/BTCUSD | jq '.'
 
 # Test 3: Memory Usage Check
 echo -e "\n💾 Memory Usage Check..."
@@ -31,7 +31,7 @@ fi
 echo -e "\n⚡ API Rate Test (5 calls)..."
 for i in {1..5}; do
     echo "Call $i:"
-    time curl -s http://localhost:5000/api/ws-proxy/ticker > /dev/null
+    time curl -s http://localhost:8001/api/ws-proxy/ticker > /dev/null
     sleep 0.5
 done
 
