@@ -4,7 +4,7 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from flask import current_app
+# from flask import current_app
 
 from backend.services.exchange import ExchangeError
 from backend.services.cache_service import get_cache_service

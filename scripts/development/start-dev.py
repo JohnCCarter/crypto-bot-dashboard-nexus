@@ -106,26 +106,6 @@ def main():
     # Aktivera virtuell miljö
     activate_cmd = activate_venv()
     
-    # Starta backend (Flask) - kör från projektets rot för att lösa importfel
-    if is_powershell():
-        backend_cmd = (
-            f"{activate_cmd}; "
-            f"cd {project_root}; "
-            f"python -m backend.app"
-        )
-    else:
-        backend_cmd = (
-            f"{activate_cmd} && "
-            f"cd {project_root} && "
-            f"python -m backend.app"
-        )
-    
-    run_command(backend_cmd, background=True)
-    print("Backend (Flask) startat på port 5000")
-    
-    # Vänta lite för att låta backend starta
-    time.sleep(2)
-    
     # Starta backend (FastAPI) - kör från projektets rot för att lösa importfel
     if is_powershell():
         fastapi_cmd = (
@@ -164,7 +144,6 @@ def main():
     print("Frontend startat")
     
     print("\nUtvecklingsmiljön är nu igång!")
-    print("- Backend (Flask): http://localhost:5000")
     print("- Backend (FastAPI): http://localhost:8001")
     print("- Frontend: http://localhost:5173")
     

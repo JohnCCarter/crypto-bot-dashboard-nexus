@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import ccxt
-from flask import current_app
+# from flask import current_app  # Ta bort denna rad
 from backend.services.global_nonce_manager import get_global_nonce_manager
 from backend.services.symbol_converter import BitfinexSymbolConverter
 from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
@@ -767,7 +767,7 @@ class ExchangeService:
                             )
                             # Lägg till market type för Bitfinex
                             params = {"type": "exchange"}
-                            current_app.logger.warning(
+                            print(
                                 f"⚠️ [Exchange] Added market type 'exchange' for fetch_closed_orders: {bitfinex_symbol}"
                             )
                             orders = self.exchange.fetch_closed_orders(
@@ -851,12 +851,12 @@ class ExchangeService:
                 if bitfinex_symbol:
                     # Lägg till market type för att undvika safeMarket-fel
                     params["type"] = "exchange"  # Specificera spot/exchange market
-                    current_app.logger.warning(
+                    print(
                         f"⚠️ [Exchange] Added market type 'exchange' for symbol {bitfinex_symbol}"
                     )
                 else:
                     # Varning när ingen symbol specificeras - kan orsaka safeMarket-fel
-                    current_app.logger.warning(
+                    print(
                         "⚠️ [Exchange] fetch_open_orders called without symbol - "
                         "this may cause safeMarket() errors for Bitfinex"
                     )

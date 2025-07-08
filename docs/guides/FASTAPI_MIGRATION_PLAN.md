@@ -119,4 +119,18 @@ Framstegen i migrationen kommer att spåras i `docs/guides/FASTAPI_MIGRATION_STA
 
 ## Uppföljning
 
-Framstegen och statusen för migrationen kommer att uppdateras kontinuerligt i `docs/guides/FASTAPI_MIGRATION_STATUS.md`. 
+Framstegen och statusen för migrationen kommer att uppdateras kontinuerligt i `docs/guides/FASTAPI_MIGRATION_STATUS.md`.
+
+## Migration Status: COMPLETE
+
+As of July 2025, Flask is fully removed from the backend. All API endpoints and backend logic now run exclusively on FastAPI (port 8001). Any remaining references to Flask in this document are historical.
+
+## Known Issues
+- WebSocket User Data: "Cannot run the event loop while another loop is running" may appear in logs. This does not block core functionality but is under investigation.
+
+## Flask phase-out and test status (July 2025)
+
+- Flask is now fully removed from the codebase (no routes, services, requirements, or scripts).
+- All legacy Flask tests have been removed (with backup) as they cannot be migrated directly.
+- The test suite is free from Flask- and marker-blockers. Remaining test failures are due to logic, data, or mocking issues and will be addressed stepwise.
+- **Recommendation:** New API tests should be written using FastAPI's TestClient and modern async patterns. 

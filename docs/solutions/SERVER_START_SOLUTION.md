@@ -208,3 +208,5 @@ Problemet löstes genom att identifiera att Flask måste köras från projektets
 3. Flask app discovery
 
 De nya startskripten säkerställer konsekvent och robust serverstart för alla utvecklingsmiljöer. 
+
+> **NOTE (July 2025):** Flask is now fully removed from the backend. All server start and troubleshooting should be done with FastAPI (Uvicorn) on port 8001. The steps below are for historical reference only. 

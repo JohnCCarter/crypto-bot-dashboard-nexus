@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 from backend.services.global_nonce_manager import get_global_nonce_manager
 from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
 from dataclasses import dataclass
@@ -1206,3 +1207,23 @@ async def stop_user_data_client():
     if _user_data_client:
         await _user_data_client.disconnect()
         _user_data_client = None
+
+
+async def get_websocket_user_data_service():
+    """
+    Wrapper för att skapa och returnera global BitfinexUserDataClient med API-nycklar från miljövariabler.
+    Loggar tydligt om nycklar saknas eller om något går fel.
+    """
+    logger = logging.getLogger(__name__)
+    api_key = os.environ.get("BITFINEX_API_KEY")
+    api_secret = os.environ.get("BITFINEX_API_SECRET")
+    if not api_key or not api_secret:
+        logger.error("❌ BITFINEX_API_KEY eller BITFINEX_API_SECRET saknas i miljövariabler. Kan inte initiera WebSocket User Data-tjänst.")
+        raise RuntimeError("BITFINEX_API_KEY och BITFINEX_API_SECRET krävs för WebSocket User Data-tjänst.")
+    try:
+        client = await get_user_data_client(api_key, api_secret)
+        logger.info("✅ WebSocket User Data-tjänst initierad.")
+        return client
+    except Exception as e:
+        logger.error(f"❌ Fel vid initiering av WebSocket User Data-tjänst: {e}")
+        raise

@@ -1,6 +1,4 @@
 ccxt
-Flask
-flask-cors
 numpy
 pandas
 pytest

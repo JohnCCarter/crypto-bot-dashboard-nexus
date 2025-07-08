@@ -2,7 +2,7 @@
 
 # 🚀 Crypto Trading Bot - Server Start Script
 # ===========================================
-# Detta skript startar både backend (Flask) och frontend (Vite) korrekt
+# Detta skript startar både backend (FastAPI) och frontend (Vite) korrekt
 # Kör från projektets rot: ./start-servers.sh
 
 set -e  # Avsluta vid fel
@@ -49,26 +49,11 @@ fi
 
 echo "✅ Förkunskaper kontrollerade"
 
-# Funktion för att starta Flask
-start_flask() {
-    echo "🔄 Startar Flask backend..."
-    export FLASK_APP=backend.app
-    export FLASK_ENV=development
-    
-    # Starta Flask från projektets rot (viktigt för SQLite-sökvägen)
-    echo "📂 Working directory: $(pwd)"
-    echo "🔗 Flask app: $FLASK_APP"
-    echo "🌐 Backend startar på: http://localhost:5000"
-    echo ""
-    
-    python -m flask run --host=0.0.0.0 --port=5000
-}
-
 # Funktion för att starta FastAPI
 start_fastapi() {
     echo "🔄 Startar FastAPI backend..."
     cd "$(pwd)" || exit
-    python -m backend.fastapi_app
+    python3 -m uvicorn backend.fastapi_app:app --host=0.0.0.0 --port=8001
 }
 
 # Funktion för att starta frontend
@@ -78,14 +63,8 @@ start_frontend() {
     npm run dev
 }
 
-# Starta alla tjänster i bakgrunden
-start_flask &
-FLASK_PID=$!
-
-# Vänta lite för att låta Flask starta
-sleep 2
-
-start_fastapi &
+# Starta FastAPI/Uvicorn
+python3 -m uvicorn backend.fastapi_app:app --host=0.0.0.0 --port=8001 &
 FASTAPI_PID=$!
 
 # Vänta lite för att låta FastAPI starta
@@ -95,14 +74,13 @@ start_frontend &
 FRONTEND_PID=$!
 
 echo "✅ Alla servrar startade!"
-echo "- Backend (Flask): http://localhost:5000"
 echo "- Backend (FastAPI): http://localhost:8001"
 echo "- Frontend: http://localhost:5173"
 
 # Funktion för att städa upp processer vid avslut
 cleanup() {
     echo "🛑 Avslutar processer..."
-    kill $FLASK_PID $FASTAPI_PID $FRONTEND_PID 2>/dev/null
+    kill $FASTAPI_PID $FRONTEND_PID 2>/dev/null
     exit 0
 }
 

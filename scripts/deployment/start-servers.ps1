@@ -1,6 +1,6 @@
 # 🚀 Crypto Trading Bot - Server Start Script (PowerShell)
 # ===========================================================
-# Detta skript startar både backend (Flask) och frontend (Vite) korrekt
+# Detta skript startar både backend (FastAPI) och frontend (Vite) korrekt
 # Kör från projektets rot: .\start-servers.ps1
 
 param(
@@ -41,7 +41,7 @@ Write-Host "✅ Förkunskaper kontrollerade" -ForegroundColor Green
 
 # Funktion för att starta backend
 function Start-Backend {
-    Write-Host "🐍 Startar backend (Flask)..." -ForegroundColor Blue
+    Write-Host "🐍 Startar backend (FastAPI)..." -ForegroundColor Blue
     
     # Säkerställ att vi är i projektets rot
     $originalLocation = Get-Location
@@ -54,12 +54,12 @@ function Start-Backend {
         
         Write-Host "📂 Working directory: $(Get-Location)" -ForegroundColor Gray
         Write-Host "🔗 Flask app: $env:FLASK_APP" -ForegroundColor Gray
-        Write-Host "🌐 Backend startar på: http://localhost:5000" -ForegroundColor Green
+        Write-Host "🌐 Backend startar på: http://localhost:8001" -ForegroundColor Green
         Write-Host ""
         
         # Aktivera virtual environment och starta Flask
         & "backend\venv\Scripts\Activate.ps1"
-        python -m flask run --host=0.0.0.0 --port=5000
+        python -m uvicorn backend.fastapi_app:app --host=0.0.0.0 --port=8001
     }
     finally {
         Set-Location $originalLocation
@@ -106,7 +106,7 @@ switch ($Mode) {
             $env:FLASK_DEBUG = "true"
             
             & "backend\venv\Scripts\Activate.ps1"
-            python -m flask run --host=0.0.0.0 --port=5000
+            python -m uvicorn backend.fastapi_app:app --host=0.0.0.0 --port=8001
         }
         
         # Vänta lite för backend att starta
@@ -114,7 +114,7 @@ switch ($Mode) {
         
         # Kontrollera att backend startade
         if (Test-Backend) {
-            Write-Host "✅ Backend igång på port 5000" -ForegroundColor Green
+            Write-Host "✅ Backend igång på port 8001" -ForegroundColor Green
         } else {
             Write-Host "⚠️ Backend kanske inte startade korrekt" -ForegroundColor Yellow
         }

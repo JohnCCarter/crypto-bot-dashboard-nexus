@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/python-3.11.9-blue.svg)](https://www.python.org/downloads/)
 [![React](https://img.shields.io/badge/react-18+-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/typescript-5+-blue.svg)](https://www.typescriptlang.org/)
-[![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
+[![FastAPI](https://img.shields.io/badge/fastapi-0.115+-green.svg)](https://fastapi.tiangolo.com/)
 [![Bitfinex](https://img.shields.io/badge/exchange-bitfinex-orange.svg)](https://www.bitfinex.com/)
 [![Status](https://img.shields.io/badge/status-under%20development-yellow.svg)](https://github.com/your-username/crypto-bot-dashboard-nexus)
 
@@ -788,3 +788,23 @@ python scripts/testing/run_tests_ci.py --all              # Kör alla tester i o
 ```
 
 Se [docs/guides/TESTING_OPTIMIZATION_GUIDE.md](docs/guides/TESTING_OPTIMIZATION_GUIDE.md) för fullständig dokumentation och rekommenderad arbetsordning.
+
+## Flask phase-out and test status (July 2025)
+
+- Flask is now fully removed from the codebase (no routes, services, requirements, or scripts).
+- All start scripts, environment variables, and documentation are updated for FastAPI.
+- All legacy Flask tests have been removed (with backup) as they cannot be migrated directly.
+- The test suite is free from Flask- and marker-blockers. Remaining test failures are due to logic, data, or mocking issues and will be addressed stepwise.
+- **Recommendation:** New API tests should be written using FastAPI's TestClient and modern async patterns.
+
+Backend (FastAPI): http://localhost:8001
+
+# Example: Start backend (FastAPI)
+python -m uvicorn backend.fastapi_app:app --host 0.0.0.0 --port 8001
+
+# Environment variables (FastAPI only)
+FASTAPI_ENV_FILE=.env
+FASTAPI_DEV_MODE=true
+
+## Known Issues
+- WebSocket User Data: "Cannot run the event loop while another loop is running" may appear in logs. This does not block core functionality but is under investigation.

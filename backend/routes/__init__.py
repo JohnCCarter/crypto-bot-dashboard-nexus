@@ -6,18 +6,8 @@ Route factory for centralized blueprint registration.
 
 # This file makes backend/routes a Python package
 
-from flask import Flask
-
-from backend.routes import market_data
-from backend.routes.backtest import backtest_bp
-from backend.routes.balances import register as register_balances
-from backend.routes.bot_control import register as register_bot_control
-from backend.routes.config import register as register_config
-from backend.routes.live_portfolio import live_portfolio_bp
-from backend.routes.orders import register as register_orders
-from backend.routes.positions import register as register_positions
-from backend.routes.status import status_bp
-from backend.routes.strategy_analysis import strategy_analysis_bp
+# from backend.routes import market_data
+# from backend.routes.bot_control import register as register_bot_control
 
 
 def register_all_routes(app: Flask) -> None:
@@ -31,18 +21,11 @@ def register_all_routes(app: Flask) -> None:
     a single point of truth for all route configuration.
     """
     # Register function-based routes (legacy pattern)
-    register_balances(app)
-    register_bot_control(app)
-    register_orders(app)
-    register_positions(app)
-    register_config(app)
-    market_data.register(app)
+    # register_bot_control(app)
+    # market_data.register(app)
 
     # Register blueprint-based routes
-    app.register_blueprint(status_bp)
-    app.register_blueprint(backtest_bp)
-    app.register_blueprint(strategy_analysis_bp)
-    app.register_blueprint(live_portfolio_bp)
+    # app.register_blueprint(live_portfolio_bp)
 
 
 def get_registered_routes(app: Flask) -> dict:

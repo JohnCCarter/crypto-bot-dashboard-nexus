@@ -78,14 +78,8 @@ start_frontend() {
     npm run dev
 }
 
-# Starta alla tjänster i bakgrunden
-start_flask &
-FLASK_PID=$!
-
-# Vänta lite för att låta Flask starta
-sleep 2
-
-start_fastapi &
+# Starta FastAPI/Uvicorn
+python3 -m uvicorn backend.fastapi_app:app --host=0.0.0.0 --port=8001 &
 FASTAPI_PID=$!
 
 # Vänta lite för att låta FastAPI starta
@@ -95,14 +89,13 @@ start_frontend &
 FRONTEND_PID=$!
 
 echo "✅ Alla servrar startade!"
-echo "- Backend (Flask): http://localhost:5000"
 echo "- Backend (FastAPI): http://localhost:8001"
 echo "- Frontend: http://localhost:5173"
 
 # Funktion för att städa upp processer vid avslut
 cleanup() {
     echo "🛑 Avslutar processer..."
-    kill $FLASK_PID $FASTAPI_PID $FRONTEND_PID 2>/dev/null
+    kill $FASTAPI_PID $FRONTEND_PID 2>/dev/null
     exit 0
 }
 
