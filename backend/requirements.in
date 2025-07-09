@@ -13,10 +13,10 @@ requests
 bitfinex-api-py>=3.0.4
 # FastAPI-relaterade paket
 fastapi
-uvicorn[standard]
-pytest-asyncio>=0.21.1
-SQLAlchemy>=2.0
-alembic>=1.16.0
+pydantic
+uvicorn
+python-dotenv
+supabase
 # Lägg till andra huvudpaket du faktiskt använder här
 
 # Development and CI/CD tools

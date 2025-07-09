@@ -14,7 +14,7 @@ permissions:
   pull-requests: write
 
 env:
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.11.9'
   NODE_VERSION: '18'
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.13']
+        python-version: ['3.11.9']
     
     defaults:
       run:
@@ -91,7 +91,8 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=80 \
             -v \
-            --tb=short
+            --tb=short \
+            -n auto
           echo "✅ Backend tests completed successfully"
           
       - name: 📊 Upload backend coverage to Codecov
@@ -259,7 +260,7 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11.9'
           
       - name: ⚛️ Set up Node.js
         uses: actions/setup-node@v4
@@ -322,4 +323,4 @@ jobs:
             echo "  Docker: ${{ needs.docker.result }}"
             echo "  Integration: ${{ needs.integration.result }}"
             exit 1
-          fi               
+          fi

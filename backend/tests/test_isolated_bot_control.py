@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from backend.fastapi_app import app
 from backend.api.dependencies import BotManagerDependency
-from backend.api.bot_control import get_bot_manager
+from backend.api.dependencies import get_bot_manager
 from backend.api.models import BotStatusResponse, BotActionResponse
 
 
@@ -99,25 +99,24 @@ def mock_normal_mode():
     """Konfigurera app för normal mode testing."""
     mock_manager = MockBotManagerDependency()
     
-    # Definiera en async funktion som returnerar mock-objektet
-    async def override_get_bot_manager():
-        return mock_manager
-    
-    # Spara originella dependencies för återställning
-    original_overrides = app.dependency_overrides.copy()
-    
-    # Konfigurera mock
-    app.dependency_overrides[get_bot_manager] = override_get_bot_manager
-    
-    # Mock event logger
-    with patch("backend.api.bot_control.event_logger") as mock_event_logger:
-        mock_event_logger.log_event = MagicMock()
-        mock_event_logger.log_api_error = MagicMock()
-        mock_event_logger.should_suppress_routine_log = MagicMock(return_value=False)
-        yield mock_manager, mock_event_logger
-    
-    # Återställ dependencies efter test
-    app.dependency_overrides = original_overrides
+    # Mock hela get_bot_manager_async funktionen
+    with patch("backend.api.dependencies.get_bot_manager_async") as mock_get_bot_manager_async:
+        # Skapa en mock BotManagerAsync
+        mock_bot_manager_async = AsyncMock()
+        mock_bot_manager_async.get_status.return_value = mock_manager.get_status_result
+        mock_bot_manager_async.start_bot.return_value = mock_manager.start_bot_result
+        mock_bot_manager_async.stop_bot.return_value = mock_manager.stop_bot_result
+        mock_bot_manager_async.dev_mode = False
+        
+        # Konfigurera mock att returnera vår mock
+        mock_get_bot_manager_async.return_value = mock_bot_manager_async
+        
+        # Mock event logger
+        with patch("backend.api.bot_control.event_logger") as mock_event_logger:
+            mock_event_logger.log_event = MagicMock()
+            mock_event_logger.log_api_error = MagicMock()
+            mock_event_logger.should_suppress_routine_log = MagicMock(return_value=False)
+            yield mock_manager, mock_event_logger
 
 
 # Setup för dev mode tests
@@ -126,25 +125,24 @@ def mock_dev_mode():
     """Konfigurera app för dev mode testing."""
     mock_manager = MockBotManagerDevDependency()
     
-    # Definiera en async funktion som returnerar mock-objektet
-    async def override_get_bot_manager():
-        return mock_manager
-    
-    # Spara originella dependencies för återställning
-    original_overrides = app.dependency_overrides.copy()
-    
-    # Konfigurera mock
-    app.dependency_overrides[get_bot_manager] = override_get_bot_manager
-    
-    # Mock event logger
-    with patch("backend.api.bot_control.event_logger") as mock_event_logger:
-        mock_event_logger.log_event = MagicMock()
-        mock_event_logger.log_api_error = MagicMock()
-        mock_event_logger.should_suppress_routine_log = MagicMock(return_value=False)
-        yield mock_manager, mock_event_logger
-    
-    # Återställ dependencies efter test
-    app.dependency_overrides = original_overrides
+    # Mock hela get_bot_manager_async funktionen
+    with patch("backend.api.dependencies.get_bot_manager_async") as mock_get_bot_manager_async:
+        # Skapa en mock BotManagerAsync
+        mock_bot_manager_async = AsyncMock()
+        mock_bot_manager_async.get_status.return_value = mock_manager.get_status_result
+        mock_bot_manager_async.start_bot.return_value = mock_manager.start_bot_result
+        mock_bot_manager_async.stop_bot.return_value = mock_manager.stop_bot_result
+        mock_bot_manager_async.dev_mode = True
+        
+        # Konfigurera mock att returnera vår mock
+        mock_get_bot_manager_async.return_value = mock_bot_manager_async
+        
+        # Mock event logger
+        with patch("backend.api.bot_control.event_logger") as mock_event_logger:
+            mock_event_logger.log_event = MagicMock()
+            mock_event_logger.log_api_error = MagicMock()
+            mock_event_logger.should_suppress_routine_log = MagicMock(return_value=False)
+            yield mock_manager, mock_event_logger
 
 
 @pytest.fixture

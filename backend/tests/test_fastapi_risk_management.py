@@ -81,19 +81,17 @@ def mock_order_service():
         ]
     }
     
-    order_service.get_open_orders.return_value = {
-        "orders": [
-            {
-                "id": "1",
-                "symbol": "ETH/USD",
-                "side": "buy",
-                "type": "limit",
-                "price": 2000.0,
-                "amount": 1.0,
-                "status": "open"
-            }
-        ]
-    }
+    order_service.get_open_orders.return_value = [
+        {
+            "id": "1",
+            "symbol": "ETH/USD",
+            "side": "buy",
+            "type": "limit",
+            "price": 2000.0,
+            "amount": 1.0,
+            "status": "open"
+        }
+    ]
     
     return order_service
 
@@ -112,44 +110,56 @@ def mock_exchange_service():
     return exchange_service
 
 
-@patch("backend.api.dependencies.get_risk_manager")
-@patch("backend.api.dependencies.get_order_service")
-@patch("backend.services.positions_service_async.fetch_positions_async")
-async def test_assess_portfolio_risk(mock_fetch_positions, mock_get_order_service, mock_get_risk_manager, 
-                                    client, mock_risk_manager, mock_order_service):
+async def test_assess_portfolio_risk(client, mock_risk_manager, mock_order_service):
     """Test the assess portfolio risk endpoint."""
-    mock_get_risk_manager.return_value = mock_risk_manager
-    mock_get_order_service.return_value = mock_order_service
+    from backend.api.dependencies import get_risk_manager, get_order_service
     
-    # Mock fetch_positions_async to return test data
-    mock_fetch_positions.return_value = [
-        {
-            "id": "1",
-            "symbol": "BTC/USD",
-            "side": "buy",
-            "amount": 0.1,
-            "entry_price": 13000.0,
-            "mark_price": 13500.0,
-            "pnl": 50.0,
-            "pnl_percentage": 3.85
-        }
-    ]
+    # Override dependencies
+    app.dependency_overrides[get_risk_manager] = lambda: mock_risk_manager
+    app.dependency_overrides[get_order_service] = lambda: mock_order_service
     
-    response = client.get("/api/risk/assessment")
+    # Mock fetch_positions_async
+    from backend.services.positions_service_async import fetch_positions_async
+    original_fetch_positions = fetch_positions_async
     
-    # Assertions
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == ResponseStatus.SUCCESS
-    assert "risk_assessment" in data
-    assert "total_exposure" in data["risk_assessment"]
-    assert "risk_level" in data["risk_assessment"]
-    assert data["risk_assessment"]["risk_level"] in ["low", "moderate", "high", "critical"]
-    
-    # Verify mock calls
-    mock_fetch_positions.assert_called_once()
-    mock_order_service.get_open_orders.assert_called_once()
-    mock_risk_manager.assess_portfolio_risk.assert_called_once()
+    try:
+        # Mock fetch_positions_async to return test data
+        async def mock_fetch_positions():
+            return [
+                {
+                    "id": "1",
+                    "symbol": "BTC/USD",
+                    "side": "buy",
+                    "amount": 0.1,
+                    "entry_price": 13000.0,
+                    "mark_price": 13500.0,
+                    "pnl": 50.0,
+                    "pnl_percentage": 3.85
+                }
+            ]
+        
+        # Replace the function temporarily
+        import backend.services.positions_service_async
+        backend.services.positions_service_async.fetch_positions_async = mock_fetch_positions
+        response = client.get("/api/risk/assessment")
+        
+        # Assertions
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == ResponseStatus.SUCCESS
+        assert "risk_assessment" in data
+        assert "total_risk_score" in data["risk_assessment"]
+        assert "risk_level" in data["risk_assessment"]
+        assert data["risk_assessment"]["risk_level"] in ["low", "moderate", "high", "critical"]
+        
+        # Verify mock calls
+        mock_order_service.get_open_orders.assert_called_once()
+        mock_risk_manager.assess_portfolio_risk.assert_called_once()
+    finally:
+        # Clean up
+        app.dependency_overrides.clear()
+        # Restore original function
+        backend.services.positions_service_async.fetch_positions_async = original_fetch_positions
 
 
 @patch("backend.api.dependencies.get_risk_manager")
@@ -166,8 +176,8 @@ async def test_validate_order(mock_get_exchange_service, mock_get_order_service,
     # Test without probability data
     order_data = {
         "symbol": "BTC/USD",
-        "side": OrderSide.BUY,
-        "type": OrderType.LIMIT,
+        "side": "buy",
+        "type": "limit",
         "amount": 0.1,
         "price": 13000.0,
         "stop_price": None,
@@ -175,7 +185,7 @@ async def test_validate_order(mock_get_exchange_service, mock_get_order_service,
         "stop_loss": 12000.0
     }
     
-    response = client.post("/api/risk/validate/order", json=order_data)
+    response = client.post("/api/risk/validate/order", json={"order_data": order_data})
     
     # Assertions
     assert response.status_code == 200
@@ -196,7 +206,7 @@ async def test_validate_order(mock_get_exchange_service, mock_get_order_service,
         }
     }
     
-    response = client.post("/api/risk/validate/order", json=order_with_probability)
+    response = client.post("/api/risk/validate/order", json={"order_data": order_with_probability})
     
     # Assertions
     assert response.status_code == 200

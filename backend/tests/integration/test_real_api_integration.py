@@ -33,6 +33,7 @@ class TestRealAPIIntegration:
         except requests.exceptions.RequestException as e:
             pytest.skip(f"❌ Backend server not running: {e}")
 
+    @pytest.mark.integration
     def test_api_status_integration(self):
         """Test /api/status endpoint returns real data."""
         response = requests.get(f"{self.BASE_URL}/api/status")
@@ -46,6 +47,7 @@ class TestRealAPIIntegration:
 
         print(f"✅ Status: {data['status']}")
 
+    @pytest.mark.integration
     def test_api_balances_integration(self):
         """Test /api/balances returns real account data."""
         response = requests.get(f"{self.BASE_URL}/api/balances")
@@ -64,6 +66,7 @@ class TestRealAPIIntegration:
         assert isinstance(balances, list)
         print(f"✅ Retrieved {len(balances)} balance entries")
 
+    @pytest.mark.integration
     @pytest.mark.parametrize("order_type_value", ["limit", "market"])
     def test_place_and_track_order_integration(self, order_type_value):
         """
@@ -134,6 +137,7 @@ class TestRealAPIIntegration:
             assert False
         print(f"✅ Order cancelled: {order_result['id']}")
 
+    @pytest.mark.integration
     def test_order_history_integration(self):
         """Test order history endpoint returns real data."""
         response = requests.get(f"{self.BASE_URL}/api/orders/history", timeout=15)
@@ -145,6 +149,7 @@ class TestRealAPIIntegration:
         assert isinstance(data, list)
         print(f"✅ Order history: {len(data)} entries")
 
+    @pytest.mark.integration
     def test_open_orders_integration(self):
         """Test getting open orders returns real data."""
         response = requests.get(f"{self.BASE_URL}/api/orders", timeout=15)
@@ -158,6 +163,7 @@ class TestRealAPIIntegration:
         assert isinstance(orders, list)
         print(f"✅ Open orders: {len(orders)} entries")
 
+    @pytest.mark.integration
     def test_trading_limitations_integration(self):
         """Test trading limitations endpoint."""
         response = requests.get(f"{self.BASE_URL}/api/trading-limitations", timeout=10)
@@ -169,6 +175,7 @@ class TestRealAPIIntegration:
         assert isinstance(data, (bool, dict))
         print(f"✅ Trading limitations: {data}")
 
+    @pytest.mark.integration
     def test_symbol_conversion_verification(self):
         """Verify symbol conversion is working correctly in orders."""
         # Place order with UI format symbol
@@ -208,6 +215,7 @@ class TestAPIErrorHandling:
 
     BASE_URL = "http://localhost:8001"
 
+    @pytest.mark.integration
     def test_invalid_order_data(self):
         """Test API handles invalid order data gracefully."""
         invalid_data = {
@@ -223,6 +231,7 @@ class TestAPIErrorHandling:
         assert response.status_code in [400, 422, 500]
         print("✅ Invalid order data handled gracefully")
 
+    @pytest.mark.integration
     def test_nonexistent_order_status(self):
         """Test getting status of non-existent order."""
         fake_order_id = "999999999999"

@@ -61,7 +61,7 @@ class OrderServiceAsync:
             "type": data["order_type"],
             "side": data["side"],
             "amount": float(data["amount"]),
-            "price": float(data.get("price", 0)),
+            "price": float(data.get("price", 0)) if data.get("price") is not None else None,
             "status": "pending",
             "created_at": datetime.utcnow().isoformat(),
             "leverage": float(data.get("leverage", 1.0)),
@@ -77,7 +77,7 @@ class OrderServiceAsync:
                 order_type=data["order_type"],
                 side=data["side"],
                 amount=float(data["amount"]),
-                price=float(data.get("price", 0)),
+                price=data.get("price"),  # Pass price as-is (can be None for market orders)
             )
 
             # Update order with exchange details
@@ -213,7 +213,7 @@ class OrderServiceAsync:
                         "type": exchange_order["type"],
                         "side": exchange_order["side"],
                         "amount": float(exchange_order["amount"]),
-                        "price": float(exchange_order.get("price", 0)),
+                        "price": float(exchange_order.get("price", 0)) if exchange_order.get("price") is not None else None,
                         "status": exchange_order["status"],
                         "filled_amount": float(exchange_order.get("filled", 0)),
                         "remaining_amount": float(exchange_order.get("remaining", 0)),

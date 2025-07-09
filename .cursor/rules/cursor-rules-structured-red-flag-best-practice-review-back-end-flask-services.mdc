@@ -1,6 +1,4 @@
-ja---
-description: 
-globs: 
+---
 alwaysApply: true
 ---
 Structured “Red-Flag & Best-Practice” Review (Back End: Flask + Services)

@@ -40,6 +40,8 @@ def client(app):
     return TestClient(app)
 
 
+@pytest.mark.fast
+@pytest.mark.api
 def test_get_orders_success(client, mock_order_service):
     """Test successful GET /api/orders."""
     # Mock orders data
@@ -78,6 +80,8 @@ def test_get_orders_success(client, mock_order_service):
     mock_order_service.get_open_orders.assert_called_once_with(None)
 
 
+@pytest.mark.fast
+@pytest.mark.api
 def test_get_orders_with_symbol_filter(client, mock_order_service):
     """Test GET /api/orders with symbol filter."""
     mock_orders = [
@@ -141,6 +145,8 @@ def test_get_order_by_id_not_found(client, mock_order_service):
     assert "not found" in data["detail"].lower()
 
 
+@pytest.mark.fast
+@pytest.mark.api
 def test_place_order_success(client, mock_order_service):
     """Test successful POST /api/orders."""
     order_data = {
@@ -176,6 +182,80 @@ def test_place_order_success(client, mock_order_service):
     call_args = mock_order_service.place_order.call_args[0][0]
     assert call_args["symbol"] == "BTC/USD"
     assert call_args["order_type"] == "limit"  # type should be converted to order_type
+
+
+def test_place_market_order_success(client, mock_order_service):
+    """Test successful POST /api/orders for market orders with None price."""
+    order_data = {
+        "symbol": "BTC/USD",
+        "type": "market",
+        "side": "buy",
+        "amount": 0.1
+        # No price field for market orders
+    }
+    
+    mock_result = {
+        "id": "123",
+        "symbol": "BTC/USD",
+        "type": "market",
+        "side": "buy",
+        "amount": 0.1,
+        "price": None,
+        "status": "open"
+    }
+    
+    mock_order_service.place_order.return_value = mock_result
+    
+    response = client.post("/api/orders", json=order_data)
+    
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+    assert data["status"] == "open"
+    
+    # Verify that place_order was called with the correct data
+    mock_order_service.place_order.assert_called_once()
+    call_args = mock_order_service.place_order.call_args[0][0]
+    assert call_args["symbol"] == "BTC/USD"
+    assert call_args["order_type"] == "market"
+    assert "price" not in call_args or call_args["price"] is None
+
+
+def test_place_market_order_with_explicit_none_price(client, mock_order_service):
+    """Test successful POST /api/orders for market orders with explicit None price."""
+    order_data = {
+        "symbol": "BTC/USD",
+        "type": "market",
+        "side": "buy",
+        "amount": 0.1,
+        "price": None  # Explicit None price for market orders
+    }
+    
+    mock_result = {
+        "id": "123",
+        "symbol": "BTC/USD",
+        "type": "market",
+        "side": "buy",
+        "amount": 0.1,
+        "price": None,
+        "status": "open"
+    }
+    
+    mock_order_service.place_order.return_value = mock_result
+    
+    response = client.post("/api/orders", json=order_data)
+    
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+    assert data["status"] == "open"
+    
+    # Verify that place_order was called with the correct data
+    mock_order_service.place_order.assert_called_once()
+    call_args = mock_order_service.place_order.call_args[0][0]
+    assert call_args["symbol"] == "BTC/USD"
+    assert call_args["order_type"] == "market"
+    assert call_args["price"] is None
 
 
 def test_cancel_order_success(client, mock_order_service):
