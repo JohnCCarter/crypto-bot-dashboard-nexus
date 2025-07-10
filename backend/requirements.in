@@ -1,27 +1,62 @@
-ccxt
-numpy
-pandas
-pytest
-python-dotenv
-supabase
-websocket-client
-websockets
-black
-scikit-learn
-matplotlib
-requests
-bitfinex-api-py>=3.0.4
-# FastAPI-relaterade paket
-fastapi
-pydantic
-uvicorn
-python-dotenv
-supabase
-# Lägg till andra huvudpaket du faktiskt använder här
+# =============================================================================
+# CRYPTO BOT DASHBOARD NEXUS - Backend Requirements
+# =============================================================================
 
-# Development and CI/CD tools
-flake8
-isort
-pytest-cov
-coverage
-pip-tools
+# =============================================================================
+# CORE DEPENDENCIES
+# =============================================================================
+fastapi>=0.115.0
+uvicorn[standard]>=0.35.0
+pydantic>=2.11.0
+python-dotenv>=1.1.0
+
+# =============================================================================
+# TRADING & EXCHANGE
+# =============================================================================
+ccxt>=4.4.0
+bitfinex-api-py>=3.0.4
+websocket-client>=1.8.0
+websockets>=12.0
+
+# =============================================================================
+# DATA PROCESSING & ANALYSIS
+# =============================================================================
+numpy>=2.3.0
+pandas>=2.3.0
+scikit-learn>=1.7.0
+matplotlib>=3.10.0
+
+# =============================================================================
+# DATABASE & PERSISTENCE
+# =============================================================================
+supabase>=2.16.0
+SQLAlchemy>=2.0.0
+alembic>=1.16.0
+psycopg2-binary>=2.9.0
+
+# =============================================================================
+# HTTP & NETWORKING
+# =============================================================================
+requests>=2.32.0
+httpx[http2]>=0.28.0
+aiohttp>=3.12.0
+
+# =============================================================================
+# DEVELOPMENT & CI/CD TOOLS
+# =============================================================================
+black>=25.1.0
+isort>=6.0.0
+flake8>=7.3.0
+pytest>=8.4.0
+pytest-asyncio>=1.0.0
+pytest-cov>=6.2.0
+pytest-mock>=3.14.0
+coverage[toml]>=7.9.0
+pip-tools>=7.4.0
+
+# =============================================================================
+# UTILITIES
+# =============================================================================
+python-dateutil>=2.9.0
+pytz>=2025.0
+PyYAML>=6.0.0

@@ -4,8 +4,8 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from backend.services.exchange import ExchangeError
 from backend.services.cache_service import get_cache_service
+from backend.services.exchange import ExchangeError
 
 
 def get_position_type_from_metadata(symbol: str) -> str:
@@ -47,12 +47,12 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
     """
     cache = get_cache_service()
     cache_key = f"positions_{symbols or 'all'}"
-    
+
     # Check cache first (20 second TTL for positions)
     cached_positions = cache.get(cache_key, ttl_seconds=20)
     if cached_positions is not None:
         return cached_positions
-    
+
     # exchange_service = get_shared_exchange_service() # Removed as per edit hint
     # if not exchange_service:
     #     logging.warning("Exchange service not available, returning empty positions")
@@ -124,12 +124,14 @@ def fetch_live_positions(symbols: Optional[List[str]] = None) -> List[Dict[str, 
         raise ExchangeError(f"Failed to fetch positions: {str(e)}")
 
 
-async def fetch_live_positions_async(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+async def fetch_live_positions_async(
+    symbols: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
     """
     Asynkron version av fetch_live_positions.
-    
+
     Fetch live positions from Bitfinex using hybrid approach with caching.
-    This async function currently wraps the synchronous implementation 
+    This async function currently wraps the synchronous implementation
     but can be updated to use async API calls in the future.
 
     Args:

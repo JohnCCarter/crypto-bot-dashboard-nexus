@@ -2,10 +2,10 @@
 Minimal WebSocket mock test utan anrop för att isolera problemet
 """
 
-import pytest
 import logging
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from fastapi.websockets import WebSocket
 
 # Konfigurera loggning med minimal nivå
@@ -31,10 +31,10 @@ async def test_minimal_websocket_mock(mock_websocket):
     """
     # Importera WebSocket-funktioner men anropa dem inte
     from backend.api.websocket import ConnectionManager
-    
+
     # Skapa en connection manager men anropa den inte
     manager = ConnectionManager("test")
-    
+
     # Gör ett grundläggande assert
     assert isinstance(manager, ConnectionManager)
-    assert mock_websocket.send_json is not None 
+    assert mock_websocket.send_json is not None

@@ -2,27 +2,27 @@
 Portfolio management API endpoints for FastAPI.
 """
 
-from datetime import datetime
-from typing import Dict, Any, List, Optional
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import ValidationError
 
+from backend.api.dependencies import get_portfolio_manager, get_risk_manager
 from backend.api.models import (
-    ResponseStatus,
+    AllocationItem,
     PortfolioAllocationRequest,
     PortfolioAllocationResponse,
+    ResponseStatus,
+    RiskProfile,
+    SignalData,
     StrategySignalRequest,
     StrategySignalResponse,
-    SignalData,
-    AllocationItem,
-    RiskProfile,
 )
+from backend.services.live_portfolio_service_async import LivePortfolioServiceAsync
 from backend.services.portfolio_manager_async import PortfolioManagerAsync
 from backend.services.risk_manager_async import RiskManagerAsync
-from backend.api.dependencies import get_risk_manager, get_portfolio_manager
-from backend.services.live_portfolio_service_async import LivePortfolioServiceAsync
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ router = APIRouter(
 def get_live_portfolio_service() -> LivePortfolioServiceAsync:
     """
     Dependency for LivePortfolioServiceAsync.
-    
+
     Returns:
         LivePortfolioServiceAsync instance
     """
@@ -52,11 +52,11 @@ async def allocate_portfolio(
 ) -> Dict[str, Any]:
     """
     Calculate optimal portfolio allocation based on strategy signals and risk profile.
-    
+
     Parameters:
     -----------
     request: Portfolio allocation request with signals and risk parameters
-    
+
     Returns:
     --------
     PortfolioAllocationResponse: Portfolio allocation details
@@ -67,28 +67,27 @@ async def allocate_portfolio(
         allocations = await portfolio_manager.calculate_allocations(
             signal_dicts, request.risk_profile.value, request.max_allocation_percent
         )
-        
+
         # Calculate risk assessment for the allocations
-        risk_assessment = await risk_manager.assess_portfolio_risk({})  # Empty dict as we don't have actual positions here
-        
+        risk_assessment = await risk_manager.assess_portfolio_risk(
+            {}
+        )  # Empty dict as we don't have actual positions here
+
         return {
             "status": ResponseStatus.SUCCESS,
             "message": f"Calculated portfolio allocation for {len(allocations)} assets",
             "allocations": allocations,
             "timestamp": datetime.now(),
         }
-        
+
     except ValidationError as e:
         logger.error(f"Validation error in allocate_portfolio: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to calculate portfolio allocation: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to calculate portfolio allocation: {str(e)}"
+            detail=f"Failed to calculate portfolio allocation: {str(e)}",
         )
 
 
@@ -99,11 +98,11 @@ async def process_strategy_signals(
 ) -> Dict[str, Any]:
     """
     Process strategy signals to determine trading actions.
-    
+
     Parameters:
     -----------
     request: Strategy signal request with signals from various strategies
-    
+
     Returns:
     --------
     StrategySignalResponse: Recommended trading actions
@@ -112,25 +111,22 @@ async def process_strategy_signals(
         # Convert SignalData to Dict format expected by portfolio_manager
         signal_dicts = [signal.dict() for signal in request.signals]
         actions = await portfolio_manager.process_signals(signal_dicts)
-        
+
         return {
             "status": ResponseStatus.SUCCESS,
             "message": f"Processed {len(request.signals)} strategy signals",
             "actions": actions,
             "timestamp": datetime.now(),
         }
-        
+
     except ValidationError as e:
         logger.error(f"Validation error in process_strategy_signals: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to process strategy signals: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process strategy signals: {str(e)}"
+            detail=f"Failed to process strategy signals: {str(e)}",
         )
 
 
@@ -140,25 +136,25 @@ async def get_portfolio_status(
 ) -> Dict[str, Any]:
     """
     Get current portfolio status with allocations and metrics.
-    
+
     Returns:
     --------
     Dict: Portfolio status with allocations and metrics
     """
     try:
         portfolio_status = await portfolio_manager.get_portfolio_status()
-        
+
         return {
             "status": ResponseStatus.SUCCESS,
             "portfolio_status": portfolio_status,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get portfolio status: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get portfolio status: {str(e)}"
+            detail=f"Failed to get portfolio status: {str(e)}",
         )
 
 
@@ -169,11 +165,11 @@ async def rebalance_portfolio(
 ) -> Dict[str, Any]:
     """
     Rebalance portfolio to match target allocations.
-    
+
     Parameters:
     -----------
     target_allocations: Target allocations for rebalancing
-    
+
     Returns:
     --------
     Dict: Rebalancing results
@@ -181,27 +177,26 @@ async def rebalance_portfolio(
     try:
         # Konvertera target_allocations till dictionary-format som förväntas av portfolio_manager
         allocations_dict = [allocation.dict() for allocation in target_allocations]
-        
-        rebalance_results = await portfolio_manager.rebalance_portfolio(allocations_dict)
-        
+
+        rebalance_results = await portfolio_manager.rebalance_portfolio(
+            allocations_dict
+        )
+
         return {
             "status": ResponseStatus.SUCCESS,
             "message": "Portfolio rebalanced successfully",
             "rebalance_results": rebalance_results,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
     except ValidationError as e:
         logger.error(f"Validation error in rebalance_portfolio: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to rebalance portfolio: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to rebalance portfolio: {str(e)}"
+            detail=f"Failed to rebalance portfolio: {str(e)}",
         )
 
 
@@ -212,32 +207,34 @@ async def get_live_portfolio_snapshot(
 ) -> Dict[str, Any]:
     """
     Get live portfolio snapshot with current market prices.
-    
+
     Parameters:
     -----------
     symbols: Optional list of symbols to include in the snapshot
-    
+
     Returns:
     --------
     Dict: Live portfolio snapshot data
     """
     try:
         snapshot = await live_portfolio.get_live_portfolio_snapshot(symbols)
-        
+
         # Convert to serializable format
         positions = []
         for position in snapshot.positions:
-            positions.append({
-                "symbol": position.symbol,
-                "amount": position.amount,
-                "entry_price": position.entry_price,
-                "current_price": position.current_price,
-                "unrealized_pnl": position.unrealized_pnl,
-                "unrealized_pnl_pct": position.unrealized_pnl_pct,
-                "market_value": position.market_value,
-                "timestamp": position.timestamp.isoformat(),
-            })
-        
+            positions.append(
+                {
+                    "symbol": position.symbol,
+                    "amount": position.amount,
+                    "entry_price": position.entry_price,
+                    "current_price": position.current_price,
+                    "unrealized_pnl": position.unrealized_pnl,
+                    "unrealized_pnl_pct": position.unrealized_pnl_pct,
+                    "market_value": position.market_value,
+                    "timestamp": position.timestamp.isoformat(),
+                }
+            )
+
         result = {
             "total_value": snapshot.total_value,
             "available_balance": snapshot.available_balance,
@@ -247,18 +244,18 @@ async def get_live_portfolio_snapshot(
             "timestamp": snapshot.timestamp.isoformat(),
             "market_data_quality": snapshot.market_data_quality,
         }
-        
+
         return {
             "status": ResponseStatus.SUCCESS,
             "snapshot": result,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get live portfolio snapshot: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get live portfolio snapshot: {str(e)}"
+            detail=f"Failed to get live portfolio snapshot: {str(e)}",
         )
 
 
@@ -269,40 +266,42 @@ async def get_live_portfolio_performance(
 ) -> Dict[str, Any]:
     """
     Get live portfolio performance metrics.
-    
+
     Parameters:
     -----------
     timeframe: Timeframe for performance metrics (e.g. "24h", "7d", "30d")
-    
+
     Returns:
     --------
     Dict: Performance metrics
     """
     try:
         metrics = await live_portfolio.get_portfolio_performance(timeframe)
-        
+
         # Convert to serializable format
         metrics_data = []
         for metric in metrics:
-            metrics_data.append({
-                "name": metric.name,
-                "value": metric.value,
-                "unit": metric.unit,
-                "timestamp": metric.timestamp.isoformat(),
-            })
-        
+            metrics_data.append(
+                {
+                    "name": metric.name,
+                    "value": metric.value,
+                    "unit": metric.unit,
+                    "timestamp": metric.timestamp.isoformat(),
+                }
+            )
+
         return {
             "status": ResponseStatus.SUCCESS,
             "timeframe": timeframe,
             "performance_metrics": metrics_data,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get portfolio performance: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get portfolio performance: {str(e)}"
+            detail=f"Failed to get portfolio performance: {str(e)}",
         )
 
 
@@ -315,13 +314,13 @@ async def validate_live_trade(
 ) -> Dict[str, Any]:
     """
     Validate a potential trade against available balance and position limits.
-    
+
     Parameters:
     -----------
     symbol: Trading symbol
     amount: Trade amount
     trade_type: Type of trade (buy/sell)
-    
+
     Returns:
     --------
     Dict: Trade validation result
@@ -330,9 +329,9 @@ async def validate_live_trade(
         # Validate trade_type
         if trade_type not in ["buy", "sell", "long", "short"]:
             raise ValueError(f"Invalid trade type: {trade_type}")
-        
+
         validation = await live_portfolio.validate_trade(symbol, amount, trade_type)
-        
+
         # Convert to serializable format
         result = {
             "is_valid": validation.is_valid,
@@ -342,22 +341,19 @@ async def validate_live_trade(
             "max_trade_size": validation.max_trade_size,
             "timestamp": validation.timestamp.isoformat(),
         }
-        
+
         return {
             "status": ResponseStatus.SUCCESS,
             "validation": result,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
     except ValueError as e:
         logger.error(f"Validation error in validate_live_trade: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to validate trade: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to validate trade: {str(e)}"
-        ) 
+            detail=f"Failed to validate trade: {str(e)}",
+        )

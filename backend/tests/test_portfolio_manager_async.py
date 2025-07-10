@@ -1,18 +1,19 @@
 """Tester för asynkron portföljhantering med PortfolioManagerAsync."""
 
-import pytest
 import asyncio
 from datetime import datetime
-from unittest.mock import patch, AsyncMock, MagicMock, Mock, ANY
+from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 from backend.services.portfolio_manager_async import (
+    CombinedSignal,
     PortfolioManagerAsync,
     StrategyWeight,
-    CombinedSignal,
 )
 from backend.services.risk_manager_async import (
-    RiskManagerAsync,
     ProbabilityData,
+    RiskManagerAsync,
     RiskParameters,
 )
 from backend.strategies.sample_strategy import TradeSignal
@@ -22,7 +23,7 @@ from backend.strategies.sample_strategy import TradeSignal
 def mock_risk_manager():
     """Skapa en mockad RiskManagerAsync."""
     risk_manager = AsyncMock(spec=RiskManagerAsync)
-    
+
     # Konfigurera mock-parametrar
     risk_manager.params = RiskParameters(
         max_position_size=0.1,
@@ -34,7 +35,7 @@ def mock_risk_manager():
         min_signal_confidence=0.6,
         probability_weight=0.5,
     )
-    
+
     # Konfigurera mock-metoder
     risk_manager.calculate_intelligent_position_size.return_value = (
         1000.0,  # Position size
@@ -45,7 +46,7 @@ def mock_risk_manager():
             "position_size_factor": 1.2,
         },
     )
-    
+
     risk_manager.assess_portfolio_risk.return_value = {
         "overall_risk_score": 0.4,
         "risk_level": "moderate",
@@ -53,7 +54,7 @@ def mock_risk_manager():
         "total_exposure": 20000.0,
         "recommendations": ["Diversify further"],
     }
-    
+
     return risk_manager
 
 
@@ -133,8 +134,10 @@ class TestPortfolioManagerAsyncBasic:
             StrategyWeight(strategy_name="strat1", weight=0.6, enabled=True),
             StrategyWeight(strategy_name="strat2", weight=0.6, enabled=True),
         ]
-        
-        with patch('backend.services.portfolio_manager_async.logging.warning') as mock_warn:
+
+        with patch(
+            "backend.services.portfolio_manager_async.logging.warning"
+        ) as mock_warn:
             pm = PortfolioManagerAsync(mock_risk_manager, weights)
             mock_warn.assert_called_once()
             assert "weights sum to" in mock_warn.call_args[0][0].lower()
@@ -151,7 +154,7 @@ class TestPortfolioManagerAsyncSignals:
         combined_signal = await portfolio_manager.combine_strategy_signals(
             mock_strategy_signals, "BTC/USD", 50000.0
         )
-        
+
         assert isinstance(combined_signal, CombinedSignal)
         assert combined_signal.action in ["buy", "sell", "hold"]
         assert 0.0 <= combined_signal.combined_confidence <= 1.0
@@ -168,7 +171,7 @@ class TestPortfolioManagerAsyncSignals:
         combined_signal = await portfolio_manager.combine_strategy_signals(
             {}, "BTC/USD", 50000.0
         )
-        
+
         assert isinstance(combined_signal, CombinedSignal)
         assert combined_signal.action == "hold"
         assert combined_signal.combined_confidence == 0.5
@@ -177,7 +180,9 @@ class TestPortfolioManagerAsyncSignals:
         assert "No strategy signals" in combined_signal.metadata["reason"]
 
     @pytest.mark.asyncio
-    async def test_combine_strategy_signals_filter_low_confidence(self, portfolio_manager):
+    async def test_combine_strategy_signals_filter_low_confidence(
+        self, portfolio_manager
+    ):
         """Test att signaler med låg konfidens filtreras bort."""
         signals = {
             "ema_crossover": TradeSignal(
@@ -190,11 +195,11 @@ class TestPortfolioManagerAsyncSignals:
                 },
             ),
         }
-        
+
         combined_signal = await portfolio_manager.combine_strategy_signals(
             signals, "BTC/USD", 50000.0
         )
-        
+
         # När alla signaler filtreras, bör en hold-signal genereras
         assert combined_signal.action == "hold"
         assert len(combined_signal.individual_signals) == 0
@@ -215,15 +220,17 @@ class TestPortfolioManagerAsyncSignals:
                 },
             ),
         }
-        
-        with patch('backend.services.portfolio_manager_async.logging.warning') as mock_warn:
+
+        with patch(
+            "backend.services.portfolio_manager_async.logging.warning"
+        ) as mock_warn:
             combined_signal = await portfolio_manager.combine_strategy_signals(
                 signals, "BTC/USD", 50000.0
             )
-            
+
             mock_warn.assert_called_once()
             assert "unknown strategy" in mock_warn.call_args[0][0].lower()
-            
+
             # När alla signaler filtreras, bör en hold-signal genereras
             assert combined_signal.action == "hold"
             assert len(combined_signal.individual_signals) == 0
@@ -248,22 +255,20 @@ class TestPortfolioManagerAsyncPositionSizing:
                 confidence=0.8,
             ),
             individual_signals={
-                "ema_crossover": TradeSignal(
-                    action="buy", confidence=0.8, metadata={}
-                )
+                "ema_crossover": TradeSignal(action="buy", confidence=0.8, metadata={})
             },
             metadata={"symbol": "BTC/USD"},
         )
-        
+
         portfolio_value = 100000.0
         current_positions = {"ETH/USD": {"amount": 2.0, "entry_price": 3000.0}}
         symbol = "BTC/USD"
-        
+
         # Beräkna positionsstorlek
         size, metadata = await portfolio_manager.calculate_portfolio_position_size(
             combined_signal, portfolio_value, current_positions, symbol
         )
-        
+
         # Verifiera resultat
         assert size == 1000.0  # Från mock
         assert "symbol" in metadata
@@ -271,7 +276,7 @@ class TestPortfolioManagerAsyncPositionSizing:
         assert "combined_signal_action" in metadata
         assert metadata["combined_signal_action"] == "buy"
         assert "portfolio_diversification_factor" in metadata
-        
+
         # Verifiera att risk_manager.calculate_intelligent_position_size anropades
         mock_risk_manager.calculate_intelligent_position_size.assert_called_once()
         args = mock_risk_manager.calculate_intelligent_position_size.call_args[1]
@@ -285,12 +290,12 @@ class TestPortfolioManagerAsyncPositionSizing:
         # Tomt portfölj = ingen diversifiering = faktor 1.0
         factor = await portfolio_manager._calculate_diversification_factor({})
         assert factor == 1.0
-        
+
         # Fler positioner bör ge lägre faktor (mindre position per tillgång)
         positions = {f"sym{i}": {"amount": 1.0} for i in range(3)}
         factor = await portfolio_manager._calculate_diversification_factor(positions)
         assert factor < 1.0
-        
+
         # Max antal positioner bör ge lägsta faktor
         positions = {f"sym{i}": {"amount": 1.0} for i in range(5)}
         factor = await portfolio_manager._calculate_diversification_factor(positions)
@@ -316,31 +321,29 @@ class TestPortfolioManagerAsyncTradeExecution:
                 confidence=0.9,
             ),
             individual_signals={
-                "ema_crossover": TradeSignal(
-                    action="buy", confidence=0.9, metadata={}
-                )
+                "ema_crossover": TradeSignal(action="buy", confidence=0.9, metadata={})
             },
             metadata={"symbol": "BTC/USD"},
         )
-        
+
         # Konfigurera mock för validering
         mock_risk_manager.validate_order_with_probabilities.return_value = {
             "valid": True,
             "errors": [],
             "risk_assessment": {"risk_score": 0.3},
         }
-        
+
         # Testa om handel bör genomföras
         should_execute, metadata = await portfolio_manager.should_execute_trade(
             combined_signal, 100000.0, {}, "BTC/USD", 50000.0
         )
-        
+
         assert should_execute is True
         assert "confidence" in metadata
         assert metadata["confidence"] == 0.9
         assert "risk_validation" in metadata
         assert metadata["risk_validation"]["valid"] is True
-        
+
         # Verifiera att validate_order_with_probabilities anropades
         mock_risk_manager.validate_order_with_probabilities.assert_called_once()
 
@@ -362,19 +365,19 @@ class TestPortfolioManagerAsyncTradeExecution:
             individual_signals={},
             metadata={},
         )
-        
+
         # Konfigurera mock för misslyckad validering
         mock_risk_manager.validate_order_with_probabilities.return_value = {
             "valid": False,
             "errors": ["Position size too large"],
             "risk_assessment": {"risk_score": 0.6},
         }
-        
+
         # Testa om handel bör genomföras
         should_execute, metadata = await portfolio_manager.should_execute_trade(
             combined_signal, 100000.0, {}, "BTC/USD", 50000.0
         )
-        
+
         assert should_execute is False
         assert "risk_validation" in metadata
         assert metadata["risk_validation"]["valid"] is False
@@ -387,27 +390,30 @@ class TestPortfolioManagerAsyncFactory:
     @pytest.mark.asyncio
     async def test_get_portfolio_manager_async(self):
         """Test factory function get_portfolio_manager_async."""
-        with patch('backend.services.portfolio_manager_async.PortfolioManagerAsync') as mock_pm:
-            
+        with patch(
+            "backend.services.portfolio_manager_async.PortfolioManagerAsync"
+        ) as mock_pm:
+
             # Skapa mock-instanser
             mock_risk_manager = AsyncMock(spec=RiskManagerAsync)
             mock_strategy_weights = [
                 StrategyWeight(strategy_name="test_strategy", weight=1.0)
             ]
-            
+
             mock_instance = AsyncMock(spec=PortfolioManagerAsync)
             mock_pm.return_value = mock_instance
-            
+
             # Anropa factory function
-            from backend.services.portfolio_manager_async import get_portfolio_manager_async
-            
-            portfolio_manager = await get_portfolio_manager_async(
-                risk_manager=mock_risk_manager,
-                strategy_weights=mock_strategy_weights
+            from backend.services.portfolio_manager_async import (
+                get_portfolio_manager_async,
             )
-            
+
+            portfolio_manager = await get_portfolio_manager_async(
+                risk_manager=mock_risk_manager, strategy_weights=mock_strategy_weights
+            )
+
             # Verifiera att dependencies laddades korrekt
             mock_pm.assert_called_once_with(mock_risk_manager, mock_strategy_weights)
-            
+
             # Verifiera att instansen returnerades
-            assert portfolio_manager == mock_instance 
+            assert portfolio_manager == mock_instance

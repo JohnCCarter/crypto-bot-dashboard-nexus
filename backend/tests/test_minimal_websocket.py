@@ -12,4 +12,4 @@ async def test_minimal_websocket():
     Detta testar om problemet är relaterat till asyncio eller WebSocket-specifikt.
     """
     # Bara ett enkelt asynkront test utan WebSocket-beroenden
-    assert True 
+    assert True

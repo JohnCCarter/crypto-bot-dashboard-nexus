@@ -1,12 +1,13 @@
 """Tester för asynkron riskhantering med RiskManagerAsync."""
 
 import asyncio
+import json
 import os
 import tempfile
-import pytest
-import json
 from datetime import date
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from backend.services.risk_manager_async import (
     ProbabilityData,
@@ -99,7 +100,7 @@ class TestRiskManagerAsyncBasic:
             max_daily_loss=0.05,
             max_open_positions=5,
             min_signal_confidence=0.6,
-            probability_weight=0.5
+            probability_weight=0.5,
         )
 
     @pytest.mark.asyncio
@@ -123,21 +124,21 @@ class TestRiskManagerAsyncBasic:
         # Först skapa en fil med initial data för att undvika tom fil
         with open(temp_file, "w") as f:
             json.dump({"date": str(date.today()), "daily_pnl": 0.0}, f)
-            
+
         # Skapa manager med test-filen
         manager = RiskManagerAsync(risk_parameters, persistence_file=temp_file)
         # Ladda först för att initiera korrekt
         await manager._load_daily_pnl()
-        
+
         # Uppdatera värden
         manager.daily_pnl = 0.025
         manager.current_date = date.today()
 
         # Spara PnL och vänta tills operationen är klar
         await manager._save_daily_pnl()
-        
-        # Ge lite tid för att säkerställa att filen har skrivits
-        await asyncio.sleep(0.1)
+
+        # Ge minimal tid för att säkerställa att filen har skrivits
+        await asyncio.sleep(0.01)  # Reducera från 0.1s till 0.01s
 
         # Verifiera att data sparades korrekt
         with open(temp_file, "r") as f:
@@ -160,7 +161,7 @@ class TestRiskManagerAsyncValidation:
             max_daily_loss=0.05,
             max_open_positions=5,
             min_signal_confidence=0.6,
-            probability_weight=0.5
+            probability_weight=0.5,
         )
 
     @pytest.fixture
@@ -171,12 +172,12 @@ class TestRiskManagerAsyncValidation:
         manager.params = params
         manager.daily_pnl = 0.0
         manager.current_date = date.today()
-        
+
         # Konfigurera asynkrona metoder
         manager.validate_order.return_value = {"valid": True}
         manager.validate_order_with_probabilities.return_value = {"valid": True}
         manager.assess_portfolio_risk.return_value = {"risk_level": "low"}
-        
+
         return manager
 
     @pytest.mark.asyncio
@@ -192,11 +193,11 @@ class TestRiskManagerAsyncValidation:
         }
         portfolio_value = 100000.0  # $100,000
         current_positions = {}
-        
+
         # Konfigurera mock-returvärde
         risk_manager.validate_order.return_value = {
             "valid": True,
-            "risk_assessment": {"risk_level": "low", "risk_factors": []}
+            "risk_assessment": {"risk_level": "low", "risk_factors": []},
         }
 
         # Validera order
@@ -227,12 +228,12 @@ class TestRiskManagerAsyncValidation:
             probability_hold=0.2,
             confidence=0.8,
         )
-        
+
         # Konfigurera mock-returvärde
         risk_manager.validate_order_with_probabilities.return_value = {
             "valid": True,
             "probability_assessment": {"confidence": 0.8, "action_probability": 0.7},
-            "risk_assessment": {"risk_level": "low"}
+            "risk_assessment": {"risk_level": "low"},
         }
 
         # Validera order med sannolikheter
@@ -267,7 +268,7 @@ class TestRiskManagerAsyncValidation:
                 "pnl_percentage": -0.05,
             },
         }
-        
+
         # Konfigurera mock-returvärde
         risk_manager.assess_portfolio_risk.return_value = {
             "total_exposure": 25000.0,
@@ -304,7 +305,7 @@ class TestRiskManagerAsyncAdvanced:
             max_daily_loss=0.05,
             max_open_positions=5,
             min_signal_confidence=0.6,
-            probability_weight=0.5
+            probability_weight=0.5,
         )
 
     @pytest.fixture
@@ -315,14 +316,14 @@ class TestRiskManagerAsyncAdvanced:
         manager.params = params
         manager.daily_pnl = 0.0
         manager.current_date = date.today()
-        
+
         # Konfigurera asynkrona metoder
         manager.validate_order.return_value = {"valid": True}
         manager.validate_order_with_probabilities.return_value = {"valid": True}
         manager.assess_portfolio_risk.return_value = {"risk_level": "low"}
         manager.update_daily_pnl.return_value = None
         manager.reset_daily_pnl.return_value = None
-        
+
         return manager
 
     @pytest.mark.asyncio
@@ -330,10 +331,10 @@ class TestRiskManagerAsyncAdvanced:
         """Test att uppdatera daglig PnL."""
         # Konfigurera mock
         risk_manager.daily_pnl = 100.0
-        
+
         # Uppdatera PnL
         await risk_manager.update_daily_pnl(50.0)
-        
+
         # Verifiera att update_daily_pnl kallades
         risk_manager.update_daily_pnl.assert_called_once_with(50.0)
 
@@ -342,7 +343,7 @@ class TestRiskManagerAsyncAdvanced:
         """Test att återställa daglig PnL."""
         # Återställ PnL
         await risk_manager.reset_daily_pnl()
-        
+
         # Verifiera att reset_daily_pnl kallades
         risk_manager.reset_daily_pnl.assert_called_once()
 
@@ -360,7 +361,7 @@ class TestRiskManagerAsyncAdvanced:
             probability_hold=0.2,
             confidence=0.8,
         )
-        
+
         # Konfigurera mock-returvärde
         risk_manager.calculate_intelligent_position_size.return_value = (
             0.05,  # 5% av tillgängligt saldo
@@ -389,13 +390,13 @@ class TestRiskManagerAsyncAdvanced:
 async def test_get_risk_manager_async():
     """Test att hämta en singleton-instans av RiskManagerAsync."""
     from backend.services.risk_manager_async import get_risk_manager_async
-    
+
     # Hämta en instans
     manager = await get_risk_manager_async()
-    
+
     # Verifiera att det är en RiskManagerAsync-instans
     assert isinstance(manager, RiskManagerAsync)
-    
+
     # Hämta en till instans (bör vara samma)
     manager2 = await get_risk_manager_async()
-    assert manager is manager2 
+    assert manager is manager2

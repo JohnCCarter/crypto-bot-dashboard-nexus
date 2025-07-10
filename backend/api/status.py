@@ -3,11 +3,11 @@ Status API endpoints.
 """
 
 import os
-from typing import Dict, Any
+from typing import Any, Dict
 
 from fastapi import APIRouter
 
-from backend.api.models import StatusResponse, HealthResponse
+from backend.api.models import HealthResponse, StatusResponse
 
 # Create router
 router = APIRouter(
@@ -29,4 +29,4 @@ async def api_status() -> Dict[str, Any]:
         "status": "operational",
         "version": "0.1.0",
         "environment": os.getenv("ENVIRONMENT", "development"),
-    } 
+    }

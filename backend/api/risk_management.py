@@ -4,29 +4,29 @@ Risk management API for FastAPI.
 This module provides endpoints for risk management operations.
 """
 
-from typing import Optional, Dict, Any
 import logging
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from backend.api.dependencies import (
+    get_exchange_service,
+    get_order_service,
+    get_risk_manager,
+)
 from backend.api.models import (
     OrderData,
     OrderValidationResponse,
+    ProbabilityDataModel,
+    ResponseStatus,
     RiskAssessmentResponse,
     RiskScoreResponse,
-    ProbabilityDataModel,
-    ResponseStatus
 )
-from backend.api.dependencies import (
-    get_risk_manager,
-    get_order_service,
-    get_exchange_service
-)
-from backend.services.risk_manager_async import RiskManagerAsync, ProbabilityData
-from backend.services.order_service_async import OrderServiceAsync
-from backend.services.exchange_async import fetch_balance_async
 from backend.services.exchange import ExchangeService
+from backend.services.exchange_async import fetch_balance_async
+from backend.services.order_service_async import OrderServiceAsync
 from backend.services.positions_service_async import fetch_positions_async
+from backend.services.risk_manager_async import ProbabilityData, RiskManagerAsync
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ async def assess_portfolio_risk(
 ):
     """
     Assess the overall portfolio risk based on current positions and orders.
-    
+
     Returns:
         RiskAssessmentResponse: Risk assessment data
     """
@@ -53,27 +53,26 @@ async def assess_portfolio_risk(
         # Fetch current positions
         positions = await fetch_positions_async()
         positions_dict = {p["symbol"]: p for p in positions}
-        
+
         # Fetch pending orders
         open_orders = await order_service.get_open_orders()
         orders_dict = {order["id"]: order for order in open_orders}
-        
+
         # Assess risk
         risk_assessment = await risk_manager.assess_portfolio_risk(
-            current_positions=positions_dict,
-            pending_orders=orders_dict
+            current_positions=positions_dict, pending_orders=orders_dict
         )
-        
+
         return {
             "status": ResponseStatus.SUCCESS,
             "message": "Risk assessment completed successfully",
-            "risk_assessment": risk_assessment
+            "risk_assessment": risk_assessment,
         }
     except Exception as e:
         logger.error(f"Failed to assess portfolio risk: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to assess portfolio risk: {str(e)}"
+            detail=f"Failed to assess portfolio risk: {str(e)}",
         )
 
 
@@ -87,28 +86,28 @@ async def validate_order(
 ):
     """
     Validate an order against risk parameters.
-    
+
     Args:
         order_data: Order data to validate
         probability_data: Optional probability data for enhanced validation
-        
+
     Returns:
         OrderValidationResponse: Validation result
     """
     try:
         # Get portfolio value
         portfolio_value = 10000.0  # Default fallback value
-        
+
         if exchange_service:
             try:
                 balance_data = await fetch_balance_async(exchange_service)
                 if balance_data and "total" in balance_data:
                     # Use USDT or USD value if available
                     portfolio_value = float(
-                        balance_data["total"].get("USDT", 0.0) or 
-                        balance_data["total"].get("USD", 0.0)
+                        balance_data["total"].get("USDT", 0.0)
+                        or balance_data["total"].get("USD", 0.0)
                     )
-                    
+
                     # Fallback to BTC value if no USD/USDT
                     if portfolio_value <= 0:
                         btc_value = float(balance_data["total"].get("BTC", 0.0))
@@ -118,14 +117,14 @@ async def validate_order(
             except Exception as e:
                 # Log but continue with default value
                 logger.warning(f"Failed to get portfolio value: {e}")
-        
+
         # Get current positions
         positions = await fetch_positions_async()
         positions_dict = {p["symbol"]: p for p in positions}
-        
+
         # Prepare order_data in format expected by risk manager
         order_dict = order_data.dict()
-        
+
         # Convert probability data if provided
         probability_obj = None
         if probability_data:
@@ -133,16 +132,16 @@ async def validate_order(
                 probability_buy=probability_data.probability_buy,
                 probability_sell=probability_data.probability_sell,
                 probability_hold=probability_data.probability_hold,
-                confidence=probability_data.confidence
+                confidence=probability_data.confidence,
             )
-        
+
         # Validate order
         if probability_obj:
             validation_result = await risk_manager.validate_order_with_probabilities(
                 order_data=order_dict,
                 portfolio_value=portfolio_value,
                 current_positions=positions_dict,
-                probability_data=probability_obj
+                probability_data=probability_obj,
             )
         else:
             validation_result = await risk_manager.validate_order(
@@ -150,19 +149,19 @@ async def validate_order(
                 portfolio_value=portfolio_value,
                 current_positions=positions_dict,
             )
-        
+
         return {
             "status": ResponseStatus.SUCCESS,
             "message": "Order validation completed",
             "valid": validation_result["valid"],
             "errors": validation_result.get("errors", []),
-            "risk_assessment": validation_result.get("risk_assessment", {})
+            "risk_assessment": validation_result.get("risk_assessment", {}),
         }
     except Exception as e:
         logger.error(f"Failed to validate order: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to validate order: {str(e)}"
+            detail=f"Failed to validate order: {str(e)}",
         )
 
 
@@ -177,14 +176,14 @@ async def get_risk_score(
 ):
     """
     Calculate risk score based on probability data.
-    
+
     Args:
         symbol: Trading symbol
         probability_buy: Probability of buy action
         probability_sell: Probability of sell action
         probability_hold: Probability of hold action
         confidence: Confidence level
-        
+
     Returns:
         RiskScoreResponse: Risk score information
     """
@@ -194,12 +193,12 @@ async def get_risk_score(
             probability_buy=probability_buy,
             probability_sell=probability_sell,
             probability_hold=probability_hold,
-            confidence=confidence
+            confidence=confidence,
         )
-        
+
         # Calculate risk score
         risk_score = probability_data.get_risk_score()
-        
+
         return {
             "status": ResponseStatus.SUCCESS,
             "message": "Risk score calculated successfully",
@@ -210,14 +209,14 @@ async def get_risk_score(
                 "probability_buy": probability_buy,
                 "probability_sell": probability_sell,
                 "probability_hold": probability_hold,
-                "confidence": confidence
-            }
+                "confidence": confidence,
+            },
         }
     except Exception as e:
         logger.error(f"Failed to calculate risk score: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to calculate risk score: {str(e)}"
+            detail=f"Failed to calculate risk score: {str(e)}",
         )
 
 
@@ -232,4 +231,4 @@ def _get_risk_level(risk_score: float) -> str:
     elif risk_score < 0.8:
         return "high"
     else:
-        return "very_high" 
+        return "very_high"

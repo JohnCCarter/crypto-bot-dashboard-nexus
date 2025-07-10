@@ -5,9 +5,11 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from backend.services.exchange_async import _exchange_instance as async_exchange_instance
-from backend.services.exchange import ExchangeError
 from backend.services.cache_service import get_cache_service
+from backend.services.exchange import ExchangeError
+from backend.services.exchange_async import (
+    _exchange_instance as async_exchange_instance,
+)
 
 
 async def get_position_type_from_metadata_async(symbol: str) -> str:
@@ -23,13 +25,15 @@ async def get_position_type_from_metadata_async(symbol: str) -> str:
     # OBS: Detta är en förenklad implementation som använder statisk data
     # I en fullständig implementation skulle vi använda en databas eller annan persistent lagring
     # istället för att förlita oss på FastAPI app context
-    
+
     # För närvarande, returnera alltid "spot" som en förenkling
     # Detta kan utökas i framtiden för att hämta data från en databas
     return "spot"
 
 
-async def fetch_positions_async(symbols: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+async def fetch_positions_async(
+    symbols: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
     """
     Fetch positions asynchronously from Bitfinex using hybrid approach with caching.
 
@@ -47,14 +51,16 @@ async def fetch_positions_async(symbols: Optional[List[str]] = None) -> List[Dic
     """
     cache = get_cache_service()
     cache_key = f"positions_{symbols or 'all'}"
-    
+
     # Check cache first (20 second TTL for positions)
     cached_positions = cache.get(cache_key, ttl_seconds=20)
     if cached_positions is not None:
         return cached_positions
-    
+
     if not async_exchange_instance:
-        logging.warning("Async exchange service not available, returning empty positions")
+        logging.warning(
+            "Async exchange service not available, returning empty positions"
+        )
         return []
 
     try:
@@ -64,8 +70,7 @@ async def fetch_positions_async(symbols: Optional[List[str]] = None) -> List[Dic
             # Använd run_in_executor för att köra den synkrona metoden i en separat tråd
             loop = asyncio.get_event_loop()
             positions = await loop.run_in_executor(
-                None, 
-                lambda: async_exchange_instance.fetch_positions(symbols)
+                None, lambda: async_exchange_instance.fetch_positions(symbols)
             )
             traditional_positions = positions
             logging.info(
@@ -86,13 +91,12 @@ async def fetch_positions_async(symbols: Optional[List[str]] = None) -> List[Dic
             # Hämta balances asynkront
             loop = asyncio.get_event_loop()
             balances = await loop.run_in_executor(
-                None, 
-                lambda: async_exchange_instance.fetch_balance()
+                None, lambda: async_exchange_instance.fetch_balance()
             )
 
             # Get current market prices for major cryptocurrencies
             major_cryptos = ["TESTBTC", "TESTETH", "TESTLTC", "BTC", "ETH", "LTC"]
-            
+
             # Skapa tasks för alla ticker-anrop för att köra dem parallellt
             ticker_tasks = {}
             for crypto in major_cryptos:
@@ -104,13 +108,12 @@ async def fetch_positions_async(symbols: Optional[List[str]] = None) -> List[Dic
                         else crypto
                     )
                     symbol = f"{base_currency}/USD"
-                    
+
                     # Skapa en task för att hämta ticker-data
                     ticker_tasks[crypto] = loop.run_in_executor(
-                        None,
-                        lambda s=symbol: async_exchange_instance.fetch_ticker(s)
+                        None, lambda s=symbol: async_exchange_instance.fetch_ticker(s)
                     )
-            
+
             # Vänta på att alla ticker-tasks ska slutföras
             for crypto, future in ticker_tasks.items():
                 try:

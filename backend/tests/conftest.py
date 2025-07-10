@@ -1,9 +1,10 @@
 from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.services.exchange import ExchangeService
 from backend.fastapi_app import app
+from backend.services.exchange import ExchangeService
 
 
 @pytest.fixture(scope="session")
@@ -22,10 +23,11 @@ def test_client(fastapi_app):
     """
     # Sätt miljövariabler för snabbare testning
     import os
+
     os.environ["FASTAPI_DISABLE_WEBSOCKETS"] = "true"
     os.environ["FASTAPI_DISABLE_GLOBAL_NONCE_MANAGER"] = "true"
     os.environ["FASTAPI_DEV_MODE"] = "true"
-    
+
     return TestClient(fastapi_app)
 
 
@@ -53,20 +55,25 @@ def mock_services():
     """
     Mock alla tjänster en gång per session för snabbare testning.
     """
-    with patch("backend.services.websocket_market_service.get_websocket_client") as mock_ws_market, \
-         patch("backend.services.websocket_user_data_service.get_websocket_user_data_service") as mock_ws_user, \
-         patch("backend.services.bot_manager_async.get_bot_manager_async") as mock_bot_manager, \
-         patch("backend.services.global_nonce_manager.get_global_nonce_manager") as mock_nonce_manager:
-        
+    with patch(
+        "backend.services.websocket_market_service.get_websocket_client"
+    ) as mock_ws_market, patch(
+        "backend.services.websocket_user_data_service.get_websocket_user_data_service"
+    ) as mock_ws_user, patch(
+        "backend.services.bot_manager_async.get_bot_manager_async"
+    ) as mock_bot_manager, patch(
+        "backend.services.global_nonce_manager.get_global_nonce_manager"
+    ) as mock_nonce_manager:
+
         # Konfigurera mock-returnerade värden
         mock_ws_market.return_value = None
         mock_ws_user.return_value = None
         mock_bot_manager.return_value = None
         mock_nonce_manager.return_value = None
-        
+
         yield {
             "ws_market": mock_ws_market,
             "ws_user": mock_ws_user,
             "bot_manager": mock_bot_manager,
-            "nonce_manager": mock_nonce_manager
+            "nonce_manager": mock_nonce_manager,
         }

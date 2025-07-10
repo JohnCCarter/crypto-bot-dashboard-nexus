@@ -1,0 +1,11 @@
+{
+    "python.analysis.typeCheckingMode": "basic",
+    "cursor.composer.shouldAllowCustomModes": true,
+    "cursor.general.gitGraphIndexing": "enabled",
+    "markdown.validate.enabled": true,
+    "terminal.integrated.stickyScroll.enabled": true,
+    "terminal.integrated.suggest.enabled": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.createEnvironment.contentButton": "hide"
+    
+}

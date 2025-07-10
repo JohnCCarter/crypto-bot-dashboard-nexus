@@ -4,8 +4,8 @@ import sys
 import threading
 import time
 from datetime import UTC, datetime
-from typing import Any, Dict, Optional
 from threading import Lock
+from typing import Any, Dict, Optional
 
 from backend.persistence.utils import load_bot_state  # NEW IMPORT
 from backend.persistence.utils import save_bot_state
@@ -228,7 +228,7 @@ def get_bot_status():
 async def start_bot_async():
     """
     Asynkron version av start_bot.
-    
+
     Startar tradingboten med faktisk trading logic.
     Detta är en asynkron wrapper runt den synkrona funktionen.
     """
@@ -240,7 +240,7 @@ async def start_bot_async():
 async def stop_bot_async():
     """
     Asynkron version av stop_bot.
-    
+
     Stoppar tradingboten.
     Detta är en asynkron wrapper runt den synkrona funktionen.
     """
@@ -250,7 +250,7 @@ async def stop_bot_async():
 async def get_bot_status_async():
     """
     Asynkron version av get_bot_status.
-    
+
     Returnerar nuvarande status för tradingboten, uptime och senaste uppdateringstid.
     Detta är en asynkron wrapper runt den synkrona funktionen.
     """

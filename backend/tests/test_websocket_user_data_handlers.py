@@ -118,7 +118,7 @@ class TestWebSocketUserDataHandlers:
 
         # Mock callback
         position_callback = AsyncMock()
-        client.callbacks["positions"] = [position_callback]
+        client.position_callbacks = {"positions": [position_callback]}
 
         # Test position data (Bitfinex format)
         position_data = [
@@ -154,7 +154,7 @@ class TestWebSocketUserDataHandlers:
 
         # Mock callback
         margin_callback = AsyncMock()
-        client.callbacks["margin_info"] = [margin_callback]
+        client.margin_callbacks = {"margin_info": [margin_callback]}
 
         # Test margin data
         margin_data = [
@@ -182,7 +182,7 @@ class TestWebSocketUserDataHandlers:
 
         # Mock callback
         notif_callback = AsyncMock()
-        client.callbacks["notifications"] = [notif_callback]
+        client.notification_callbacks = {"notifications": [notif_callback]}
 
         # Test notification data
         notif_data = [

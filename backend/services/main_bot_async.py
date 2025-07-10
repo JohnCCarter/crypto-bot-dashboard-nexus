@@ -4,19 +4,29 @@ Async main trading bot implementation.
 This module provides an asynchronous implementation of the main trading bot logic.
 """
 
+import asyncio
 import logging
 import os
 import traceback
-import asyncio
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 
 from backend.services.config_service import ConfigService
-from backend.services.live_data_service_async import LiveDataServiceAsync, get_live_data_service_async
+from backend.services.live_data_service_async import (
+    LiveDataServiceAsync,
+    get_live_data_service_async,
+)
 from backend.services.notifications import Notifier
-from backend.services.risk_manager_async import RiskManagerAsync, RiskParameters, get_risk_manager_async
-from backend.services.trading_window_async import TradingWindowAsync, get_trading_window_async
+from backend.services.risk_manager_async import (
+    RiskManagerAsync,
+    RiskParameters,
+    get_risk_manager_async,
+)
+from backend.services.trading_window_async import (
+    TradingWindowAsync,
+    get_trading_window_async,
+)
 from backend.strategies.ema_crossover_strategy import run_strategy as run_ema
 from backend.strategies.fvg_strategy import run_strategy as run_fvg
 from backend.strategies.rsi_strategy import run_strategy as run_rsi
@@ -52,7 +62,9 @@ async def main_async():
         params["symbol"] = symbol
         params["timeframe"] = timeframe
 
-    logger.info(f"📊 [TradingBotAsync] Trading symbol: {symbol}, timeframe: {timeframe}")
+    logger.info(
+        f"📊 [TradingBotAsync] Trading symbol: {symbol}, timeframe: {timeframe}"
+    )
 
     # Initialize ASYNC LIVE DATA SERVICE
     logger.info("🔴 [TradingBotAsync] Initializing async live data service...")
@@ -132,15 +144,17 @@ async def main_async():
             logger.info(f"   Latest candle: {live_data_df.index[-1]}")
 
             #  RUN STRATEGIES WITH LIVE DATA
-            logger.info(" [TradingBotAsync] Running trading strategies with live data...")
+            logger.info(
+                " [TradingBotAsync] Running trading strategies with live data..."
+            )
 
             # Run strategies in parallel using asyncio.to_thread since they're CPU-bound
             strategy_tasks = [
                 asyncio.to_thread(run_ema, live_data_df, ema_params),
                 asyncio.to_thread(run_rsi, live_data_df, rsi_params),
-                asyncio.to_thread(run_fvg, live_data_df, fvg_params)
+                asyncio.to_thread(run_fvg, live_data_df, fvg_params),
             ]
-            
+
             # Await all strategy results
             strategy_results = await asyncio.gather(*strategy_tasks)
             ema_signal, rsi_signal, fvg_signal = strategy_results
@@ -170,12 +184,14 @@ async def main_async():
                 ),
                 risk_manager.calculate_intelligent_position_size(
                     fvg_signal.confidence, portfolio_value, current_positions
-                )
+                ),
             ]
-            
+
             # Await all position size calculations
             position_size_results = await asyncio.gather(*position_size_tasks)
-            ema_position_size = position_size_results[0][0]  # Extract just the size, not the metadata
+            ema_position_size = position_size_results[0][
+                0
+            ]  # Extract just the size, not the metadata
             rsi_position_size = position_size_results[1][0]
             fvg_position_size = position_size_results[2][0]
 
@@ -257,7 +273,9 @@ async def main_async():
                 notifier.send(notification_message)
 
             else:
-                logger.info(" [TradingBotAsync] No actionable signals - holding position")
+                logger.info(
+                    " [TradingBotAsync] No actionable signals - holding position"
+                )
                 notifier.send(
                     f"Trading bot analyzed live data - no trades executed. "
                     f"Current price: ${current_price:.2f}"

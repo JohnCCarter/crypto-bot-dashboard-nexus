@@ -43,10 +43,7 @@ class BitfinexClientWrapper:
             self.nonce_manager.register_api_key(api_key, "BitfinexClientWrapper")
 
         # Skapa Bitfinex-klienten
-        self.client = Client(
-            api_key=api_key,
-            api_secret=api_secret
-        )
+        self.client = Client(api_key=api_key, api_secret=api_secret)
 
         # Flaggor för anslutningsstatus
         self.is_ws_connected = False
@@ -72,12 +69,14 @@ class BitfinexClientWrapper:
     def _setup_ws_handlers(self):
         """Konfigurera grundläggande WebSocket-händelsehanterare"""
         # Hantera anslutningshändelser - endast 'open' stöds av bfxapi
-        self.client.wss.on('open', self._handle_ws_connected)
-        
+        self.client.wss.on("open", self._handle_ws_connected)
+
         # Använd notify för att hantera andra händelser som inte stöds som events
         # bfxapi stöder endast: 'open', 'notification'
         # Andra händelser hanteras via notify-callback istället
-        logger.info("Bitfinex WebSocket handlers konfigurerade - använder notify för händelser")
+        logger.info(
+            "Bitfinex WebSocket handlers konfigurerade - använder notify för händelser"
+        )
 
     def _handle_ws_connected(self, *args, **kwargs):
         """Hantera WebSocket-anslutning"""
@@ -256,17 +255,17 @@ class BitfinexClientWrapper:
             # Använd asynkron API
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             # Uppdaterad för version 3.0.4
             result = loop.run_until_complete(
                 self.client.rest.auth.submit_order(
                     symbol=symbol,
                     price=str(price),
                     amount=str(amount),
-                    market_type=order_type
+                    market_type=order_type,
                 )
             )
-            
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result
@@ -294,12 +293,10 @@ class BitfinexClientWrapper:
             # Använd asynkron API
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             # Uppdaterad för version 3.0.4
-            result = loop.run_until_complete(
-                self.client.rest.auth.orders(id=order_id)
-            )
-            
+            result = loop.run_until_complete(self.client.rest.auth.orders(id=order_id))
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result
@@ -324,12 +321,10 @@ class BitfinexClientWrapper:
             # Använd asynkron API
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             # Uppdaterad för version 3.0.4
-            result = loop.run_until_complete(
-                self.client.rest.auth.active_orders()
-            )
-            
+            result = loop.run_until_complete(self.client.rest.auth.active_orders())
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result
@@ -357,12 +352,12 @@ class BitfinexClientWrapper:
             # Använd asynkron API
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             # Uppdaterad för version 3.0.4
             result = loop.run_until_complete(
                 self.client.rest.auth.cancel_order(id=order_id)
             )
-            
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result
@@ -387,12 +382,10 @@ class BitfinexClientWrapper:
             # Använd asynkron API
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             # Uppdaterad för version 3.0.4
-            result = loop.run_until_complete(
-                self.client.rest.auth.wallets()
-            )
-            
+            result = loop.run_until_complete(self.client.rest.auth.wallets())
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result
@@ -417,12 +410,10 @@ class BitfinexClientWrapper:
             # Använd asynkron API
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             # Uppdaterad för version 3.0.4
-            result = loop.run_until_complete(
-                self.client.rest.auth.positions()
-            )
-            
+            result = loop.run_until_complete(self.client.rest.auth.positions())
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result
@@ -449,7 +440,7 @@ class BitfinexClientWrapper:
         try:
             # Uppdaterad för version 3.0.4 - inte asynkron i den nya versionen
             result = self.client.rest.public.get_t_ticker(symbol=symbol)
-            
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result
@@ -480,7 +471,7 @@ class BitfinexClientWrapper:
             result = self.client.rest.public.get_book(
                 symbol=symbol, precision=precision, len=str(length)
             )
-            
+
             self.api_calls_count += 1
             self.last_api_call_time = time.time()
             return result

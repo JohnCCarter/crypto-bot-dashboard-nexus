@@ -12,11 +12,12 @@ import hmac
 import json
 import logging
 import os
-from backend.services.global_nonce_manager import get_global_nonce_manager
-from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable, Dict, List, Optional
+
+from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper
+from backend.services.global_nonce_manager import get_global_nonce_manager
 
 try:
     import websockets
@@ -200,6 +201,7 @@ class Notification:
 
     mts: int
     notification_type: str
+    message_id: int
     notification_info: list
     code: int
     status: str
@@ -216,7 +218,7 @@ class BitfinexUserDataClient:
     def __init__(self, api_key: str, api_secret: str):
         """
         Initiera klienten med API-nycklar.
-        
+
         Args:
             api_key: Bitfinex API-nyckel
             api_secret: Bitfinex API-hemlighet
@@ -232,14 +234,12 @@ class BitfinexUserDataClient:
         self.position_callbacks = []
         self.margin_callbacks = []
         self.notification_callbacks = []
-        
+
         # Använd den nya BitfinexClientWrapper för WebSocket-hantering
         self.bitfinex_client = BitfinexClientWrapper(
-            api_key=api_key,
-            api_secret=api_secret,
-            use_rest_auth=True
+            api_key=api_key, api_secret=api_secret, use_rest_auth=True
         )
-        
+
         # Flagga för att indikera om vi använder wrapper eller legacy-kod
         self.use_wrapper = True
 
@@ -256,32 +256,36 @@ class BitfinexUserDataClient:
                 if success:
                     self.connected = True
                     self.authenticated = self.bitfinex_client.is_ws_authenticated
-                    
+
                     # Registrera callbacks för relevanta händelser
                     self._register_wrapper_callbacks()
-                    
-                    logger.info("Ansluten till Bitfinex User Data WebSocket via wrapper")
+
+                    logger.info(
+                        "Ansluten till Bitfinex User Data WebSocket via wrapper"
+                    )
                     return
                 else:
-                    logger.error("Kunde inte ansluta till Bitfinex WebSocket via wrapper")
+                    logger.error(
+                        "Kunde inte ansluta till Bitfinex WebSocket via wrapper"
+                    )
                     # Fallback till legacy-kod
                     self.use_wrapper = False
-            
+
             # Legacy-kod om wrapper inte används eller misslyckas
             if not websockets:
                 raise ImportError("websockets module is required")
-                
+
             self.websocket = await websockets.connect("wss://api.bitfinex.com/ws/2")
             self.connected = True
-            
+
             # Autentisera anslutningen
             await self._authenticate()
-            
+
             # Starta meddelandehantering i bakgrunden
             asyncio.create_task(self._handle_messages())
-            
+
             logger.info("Ansluten till Bitfinex User Data WebSocket")
-            
+
         except Exception as e:
             self.connected = False
             self.authenticated = False
@@ -293,86 +297,98 @@ class BitfinexUserDataClient:
         # Registrera callbacks för olika händelsetyper
         if self.bitfinex_client:
             # Orderhantering
-            self.bitfinex_client.register_ws_callback('order_new', 
-                                                     self._wrapper_handle_order_new)
-            self.bitfinex_client.register_ws_callback('order_update', 
-                                                     self._wrapper_handle_order_update)
-            self.bitfinex_client.register_ws_callback('order_cancel', 
-                                                     self._wrapper_handle_order_cancel)
-            
+            self.bitfinex_client.register_ws_callback(
+                "order_new", self._wrapper_handle_order_new
+            )
+            self.bitfinex_client.register_ws_callback(
+                "order_update", self._wrapper_handle_order_update
+            )
+            self.bitfinex_client.register_ws_callback(
+                "order_cancel", self._wrapper_handle_order_cancel
+            )
+
             # Trades/fills
-            self.bitfinex_client.register_ws_callback('trade_execution', 
-                                                     self._wrapper_handle_trade_execution)
-            
+            self.bitfinex_client.register_ws_callback(
+                "trade_execution", self._wrapper_handle_trade_execution
+            )
+
             # Wallet/balances
-            self.bitfinex_client.register_ws_callback('wallet_snapshot', 
-                                                     self._wrapper_handle_wallet_snapshot)
-            self.bitfinex_client.register_ws_callback('wallet_update', 
-                                                     self._wrapper_handle_wallet_update)
-            
+            self.bitfinex_client.register_ws_callback(
+                "wallet_snapshot", self._wrapper_handle_wallet_snapshot
+            )
+            self.bitfinex_client.register_ws_callback(
+                "wallet_update", self._wrapper_handle_wallet_update
+            )
+
             # Positions
-            self.bitfinex_client.register_ws_callback('position_snapshot', 
-                                                     self._wrapper_handle_position_snapshot)
-            self.bitfinex_client.register_ws_callback('position_new', 
-                                                     self._wrapper_handle_position_new)
-            self.bitfinex_client.register_ws_callback('position_update', 
-                                                     self._wrapper_handle_position_update)
-            self.bitfinex_client.register_ws_callback('position_close', 
-                                                     self._wrapper_handle_position_close)
-            
+            self.bitfinex_client.register_ws_callback(
+                "position_snapshot", self._wrapper_handle_position_snapshot
+            )
+            self.bitfinex_client.register_ws_callback(
+                "position_new", self._wrapper_handle_position_new
+            )
+            self.bitfinex_client.register_ws_callback(
+                "position_update", self._wrapper_handle_position_update
+            )
+            self.bitfinex_client.register_ws_callback(
+                "position_close", self._wrapper_handle_position_close
+            )
+
             # Margin info
-            self.bitfinex_client.register_ws_callback('margin_info_update', 
-                                                     self._wrapper_handle_margin_info_update)
-            
+            self.bitfinex_client.register_ws_callback(
+                "margin_info_update", self._wrapper_handle_margin_info_update
+            )
+
             # Notifications
-            self.bitfinex_client.register_ws_callback('notification', 
-                                                     self._wrapper_handle_notification)
+            self.bitfinex_client.register_ws_callback(
+                "notification", self._wrapper_handle_notification
+            )
 
     # Wrapper callback-hanterare
     def _wrapper_handle_order_new(self, data):
         """Hantera ny order via wrapper."""
         asyncio.create_task(self._handle_order_new(data))
-    
+
     def _wrapper_handle_order_update(self, data):
         """Hantera orderuppdatering via wrapper."""
         asyncio.create_task(self._handle_order_update(data))
-    
+
     def _wrapper_handle_order_cancel(self, data):
         """Hantera avbruten order via wrapper."""
         asyncio.create_task(self._handle_order_cancel(data))
-    
+
     def _wrapper_handle_trade_execution(self, data):
         """Hantera trade execution via wrapper."""
         asyncio.create_task(self._handle_trade_execution(data))
-    
+
     def _wrapper_handle_wallet_snapshot(self, data):
         """Hantera wallet snapshot via wrapper."""
         asyncio.create_task(self._handle_wallet_snapshot(data))
-    
+
     def _wrapper_handle_wallet_update(self, data):
         """Hantera wallet update via wrapper."""
         asyncio.create_task(self._handle_wallet_update(data))
-    
+
     def _wrapper_handle_position_snapshot(self, data):
         """Hantera position snapshot via wrapper."""
         asyncio.create_task(self._handle_position_snapshot(data))
-    
+
     def _wrapper_handle_position_new(self, data):
         """Hantera ny position via wrapper."""
         asyncio.create_task(self._handle_position_new(data))
-    
+
     def _wrapper_handle_position_update(self, data):
         """Hantera positionsuppdatering via wrapper."""
         asyncio.create_task(self._handle_position_update(data))
-    
+
     def _wrapper_handle_position_close(self, data):
         """Hantera stängd position via wrapper."""
         asyncio.create_task(self._handle_position_close(data))
-    
+
     def _wrapper_handle_margin_info_update(self, data):
         """Hantera margin info update via wrapper."""
         asyncio.create_task(self._handle_margin_info_update(data))
-    
+
     def _wrapper_handle_notification(self, data):
         """Hantera notifikation via wrapper."""
         asyncio.create_task(self._handle_notification(data))
@@ -381,13 +397,13 @@ class BitfinexUserDataClient:
         """Koppla från Bitfinex WebSocket API."""
         if not self.connected:
             return
-            
+
         try:
             if self.use_wrapper and self.bitfinex_client:
                 self.bitfinex_client.disconnect_websocket()
             elif self.websocket:
                 await self.websocket.close()
-                
+
             self.connected = False
             self.authenticated = False
             logger.info("Frånkopplad från Bitfinex User Data WebSocket")
@@ -1164,6 +1180,9 @@ class BitfinexUserDataClient:
                 notification = Notification(
                     mts=int(notification_data[0]),
                     notification_type=notification_data[1],
+                    message_id=(
+                        int(notification_data[2]) if len(notification_data) > 2 else 0
+                    ),
                     notification_info=(
                         notification_data[4] if len(notification_data) > 4 else []
                     ),
@@ -1218,8 +1237,12 @@ async def get_websocket_user_data_service():
     api_key = os.environ.get("BITFINEX_API_KEY")
     api_secret = os.environ.get("BITFINEX_API_SECRET")
     if not api_key or not api_secret:
-        logger.error("❌ BITFINEX_API_KEY eller BITFINEX_API_SECRET saknas i miljövariabler. Kan inte initiera WebSocket User Data-tjänst.")
-        raise RuntimeError("BITFINEX_API_KEY och BITFINEX_API_SECRET krävs för WebSocket User Data-tjänst.")
+        logger.error(
+            "❌ BITFINEX_API_KEY eller BITFINEX_API_SECRET saknas i miljövariabler. Kan inte initiera WebSocket User Data-tjänst."
+        )
+        raise RuntimeError(
+            "BITFINEX_API_KEY och BITFINEX_API_SECRET krävs för WebSocket User Data-tjänst."
+        )
     try:
         client = await get_user_data_client(api_key, api_secret)
         logger.info("✅ WebSocket User Data-tjänst initierad.")

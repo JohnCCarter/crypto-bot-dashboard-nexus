@@ -433,16 +433,85 @@ docker-compose up -d
 
 ## 🧪 Testing
 
+### Running Tests
+
+**Fast Parallel Testing (Recommended):**
+```bash
+# Run all tests in parallel (auto-detects CPU cores)
+python -m pytest backend/tests/
+
+# Run only fast tests in parallel
+python scripts/testing/run_tests_optimized.py --fast-only
+
+# Run specific test categories
+python scripts/testing/run_tests_optimized.py --category "risk"
+python scripts/testing/run_tests_optimized.py --markers "fast or api"
+```
+
+**Test Performance:**
+- **Parallel execution:** 8 workers (auto-detected)
+- **Speed improvement:** 47% faster (from 6min to 3:10min)
+- **Test categories:** Fast, slow, integration, unit, api, mock
+
+**Test Categories:**
+- `fast`: Tests < 1s each
+- `slow`: Tests > 5s each  
+- `integration`: End-to-end tests (requires server)
+- `unit`: Isolated unit tests
+- `api`: API endpoint tests
+- `mock`: Mock-based tests
+
+**Integration Tests:**
+```bash
+# Run integration tests (requires running server)
+pytest backend/tests/integration/ -v
+```
+
+**Test Configuration:**
+- Parallel execution enabled by default (`-n auto`)
+- Integration and slow tests excluded by default
+- Max 5 failures before stopping (`--maxfail=5`)
+- Duration reporting for slow tests
+
 ### Backend Testing
 
+The project uses a **smart test separation strategy** to optimize test execution and avoid false failures from server-dependent tests.
+
+#### Test Categories
+
 ```bash
-# Run all tests with coverage
+# Standard test run (excludes integration tests requiring server)
 pytest backend/tests/ -v --cov=backend
+
+# Run only integration tests (requires FastAPI server on localhost:8001)
+pytest backend/tests/ -v -m "integration"
 
 # Run specific test categories
 pytest backend/tests/test_strategies.py -v     # Trading strategies
 pytest backend/tests/test_indicators.py -v    # Technical indicators
-pytest backend/tests/test_routes.py -v        # API endpoints
+pytest backend/tests/test_fastapi_*.py -v     # FastAPI endpoints
+```
+
+#### Test Configuration
+
+- **Standard tests**: Exclude integration tests that require running server
+- **Integration tests**: Marked with `@pytest.mark.integration` and run separately
+- **Fast tests**: Unit tests and mocked API tests (recommended for development)
+- **Slow tests**: Tests with real API calls or complex setup
+
+#### Test Commands
+
+```bash
+# Development workflow (fast tests only)
+pytest backend/tests/ -v
+
+# Full test suite (including integration)
+pytest backend/tests/ -v -m "not integration"  # Standard tests
+pytest backend/tests/ -v -m "integration"      # Integration tests
+
+# Specific test files
+pytest backend/tests/test_fastapi_orders.py -v
+pytest backend/tests/test_risk_manager_async.py -v
 ```
 
 **Test Coverage:** 62+ tests covering:

@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional
 
 from backend.services.exchange import ExchangeService
 from backend.services.exchange_async import (
-    create_order_async,
-    fetch_order_async,
     cancel_order_async,
-    fetch_open_orders_async
+    create_order_async,
+    fetch_open_orders_async,
+    fetch_order_async,
 )
 from backend.services.validation import validate_order_data, validate_trading_pair
 
@@ -61,7 +61,9 @@ class OrderServiceAsync:
             "type": data["order_type"],
             "side": data["side"],
             "amount": float(data["amount"]),
-            "price": float(data.get("price", 0)) if data.get("price") is not None else None,
+            "price": (
+                float(data.get("price", 0)) if data.get("price") is not None else None
+            ),
             "status": "pending",
             "created_at": datetime.utcnow().isoformat(),
             "leverage": float(data.get("leverage", 1.0)),
@@ -77,7 +79,9 @@ class OrderServiceAsync:
                 order_type=data["order_type"],
                 side=data["side"],
                 amount=float(data["amount"]),
-                price=data.get("price"),  # Pass price as-is (can be None for market orders)
+                price=data.get(
+                    "price"
+                ),  # Pass price as-is (can be None for market orders)
             )
 
             # Update order with exchange details
@@ -121,7 +125,7 @@ class OrderServiceAsync:
                 exchange_order = await fetch_order_async(
                     exchange=self.exchange,
                     order_id=order["exchange_order_id"],
-                    symbol=order["symbol"]
+                    symbol=order["symbol"],
                 )
 
                 order.update(
@@ -159,7 +163,7 @@ class OrderServiceAsync:
             await cancel_order_async(
                 exchange=self.exchange,
                 order_id=order["exchange_order_id"],
-                symbol=order["symbol"]
+                symbol=order["symbol"],
             )
 
             order["status"] = "cancelled"
@@ -170,7 +174,9 @@ class OrderServiceAsync:
             order["error"] = str(e)
             return False
 
-    async def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def get_open_orders(
+        self, symbol: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get all open orders asynchronously.
 
@@ -183,10 +189,9 @@ class OrderServiceAsync:
         # First, try to get open orders from the exchange
         try:
             exchange_orders = await fetch_open_orders_async(
-                exchange=self.exchange,
-                symbol=symbol
+                exchange=self.exchange, symbol=symbol
             )
-            
+
             # Update local order cache with exchange data
             for exchange_order in exchange_orders:
                 order_id = None
@@ -195,14 +200,16 @@ class OrderServiceAsync:
                     if local_order.get("exchange_order_id") == exchange_order["id"]:
                         order_id = local_id
                         break
-                
+
                 if order_id:
                     # Update existing order
-                    self.orders[order_id].update({
-                        "status": exchange_order["status"],
-                        "filled_amount": exchange_order["filled"],
-                        "remaining_amount": exchange_order["remaining"],
-                    })
+                    self.orders[order_id].update(
+                        {
+                            "status": exchange_order["status"],
+                            "filled_amount": exchange_order["filled"],
+                            "remaining_amount": exchange_order["remaining"],
+                        }
+                    )
                 else:
                     # Create new order entry if not in local cache
                     new_id = str(uuid.uuid4())
@@ -213,7 +220,11 @@ class OrderServiceAsync:
                         "type": exchange_order["type"],
                         "side": exchange_order["side"],
                         "amount": float(exchange_order["amount"]),
-                        "price": float(exchange_order.get("price", 0)) if exchange_order.get("price") is not None else None,
+                        "price": (
+                            float(exchange_order.get("price", 0))
+                            if exchange_order.get("price") is not None
+                            else None
+                        ),
                         "status": exchange_order["status"],
                         "filled_amount": float(exchange_order.get("filled", 0)),
                         "remaining_amount": float(exchange_order.get("remaining", 0)),
@@ -222,7 +233,7 @@ class OrderServiceAsync:
         except Exception as e:
             # If exchange call fails, just use local cache
             pass
-        
+
         # Return orders from local cache
         open_orders = [
             order for order in self.orders.values() if order["status"] == "open"
@@ -239,18 +250,18 @@ _order_service_async: Optional[OrderServiceAsync] = None
 
 
 async def get_order_service_async(
-    exchange_service: ExchangeService
+    exchange_service: ExchangeService,
 ) -> OrderServiceAsync:
     """
     Get or create a singleton instance of OrderServiceAsync.
-    
+
     Args:
         exchange_service: Exchange service instance
-        
+
     Returns:
         OrderServiceAsync: Async order service instance
     """
     global _order_service_async
     if _order_service_async is None:
         _order_service_async = OrderServiceAsync(exchange_service)
-    return _order_service_async 
+    return _order_service_async

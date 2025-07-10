@@ -3,10 +3,11 @@
 Snabbare version som undviker FastAPI-app startup.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi.testclient import TestClient
+
+import pytest
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from backend.api import config as config_api
 from backend.services.portfolio_manager import StrategyWeight
@@ -24,7 +25,7 @@ def fast_app():
 def mock_config_service():
     """Create a mock config service."""
     mock_service = AsyncMock()
-    
+
     # Setup mock responses
     mock_service.get_config_summary_async.return_value = {
         "config_file": "backend/config.json",
@@ -43,21 +44,22 @@ def mock_config_service():
             "risk_threshold": 0.8,
         },
     }
-    
+
     return mock_service
 
 
 @pytest.fixture
 def client(fast_app, mock_config_service):
     """Create a test client with mocked dependencies."""
-    
+
     # Override the get_config_service dependency
     def get_mock_config_service():
         return mock_config_service
-    
+
     from backend.api.dependencies import get_config_service
+
     fast_app.dependency_overrides[get_config_service] = get_mock_config_service
-    
+
     return TestClient(fast_app)
 
 
@@ -86,4 +88,4 @@ def test_update_config_fast(client):
     response = client.post("/api/config", json=test_data)
     assert response.status_code == 200
     assert response.json()["success"] is True
-    assert response.json()["updated_fields"] == ["risk", "strategy"] 
+    assert response.json()["updated_fields"] == ["risk", "strategy"]

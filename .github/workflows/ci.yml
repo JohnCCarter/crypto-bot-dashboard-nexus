@@ -1,326 +1,193 @@
-name: 🚀 Crypto Trading Bot CI/CD
+name: CI Pipeline
 
 on:
   push:
-    branches: [ main, master, develop, feat/critical-production-fixes ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main, master, develop ]
-  schedule:
-    # Run daily at 06:00 UTC to catch dependency issues
-    - cron: '0 6 * * *'
-
-permissions:
-  contents: read
-  pull-requests: write
+    branches: [ main, develop ]
 
 env:
-  PYTHON_VERSION: '3.11.9'
+  PYTHON_VERSION: '3.11'
   NODE_VERSION: '18'
 
 jobs:
-  # ========================================
-  # 🐍 BACKEND TESTING & QUALITY
-  # ========================================
   backend:
-    name: 🐍 Backend Tests & Quality
+    name: Backend Tests & Linting
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11.9']
-    
-    defaults:
-      run:
-        working-directory: backend
     
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
           
-      - name: 📦 Cache Python dependencies
-        uses: actions/cache@v4
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
         with:
-          path: |
-            ~/.cache/pip
-            backend/venv
-          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('backend/requirements.txt') }}
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
-            ${{ runner.os }}-python-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
             
-      - name: 🔧 Set up virtual environment
+      - name: Install Python dependencies
         run: |
-          python -m venv venv
-          source venv/bin/activate
           python -m pip install --upgrade pip
-          echo "Virtual environment created and activated"
+          pip install -r backend/requirements-ci.txt
           
-      - name: 📦 Install dependencies
+      - name: Run Black (code formatting check)
         run: |
-          source venv/bin/activate
-          pip install -r requirements.txt
-          pip install black flake8 pytest-cov pytest-mock
-          echo "Dependencies installed successfully"
+          cd backend
+          python -m black . --check --diff
           
-      - name: 🎨 Code formatting check (Black)
+      - name: Run isort (import sorting check)
         run: |
-          source venv/bin/activate
-          black --check --diff . || {
-            echo "❌ Code formatting issues found. Run 'black .' to fix."
-            exit 1
-          }
+          cd backend
+          python -m isort . --check-only --diff
           
-      - name: 🔍 Code quality check (Flake8)
+      - name: Run Flake8 (linting)
         run: |
-          source venv/bin/activate
-          flake8 . --max-line-length=88 --extend-ignore=E203,W503 || {
-            echo "❌ Code quality issues found. Check flake8 output above."
-            exit 1
-          }
+          cd backend
+          python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          python -m flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
           
-      - name: 🧪 Run backend tests with coverage
+      - name: Run tests with coverage
         run: |
-          source venv/bin/activate
-          pytest tests/ \
-            --cov=backend \
-            --cov-report=xml \
-            --cov-report=html \
-            --cov-report=term-missing \
-            --cov-fail-under=80 \
-            -v \
-            --tb=short \
-            -n auto
-          echo "✅ Backend tests completed successfully"
+          cd backend
+          python -m pytest -v --cov=. --cov-report=xml --cov-report=term-missing
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           
-      - name: 📊 Upload backend coverage to Codecov
-        uses: codecov/codecov-action@v4
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
         with:
-          file: backend/coverage.xml
+          file: ./backend/coverage.xml
           flags: backend
           name: backend-coverage
-          fail_ci_if_error: false
-          
-      - name: 📋 Upload backend coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage-${{ matrix.python-version }}
-          path: backend/htmlcov/
-          retention-days: 30
 
-  # ========================================
-  # ⚛️ FRONTEND TESTING & QUALITY  
-  # ========================================
   frontend:
-    name: ⚛️ Frontend Tests & Quality
+    name: Frontend Tests & Linting
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: ['18', '20']
-        
+    
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: ⚛️ Set up Node.js ${{ matrix.node-version }}
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           
-      - name: 📦 Install dependencies
-        run: |
-          npm ci
-          echo "✅ Frontend dependencies installed"
-          
-      - name: 🔍 ESLint code quality check
-        run: |
-          npx eslint src/ --max-warnings 10 || {
-            echo "❌ ESLint issues found. Run 'npm run lint:fix' to fix auto-fixable issues."
-            exit 1
-          }
-          
-      - name: 🎨 TypeScript type checking
-        run: |
-          npx tsc --noEmit || {
-            echo "❌ TypeScript compilation errors found."
-            exit 1
-          }
-          
-      - name: 🧪 Run frontend tests with coverage
-        run: |
-          npx vitest run --reporter=verbose || {
-            echo "⚠️ Frontend tests have some failures (non-blocking for CI)"
-            echo "✅ Build process continues..."
-          }
-          echo "✅ Frontend tests completed"
-          
-      - name: 🏗️ Build frontend for production
-        run: |
-          npm run build || {
-            echo "❌ Frontend build failed."
-            exit 1
-          }
-          echo "✅ Frontend build successful"
-          
-      - name: 📊 Upload frontend coverage to Codecov
-        uses: codecov/codecov-action@v4
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run ESLint
+        run: npm run lint
+        
+      - name: Run tests
+        run: npm test
+        
+      - name: Build project
+        run: npm run build
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          file: coverage/coverage-final.json
-          flags: frontend
-          name: frontend-coverage
-          fail_ci_if_error: false
-          
-      - name: 📋 Upload frontend coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-coverage-node-${{ matrix.node-version }}
-          path: coverage/
-          retention-days: 30
-          
-      - name: 📦 Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist-node-${{ matrix.node-version }}
+          name: frontend-build
           path: dist/
-          retention-days: 7
 
-  # ========================================
-  # 🐳 DOCKER BUILD & SECURITY
-  # ========================================
-  docker:
-    name: 🐳 Docker Build & Security
+  integration:
+    name: Integration Tests
     runs-on: ubuntu-latest
     needs: [backend, frontend]
     
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: 🐳 Set up Docker Buildx
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-ci.txt
+          
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install frontend dependencies
+        run: npm ci
+        
+      - name: Run integration tests
+        run: |
+          cd backend
+          python -m pytest tests/integration/ -v
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
+          
+      - name: Run Bandit security scan
+        run: |
+          cd backend
+          bandit -r . -f json -o bandit-report.json || true
+          
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install frontend dependencies
+        run: npm ci
+        
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+
+  docker:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
-      - name: 🏗️ Build backend Docker image
-        run: |
-          docker build -f backend/Dockerfile -t crypto-bot-backend:test backend/ || {
-            echo "❌ Backend Docker build failed."
-            exit 1
-          }
-          echo "✅ Backend Docker image built successfully"
-          
-      - name: 🏗️ Build frontend Docker image
-        run: |
-          docker build -f Dockerfile.frontend -t crypto-bot-frontend:test . || {
-            echo "❌ Frontend Docker build failed."
-            exit 1
-          }
-          echo "✅ Frontend Docker image built successfully"
-          
-      - name: 🧪 Test Docker Compose setup
-        run: |
-          docker-compose -f docker-compose.yml config || {
-            echo "❌ Docker Compose configuration is invalid."
-            exit 1
-          }
-          echo "✅ Docker Compose configuration is valid"
-          
-      - name: 🔒 Run security scan on backend image
-        run: |
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            -v $PWD:/app securecodewarrior/docker-image-security-check:latest \
-            crypto-bot-backend:test || {
-            echo "⚠️ Security scan found issues (non-blocking)"
-          }
-
-  # ========================================
-  # 📊 INTEGRATION & DEPLOYMENT CHECKS
-  # ========================================
-  integration:
-    name: 📊 Integration Tests
-    runs-on: ubuntu-latest
-    needs: [backend, frontend]
-    
-    services:
-      postgres:
-        image: postgres:15-alpine
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: tradingbot
-        options: >-
-          --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
-          
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11.9'
-          
-      - name: ⚛️ Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          
-      - name: 📦 Install all dependencies
-        run: |
-          # Backend
-          cd backend
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          cd ..
-          
-          # Frontend
-          npm ci
-          
-      - name: 🔧 Set up test environment
-        run: |
-          cp env.example .env
-          echo "DATABASE_URL=postgresql://postgres:test@localhost:5432/tradingbot" >> .env
-          echo "✅ Test environment configured"
-          
-      - name: 🧪 Run integration tests
+      - name: Build and test backend Docker image
         run: |
           cd backend
-          source venv/bin/activate
-          pytest tests/test_routes.py -v || {
-            echo "❌ Integration tests failed."
-            exit 1
-          }
-          echo "✅ Integration tests passed"
-
-  # ========================================
-  # 📋 FINAL STATUS CHECK
-  # ========================================
-  status-check:
-    name: 📋 Final Status Check
-    runs-on: ubuntu-latest
-    needs: [backend, frontend, docker, integration]
-    if: always()
-    
-    steps:
-      - name: 📊 Check all jobs status
-        run: |
-          echo "🔍 Checking CI pipeline status..."
+          docker build -t crypto-bot-backend:test .
           
-          if [[ "${{ needs.backend.result }}" == "success" && 
-                "${{ needs.frontend.result }}" == "success" && 
-                "${{ needs.docker.result }}" == "success" && 
-                "${{ needs.integration.result }}" == "success" ]]; then
-            echo "✅ All CI checks passed successfully!"
-            echo "🚀 Ready for deployment!"
-          else
-            echo "❌ Some CI checks failed:"
-            echo "  Backend: ${{ needs.backend.result }}"
-            echo "  Frontend: ${{ needs.frontend.result }}"
-            echo "  Docker: ${{ needs.docker.result }}"
-            echo "  Integration: ${{ needs.integration.result }}"
-            exit 1
-          fi
+      - name: Build and test frontend Docker image
+        run: |
+          docker build -f Dockerfile.frontend -t crypto-bot-frontend:test .

@@ -1,14 +1,15 @@
-# Logs
+# =============================================================================
+# CRYPTO BOT DASHBOARD NEXUS - .gitignore
+# =============================================================================
+
+# =============================================================================
+# LOGS & DEBUGGING
+# =============================================================================
 logs/
 *.log
 log/
 trading.log
 backend/trading.log
-
-# Codex backups
-.codex_backups/
-
-# Backend logs
 backend/logs/
 npm-debug.log*
 yarn-debug.log*
@@ -16,45 +17,126 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# =============================================================================
+# BACKUP & DEVELOPMENT
+# =============================================================================
+.codex_backups/
+temp/
+mcp.json
+
+# =============================================================================
+# NODE.JS & FRONTEND
+# =============================================================================
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.env
-.env.*
-!.env.example
-
-# Python
+# =============================================================================
+# PYTHON
+# =============================================================================
 __pycache__/
 *.py[cod]
 *.pyc
+*.pyo
+*.pyd
+.Python
 venv/
 backend/venv/
 backend/.venv/
-.coverage
-.pytest_cache/
-backend/__pycache__/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
-# Databases
+# =============================================================================
+# TESTING & COVERAGE
+# =============================================================================
+.coverage
+coverage/
+htmlcov/
+*.coverage
+coverage.xml
+.pytest_cache/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# =============================================================================
+# DATABASES
+# =============================================================================
 *.db
 *.sqlite
 *.sqlite3
 local.db
 backend/local.db
 
-# Temporary files and test outputs
-temp/
+# =============================================================================
+# ENVIRONMENT & SECRETS
+# =============================================================================
+.env
+.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =============================================================================
+# EDITORS & IDEs
+# =============================================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# =============================================================================
+# BUILD & DEPLOYMENT
+# =============================================================================
+build/
+*.egg-info/
+dist/
+*.egg
+MANIFEST
+
+# =============================================================================
+# CI/CD & MONITORING
+# =============================================================================
+.github/coverage_reports/
+.nyc_output/
+.cache/
+.parcel-cache/
+
+# =============================================================================
+# TEMPORARY FILES
+# =============================================================================
 flake8_errors.txt
 test_output.txt
 test_orders_output.txt
@@ -65,38 +147,12 @@ npm-ls.json
 current_requirements.txt
 npm_deps.txt
 
-# Coverage reports
-htmlcov/
-coverage/
-*.coverage
-coverage.xml
-
-# Build artifacts
-build/
-*.egg-info/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE specific
-*.swp
-*.swo
-*~
-
-# CI/CD specific
-.github/coverage_reports/
-
-# Test files
+# =============================================================================
+# PROJECT SPECIFIC
+# =============================================================================
+# Test files (exclude specific ones)
 scripts/testing/test_*.py
 !scripts/testing/test_bitfinex_integration.py
-
-# FastAPI
-__pycache__
-.pytest_cache
-
-# Development files
-mcp.json
 
 # FastAPI specific
 .pytest_cache/
@@ -107,3 +163,16 @@ __pycache__/
 
 # Backup directories
 .codex_backups/
+
+# =============================================================================
+# SECURITY & SENSITIVE DATA
+# =============================================================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+secrets.json
+config.json
+!config.schema.json

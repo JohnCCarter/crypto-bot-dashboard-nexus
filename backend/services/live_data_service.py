@@ -19,7 +19,7 @@ class LiveDataService:
     def __init__(self, exchange_id: str = "bitfinex"):
         """
         Initialize live data service for PUBLIC market data only.
-        
+
         No API keys needed - only fetches public market data (OHLCV, ticker, orderbook).
         This eliminates nonce conflicts with authenticated services.
 

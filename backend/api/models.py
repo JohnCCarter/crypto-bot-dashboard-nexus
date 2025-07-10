@@ -2,15 +2,16 @@
 Pydantic models for API request and response validation.
 """
 
-from typing import Dict, Optional, Any, List
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field, validator
 
 
 class StatusResponse(BaseModel):
     """API status response model."""
-    
+
     status: str = Field(..., description="Current system status")
     version: str = Field(..., description="API version")
     environment: str = Field(..., description="Current environment")
@@ -18,7 +19,7 @@ class StatusResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Standard error response model."""
-    
+
     error: str = Field(..., description="Error message")
     details: Optional[Dict[str, Any]] = Field(
         None, description="Additional error details"
@@ -27,13 +28,13 @@ class ErrorResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response model."""
-    
+
     status: str = Field(..., description="Health status")
 
 
 class Balance(BaseModel):
     """Balance model for a single currency."""
-    
+
     currency: str = Field(..., description="Currency code")
     available: float = Field(..., description="Available balance")
     reserved: float = Field(..., description="Reserved balance")
@@ -42,13 +43,13 @@ class Balance(BaseModel):
 
 class BalancesResponse(BaseModel):
     """Response model for multiple balances."""
-    
+
     balances: List[Balance] = Field(..., description="List of balances")
 
 
 class OrderType(str, Enum):
     """Order type enumeration."""
-    
+
     MARKET = "market"
     LIMIT = "limit"
     STOP = "stop"
@@ -58,14 +59,14 @@ class OrderType(str, Enum):
 
 class OrderSide(str, Enum):
     """Order side enumeration."""
-    
+
     BUY = "buy"
     SELL = "sell"
 
 
 class OrderStatus(str, Enum):
     """Order status enumeration."""
-    
+
     OPEN = "open"
     CLOSED = "closed"
     CANCELLED = "cancelled"
@@ -75,7 +76,7 @@ class OrderStatus(str, Enum):
 
 class Order(BaseModel):
     """Order model."""
-    
+
     id: str = Field(..., description="Order ID")
     symbol: str = Field(..., description="Trading pair symbol")
     type: OrderType = Field(..., description="Order type")
@@ -94,30 +95,28 @@ class Order(BaseModel):
 
 class OrdersResponse(BaseModel):
     """Response model for multiple orders."""
-    
+
     orders: List[Order] = Field(..., description="List of orders")
 
 
 class OrderRequest(BaseModel):
     """Request model for placing an order."""
-    
+
     symbol: str = Field(..., description="Trading pair symbol")
     type: OrderType = Field(..., description="Order type")
     side: OrderSide = Field(..., description="Order side")
     price: Optional[float] = Field(None, description="Order price")
     amount: float = Field(..., description="Order amount")
-    stop_price: Optional[float] = Field(
-        None, description="Stop price for stop orders"
-    )
+    stop_price: Optional[float] = Field(None, description="Stop price for stop orders")
     trailing_amount: Optional[float] = Field(
         None, description="Trailing amount for trailing stop orders"
     )
 
-    @validator('price', always=True)
+    @validator("price", always=True)
     def price_required_for_limit(cls, v, values):
-        order_type = values.get('type')
-        if order_type == 'limit' and v is None:
-            raise ValueError('price is required for limit orders')
+        order_type = values.get("type")
+        if order_type == "limit" and v is None:
+            raise ValueError("price is required for limit orders")
         return v
 
 
@@ -127,7 +126,7 @@ OrderCreateModel = OrderRequest
 
 class Strategy(BaseModel):
     """Strategy model for backtesting."""
-    
+
     id: str = Field(..., description="Strategy ID")
     name: str = Field(..., description="Strategy name")
     description: str = Field(..., description="Strategy description")
@@ -135,13 +134,13 @@ class Strategy(BaseModel):
 
 class StrategiesResponse(BaseModel):
     """Response model for available strategies."""
-    
+
     strategies: List[Strategy] = Field(..., description="List of strategies")
 
 
 class BacktestRequest(BaseModel):
     """Request model for running a backtest."""
-    
+
     strategy_id: str = Field(..., description="Strategy ID")
     symbol: str = Field(..., description="Trading pair symbol")
     timeframe: str = Field(..., description="Timeframe for the backtest")
@@ -154,7 +153,7 @@ class BacktestRequest(BaseModel):
 
 class BacktestTrade(BaseModel):
     """Trade model for backtest results."""
-    
+
     id: int = Field(..., description="Trade ID")
     timestamp: datetime = Field(..., description="Trade timestamp")
     type: str = Field(..., description="Trade type (buy/sell)")
@@ -165,7 +164,7 @@ class BacktestTrade(BaseModel):
 
 class BacktestResults(BaseModel):
     """Results model for backtest."""
-    
+
     total_trades: int = Field(..., description="Total number of trades")
     winning_trades: int = Field(..., description="Number of winning trades")
     losing_trades: int = Field(..., description="Number of losing trades")
@@ -178,7 +177,7 @@ class BacktestResults(BaseModel):
 
 class BacktestResponse(BaseModel):
     """Response model for backtest results."""
-    
+
     id: str = Field(..., description="Backtest ID")
     strategy: str = Field(..., description="Strategy ID")
     symbol: str = Field(..., description="Trading pair symbol")
@@ -187,14 +186,13 @@ class BacktestResponse(BaseModel):
     end_date: datetime = Field(..., description="End date for the backtest")
     status: str = Field(..., description="Backtest status")
     results: BacktestResults = Field(..., description="Backtest results")
-    trades: Optional[List[BacktestTrade]] = Field(
-        None, description="List of trades"
-    ) 
+    trades: Optional[List[BacktestTrade]] = Field(None, description="List of trades")
+
 
 # Position models
 class Position(BaseModel):
     """Position model."""
-    
+
     id: str = Field(..., description="Position ID")
     symbol: str = Field(..., description="Trading pair symbol")
     side: str = Field(..., description="Position side (buy/sell)")
@@ -215,14 +213,14 @@ class Position(BaseModel):
 
 class PositionsResponse(BaseModel):
     """Response model for multiple positions."""
-    
+
     positions: List[Position] = Field(..., description="List of positions")
 
 
 # Config models
 class StrategyWeight(BaseModel):
     """Strategy weight configuration."""
-    
+
     strategy_name: str = Field(..., description="Strategy name")
     weight: float = Field(..., description="Strategy weight")
     min_confidence: float = Field(..., description="Minimum confidence threshold")
@@ -231,53 +229,61 @@ class StrategyWeight(BaseModel):
 
 class StrategyWeightsResponse(BaseModel):
     """Response model for strategy weights."""
-    
-    strategy_weights: List[StrategyWeight] = Field(..., description="List of strategy weights")
+
+    strategy_weights: List[StrategyWeight] = Field(
+        ..., description="List of strategy weights"
+    )
     total_strategies: int = Field(..., description="Total number of strategies")
     enabled_strategies: int = Field(..., description="Number of enabled strategies")
 
 
 class StrategyParamsResponse(BaseModel):
     """Response model for strategy parameters."""
-    
+
     strategy_name: str = Field(..., description="Strategy name")
     parameters: Dict[str, Any] = Field(..., description="Strategy parameters")
 
 
 class UpdateStrategyWeightRequest(BaseModel):
     """Request model for updating strategy weight."""
-    
+
     weight: float = Field(..., description="New weight value", ge=0.0, le=1.0)
 
 
 class ProbabilityConfig(BaseModel):
     """Probability configuration."""
-    
-    probability_settings: Dict[str, Any] = Field(..., description="Probability settings")
+
+    probability_settings: Dict[str, Any] = Field(
+        ..., description="Probability settings"
+    )
     risk_config: Dict[str, Any] = Field(..., description="Risk configuration")
 
 
 class UpdateProbabilitySettingsRequest(BaseModel):
     """Request model for updating probability settings."""
-    
-    probability_settings: Dict[str, Any] = Field(..., description="New probability settings")
+
+    probability_settings: Dict[str, Any] = Field(
+        ..., description="New probability settings"
+    )
 
 
 class ConfigSummary(BaseModel):
     """Configuration summary."""
-    
+
     config_file: str = Field(..., description="Configuration file path")
     config_valid: bool = Field(..., description="Whether the configuration is valid")
     validation_errors: List[str] = Field([], description="Validation errors")
     enabled_strategies: List[str] = Field(..., description="Enabled strategies")
     total_strategy_count: int = Field(..., description="Total number of strategies")
     risk_management: Dict[str, Any] = Field(..., description="Risk management settings")
-    probability_framework: Dict[str, Any] = Field(..., description="Probability framework settings")
+    probability_framework: Dict[str, Any] = Field(
+        ..., description="Probability framework settings"
+    )
 
 
 class ValidationResponse(BaseModel):
     """Configuration validation response."""
-    
+
     valid: bool = Field(..., description="Whether the configuration is valid")
     errors: List[str] = Field(..., description="Validation errors")
     error_count: int = Field(..., description="Number of validation errors")
@@ -285,7 +291,7 @@ class ValidationResponse(BaseModel):
 
 class ReloadConfigResponse(BaseModel):
     """Response model for config reload."""
-    
+
     message: str = Field(..., description="Result message")
     config_valid: bool = Field(..., description="Whether the configuration is valid")
     validation_errors: List[str] = Field(..., description="Validation errors")
@@ -294,7 +300,7 @@ class ReloadConfigResponse(BaseModel):
 # Bot control models
 class BotStatusResponse(BaseModel):
     """Bot status response model."""
-    
+
     status: str = Field(..., description="Current bot status (running/stopped)")
     uptime: float = Field(..., description="Bot uptime in seconds")
     last_update: Optional[str] = Field(None, description="Last update timestamp")
@@ -302,22 +308,26 @@ class BotStatusResponse(BaseModel):
     cycle_count: int = Field(..., description="Number of completed cycles")
     last_cycle_time: Optional[str] = Field(None, description="Last cycle timestamp")
     error: Optional[str] = Field(None, description="Error message if any")
-    dev_mode: Optional[bool] = Field(False, description="Whether the bot is running in development mode")
+    dev_mode: Optional[bool] = Field(
+        False, description="Whether the bot is running in development mode"
+    )
 
 
 class BotActionResponse(BaseModel):
     """Bot action response model."""
-    
+
     success: bool = Field(..., description="Whether the action was successful")
     message: str = Field(..., description="Response message")
     status: str = Field(..., description="Current bot status")
-    dev_mode: Optional[bool] = Field(False, description="Whether the bot is running in development mode")
+    dev_mode: Optional[bool] = Field(
+        False, description="Whether the bot is running in development mode"
+    )
 
 
 # Market data models
 class OHLCV(BaseModel):
     """OHLCV candle model."""
-    
+
     timestamp: int = Field(..., description="Candle timestamp in milliseconds")
     open: float = Field(..., description="Open price")
     high: float = Field(..., description="High price")
@@ -328,20 +338,20 @@ class OHLCV(BaseModel):
 
 class OHLCVResponse(BaseModel):
     """Response model for OHLCV data."""
-    
+
     data: List[List[float]] = Field(..., description="OHLCV data")
 
 
 class OrderBookEntry(BaseModel):
     """Order book entry model."""
-    
+
     price: float = Field(..., description="Price level")
     amount: float = Field(..., description="Amount at price level")
 
 
 class OrderBook(BaseModel):
     """Order book model."""
-    
+
     bids: List[List[float]] = Field(..., description="Bid orders")
     asks: List[List[float]] = Field(..., description="Ask orders")
     timestamp: Optional[int] = Field(None, description="Timestamp")
@@ -351,7 +361,7 @@ class OrderBook(BaseModel):
 
 class Ticker(BaseModel):
     """Ticker model."""
-    
+
     symbol: str = Field(..., description="Trading pair symbol")
     bid: float = Field(..., description="Best bid price")
     ask: float = Field(..., description="Best ask price")
@@ -366,7 +376,7 @@ class Ticker(BaseModel):
 
 class Trade(BaseModel):
     """Trade model."""
-    
+
     id: str = Field(..., description="Trade ID")
     timestamp: int = Field(..., description="Trade timestamp")
     datetime: str = Field(..., description="Trade datetime")
@@ -382,13 +392,13 @@ class Trade(BaseModel):
 
 class TradesResponse(BaseModel):
     """Response model for recent trades."""
-    
+
     trades: List[Trade] = Field(..., description="List of trades")
 
 
 class Market(BaseModel):
     """Market model."""
-    
+
     id: str = Field(..., description="Market ID")
     symbol: str = Field(..., description="Trading pair symbol")
     base: str = Field(..., description="Base currency")
@@ -398,13 +408,14 @@ class Market(BaseModel):
 
 class MarketsResponse(BaseModel):
     """Response model for available markets."""
-    
+
     markets: List[Market] = Field(..., description="List of markets")
+
 
 # Risk management and portfolio models
 class ResponseStatus(str, Enum):
     """API response status enumeration."""
-    
+
     SUCCESS = "success"
     ERROR = "error"
     WARNING = "warning"
@@ -412,42 +423,46 @@ class ResponseStatus(str, Enum):
 
 class ProbabilityDataModel(BaseModel):
     """Probability data model for trade signals."""
-    
+
     probability_buy: float = Field(..., description="Buy probability")
     probability_sell: float = Field(..., description="Sell probability")
     probability_hold: float = Field(..., description="Hold probability")
     confidence: float = Field(..., description="Overall confidence level")
-    
+
     def dict(self) -> Dict[str, Any]:
         """Override dict method to return a dictionary representation."""
         return {
             "probability_buy": self.probability_buy,
             "probability_sell": self.probability_sell,
             "probability_hold": self.probability_hold,
-            "confidence": self.confidence
+            "confidence": self.confidence,
         }
-    
+
     def get_risk_score(self) -> float:
         """Calculate risk score based on probabilities."""
         # Higher risk when probabilities are close or confidence is low
-        highest_prob = max(self.probability_buy, self.probability_sell, self.probability_hold)
-        second_highest = sorted([self.probability_buy, self.probability_sell, self.probability_hold])[-2]
-        
+        highest_prob = max(
+            self.probability_buy, self.probability_sell, self.probability_hold
+        )
+        second_highest = sorted(
+            [self.probability_buy, self.probability_sell, self.probability_hold]
+        )[-2]
+
         # How close are the top probabilities (normalized to 0-1)
         probability_gap = 1.0 - (highest_prob - second_highest)
-        
+
         # Confidence factor (inverse - lower confidence means higher risk)
         confidence_factor = 1.0 - self.confidence
-        
+
         # Combine factors (weighted average)
         risk_score = 0.6 * probability_gap + 0.4 * confidence_factor
-        
+
         return min(1.0, max(0.0, risk_score))
 
 
 class OrderData(BaseModel):
     """Order data model for risk validation."""
-    
+
     symbol: str = Field(..., description="Trading pair symbol")
     side: OrderSide = Field(..., description="Order side (buy/sell)")
     type: OrderType = Field(..., description="Order type")
@@ -456,7 +471,7 @@ class OrderData(BaseModel):
     stop_price: Optional[float] = Field(None, description="Stop price if applicable")
     take_profit: Optional[float] = Field(None, description="Take profit price")
     stop_loss: Optional[float] = Field(None, description="Stop loss price")
-    
+
     def dict(self) -> Dict[str, Any]:
         """Override dict method to return a dictionary representation."""
         return {
@@ -467,13 +482,13 @@ class OrderData(BaseModel):
             "price": self.price,
             "stop_price": self.stop_price,
             "take_profit": self.take_profit,
-            "stop_loss": self.stop_loss
+            "stop_loss": self.stop_loss,
         }
 
 
 class OrderValidationResponse(BaseModel):
     """Response model for order validation."""
-    
+
     status: ResponseStatus = Field(..., description="Response status")
     message: str = Field(..., description="Response message")
     valid: bool = Field(..., description="Whether the order is valid")
@@ -485,7 +500,7 @@ class OrderValidationResponse(BaseModel):
 
 class RiskAssessmentResponse(BaseModel):
     """Response model for risk assessment."""
-    
+
     status: ResponseStatus = Field(..., description="Response status")
     message: str = Field(..., description="Response message")
     risk_assessment: Dict[str, Any] = Field(..., description="Risk assessment details")
@@ -493,7 +508,7 @@ class RiskAssessmentResponse(BaseModel):
 
 class RiskScoreResponse(BaseModel):
     """Response model for risk score calculation."""
-    
+
     status: ResponseStatus = Field(..., description="Response status")
     message: str = Field(..., description="Response message")
     symbol: str = Field(..., description="Trading pair symbol")
@@ -504,7 +519,7 @@ class RiskScoreResponse(BaseModel):
 
 class SignalData(BaseModel):
     """Trading signal data."""
-    
+
     symbol: str = Field(..., description="Trading pair symbol")
     signal_type: str = Field(..., description="Signal type (buy/sell/hold)")
     strength: float = Field(..., description="Signal strength")
@@ -517,14 +532,14 @@ class SignalData(BaseModel):
 
 class StrategySignalRequest(BaseModel):
     """Request model for processing strategy signals."""
-    
+
     signals: List[SignalData] = Field(..., description="List of strategy signals")
     timestamp: datetime = Field(..., description="Request timestamp")
 
 
 class StrategySignalResponse(BaseModel):
     """Response model for strategy signal processing."""
-    
+
     status: ResponseStatus = Field(..., description="Response status")
     message: str = Field(..., description="Response message")
     actions: List[Dict[str, Any]] = Field(..., description="Recommended actions")
@@ -533,7 +548,7 @@ class StrategySignalResponse(BaseModel):
 
 class AllocationItem(BaseModel):
     """Portfolio allocation item."""
-    
+
     symbol: str = Field(..., description="Trading pair symbol")
     percentage: float = Field(..., description="Allocation percentage")
     amount: Optional[float] = Field(None, description="Allocation amount")
@@ -544,7 +559,7 @@ class AllocationItem(BaseModel):
 
 class RiskProfile(str, Enum):
     """Risk profile enumeration."""
-    
+
     CONSERVATIVE = "conservative"
     MODERATE = "moderate"
     AGGRESSIVE = "aggressive"
@@ -552,7 +567,7 @@ class RiskProfile(str, Enum):
 
 class PortfolioAllocationRequest(BaseModel):
     """Request model for portfolio allocation."""
-    
+
     signals: List[SignalData] = Field(..., description="List of strategy signals")
     risk_profile: RiskProfile = Field(..., description="Risk profile")
     max_allocation_percent: float = Field(
@@ -563,8 +578,8 @@ class PortfolioAllocationRequest(BaseModel):
 
 class PortfolioAllocationResponse(BaseModel):
     """Response model for portfolio allocation."""
-    
+
     status: ResponseStatus = Field(..., description="Response status")
     message: str = Field(..., description="Response message")
     allocations: List[AllocationItem] = Field(..., description="Allocation details")
-    timestamp: datetime = Field(..., description="Response timestamp") 
+    timestamp: datetime = Field(..., description="Response timestamp")

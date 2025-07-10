@@ -53,7 +53,7 @@ class ConfigService:
     async def load_config_async(self, force_reload: bool = False) -> TradingConfig:
         """
         Asynkron version av load_config.
-        
+
         Load configuration from file with caching.
         This async function currently wraps the synchronous implementation
         but can be updated to use async file operations in the future.
@@ -175,7 +175,7 @@ class ConfigService:
     async def get_strategy_weights_async(self) -> List[StrategyWeight]:
         """
         Asynkron version av get_strategy_weights.
-        
+
         Get strategy weights for portfolio manager.
         This async function currently wraps the synchronous implementation.
 
@@ -212,7 +212,7 @@ class ConfigService:
     async def get_strategy_params_async(self, strategy_name: str) -> Dict[str, Any]:
         """
         Asynkron version av get_strategy_params.
-        
+
         Get parameters for a specific strategy.
         This async function currently wraps the synchronous implementation.
 
@@ -262,10 +262,12 @@ class ConfigService:
             self.logger.error(f"Failed to update strategy weight: {e}")
             return False
 
-    async def update_strategy_weight_async(self, strategy_name: str, new_weight: float) -> bool:
+    async def update_strategy_weight_async(
+        self, strategy_name: str, new_weight: float
+    ) -> bool:
         """
         Asynkron version av update_strategy_weight.
-        
+
         Update strategy weight in configuration.
         This async function currently wraps the synchronous implementation.
 
@@ -311,10 +313,12 @@ class ConfigService:
             self.logger.error(f"Failed to update probability settings: {e}")
             return False
 
-    async def update_probability_settings_async(self, new_settings: Dict[str, Any]) -> bool:
+    async def update_probability_settings_async(
+        self, new_settings: Dict[str, Any]
+    ) -> bool:
         """
         Asynkron version av update_probability_settings.
-        
+
         Update probability settings in configuration.
         This async function currently wraps the synchronous implementation.
 
@@ -388,7 +392,7 @@ class ConfigService:
     async def validate_config_async(self) -> List[str]:
         """
         Asynkron version av validate_config.
-        
+
         Validate current configuration and return any errors.
         This async function currently wraps the synchronous implementation.
 
@@ -451,7 +455,7 @@ class ConfigService:
     async def get_config_summary_async(self) -> Dict[str, Any]:
         """
         Asynkron version av get_config_summary.
-        
+
         Get a summary of current configuration.
         This async function currently wraps the synchronous implementation.
 

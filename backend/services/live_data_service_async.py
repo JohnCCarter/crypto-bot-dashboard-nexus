@@ -3,13 +3,13 @@ Live Market Data Service för Trading Bot Automation (Async Version)
 Använder ccxt.async_support för att hämta real-time data från Bitfinex asynkront
 """
 
+import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, Tuple, Optional, Any
+from typing import Any, Dict, Optional, Tuple
 
 import ccxt.async_support as ccxt_async
 import pandas as pd
-import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class LiveDataServiceAsync:
     def __init__(self, exchange_id: str = "bitfinex"):
         """
         Initialize async live data service for PUBLIC market data only.
-        
+
         No API keys needed - only fetches public market data (OHLCV, ticker, orderbook).
         This eliminates nonce conflicts with authenticated services.
 
@@ -146,7 +146,9 @@ class LiveDataServiceAsync:
             return orderbook
 
         except Exception as e:
-            logger.error(f"❌ [LiveDataAsync] Failed to fetch orderbook for {symbol}: {e}")
+            logger.error(
+                f"❌ [LiveDataAsync] Failed to fetch orderbook for {symbol}: {e}"
+            )
             raise
 
     async def get_live_market_context(
@@ -164,32 +166,33 @@ class LiveDataServiceAsync:
             Dict with comprehensive market data
         """
         try:
-            logger.info(f"🎯 [LiveDataAsync] Fetching complete market context for {symbol}")
+            logger.info(
+                f"🎯 [LiveDataAsync] Fetching complete market context for {symbol}"
+            )
 
             # Fetch all data in parallel with asyncio.gather
             ohlcv_task = self.fetch_live_ohlcv(symbol, timeframe, limit)
             ticker_task = self.fetch_live_ticker(symbol)
             orderbook_task = self.fetch_live_orderbook(symbol)
-            
+
             # Await all tasks concurrently
             results = await asyncio.gather(
-                ohlcv_task, ticker_task, orderbook_task, 
-                return_exceptions=True
+                ohlcv_task, ticker_task, orderbook_task, return_exceptions=True
             )
-            
+
             ohlcv_df = results[0] if not isinstance(results[0], Exception) else None
             ticker = results[1] if not isinstance(results[1], Exception) else None
             orderbook = results[2] if not isinstance(results[2], Exception) else None
-            
+
             # Handle potential failures
             if isinstance(results[0], Exception):
                 logger.error(f"❌ [LiveDataAsync] OHLCV fetch failed: {results[0]}")
                 raise results[0]
-                
+
             if isinstance(results[1], Exception):
                 logger.error(f"❌ [LiveDataAsync] Ticker fetch failed: {results[1]}")
                 raise results[1]
-                
+
             if isinstance(results[2], Exception):
                 logger.warning(
                     f"⚠️ [LiveDataAsync] Orderbook failed for {symbol}, using fallback: {results[2]}"
@@ -266,7 +269,9 @@ class LiveDataServiceAsync:
             )
             raise
 
-    async def validate_market_conditions(self, market_context: Dict) -> Tuple[bool, str]:
+    async def validate_market_conditions(
+        self, market_context: Dict
+    ) -> Tuple[bool, str]:
         """
         Validera marknadsförhållanden för trading asynkront
 
@@ -301,16 +306,20 @@ class LiveDataServiceAsync:
                     f"High volatility: {market_context['volatility_pct']:.2f}%",
                 )
 
-            logger.info("✅ [LiveDataAsync] Market conditions validated - safe to trade")
+            logger.info(
+                "✅ [LiveDataAsync] Market conditions validated - safe to trade"
+            )
             return True, "Market conditions are suitable for trading"
 
         except Exception as e:
-            logger.error(f"❌ [LiveDataAsync] Failed to validate market conditions: {e}")
+            logger.error(
+                f"❌ [LiveDataAsync] Failed to validate market conditions: {e}"
+            )
             raise
 
     async def close(self):
         """Close the exchange connection"""
-        if hasattr(self, 'exchange') and self.exchange:
+        if hasattr(self, "exchange") and self.exchange:
             await self.exchange.close()
             logger.info(f"✅ [LiveDataAsync] Closed connection to {self.exchange_id}")
 
@@ -328,22 +337,22 @@ _live_data_service_instance: Optional[LiveDataServiceAsync] = None
 async def get_live_data_service_async() -> LiveDataServiceAsync:
     """
     Get or create a singleton instance of LiveDataServiceAsync.
-    
+
     Returns:
         LiveDataServiceAsync: The singleton instance
     """
     global _live_data_service_instance
-    
+
     if _live_data_service_instance is None:
         _live_data_service_instance = LiveDataServiceAsync()
-    
+
     return _live_data_service_instance
 
 
 async def close_live_data_service_async() -> None:
     """Close the singleton instance of LiveDataServiceAsync if it exists."""
     global _live_data_service_instance
-    
+
     if _live_data_service_instance is not None:
         await _live_data_service_instance.close()
         _live_data_service_instance = None

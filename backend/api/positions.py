@@ -6,10 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from backend.api.dependencies import get_positions_service_async
 from backend.api.models import PositionsResponse
-from backend.services.exchange import ExchangeError
 from backend.services.event_logger import (
-    event_logger, should_suppress_routine_log, EventType
+    EventType,
+    event_logger,
+    should_suppress_routine_log,
 )
+from backend.services.exchange import ExchangeError
 
 # Create router
 router = APIRouter(prefix="/api/positions", tags=["positions"])
@@ -18,7 +20,7 @@ router = APIRouter(prefix="/api/positions", tags=["positions"])
 @router.get("/", response_model=PositionsResponse)
 async def get_positions(
     symbols: Optional[List[str]] = None,
-    fetch_positions_async=Depends(get_positions_service_async)
+    fetch_positions_async=Depends(get_positions_service_async),
 ):
     """
     Fetch current positions from Bitfinex.
@@ -33,7 +35,7 @@ async def get_positions(
         List of live positions
     """
     # Detta är routine polling - supprimerias enligt event_logger
-    
+
     try:
         # Attempt to fetch live positions from Bitfinex using async service
         positions = await fetch_positions_async(symbols)
@@ -42,7 +44,7 @@ async def get_positions(
         if not should_suppress_routine_log("/api/positions", "GET"):
             event_logger.log_event(
                 EventType.API_ERROR,  # Using available type
-                f"Positions fetched: {len(positions)} positions"
+                f"Positions fetched: {len(positions)} positions",
             )
 
         return {"positions": positions}
@@ -50,11 +52,11 @@ async def get_positions(
     except ExchangeError as e:
         # FEL ska alltid loggas - de är meningsfulla
         event_logger.log_exchange_error("fetch_positions", str(e))
-        
+
         # Return empty list rather than mock data for safety
         return {"positions": []}
 
     except Exception as e:
         # Kritiska fel ska alltid loggas
         event_logger.log_api_error("/api/positions", str(e))
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))

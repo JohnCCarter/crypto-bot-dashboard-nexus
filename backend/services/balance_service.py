@@ -18,12 +18,12 @@ def fetch_balances():
     """
     cache = get_cache_service()
     cache_key = "balances"
-    
+
     # Check cache first (30 second TTL for balances)
     cached_balance = cache.get(cache_key, ttl_seconds=30)
     if cached_balance is not None:
         return cached_balance
-    
+
     exchange_service = get_shared_exchange_service()
     if not exchange_service:
         raise ValueError("Exchange service not available - check API configuration")

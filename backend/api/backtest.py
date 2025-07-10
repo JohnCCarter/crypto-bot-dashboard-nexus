@@ -2,9 +2,9 @@
 Backtest API endpoints.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException, status, Body
+from fastapi import APIRouter, Body, HTTPException, status
 
 # Create router
 router = APIRouter(
@@ -17,7 +17,7 @@ router = APIRouter(
 async def get_strategies() -> Dict[str, Any]:
     """
     Get all available strategies for backtesting.
-    
+
     This is a placeholder that will be connected to the actual service.
     """
     # TODO: Implement connection to the backtest service
@@ -26,18 +26,18 @@ async def get_strategies() -> Dict[str, Any]:
             {
                 "id": "ema_crossover",
                 "name": "EMA Crossover",
-                "description": "Strategy based on EMA crossover signals"
+                "description": "Strategy based on EMA crossover signals",
             },
             {
                 "id": "rsi_strategy",
                 "name": "RSI Strategy",
-                "description": "Strategy based on RSI overbought/oversold signals"
+                "description": "Strategy based on RSI overbought/oversold signals",
             },
             {
                 "id": "fvg_strategy",
                 "name": "Fair Value Gap Strategy",
-                "description": "Strategy based on fair value gaps in the market"
-            }
+                "description": "Strategy based on fair value gaps in the market",
+            },
         ]
     }
 
@@ -48,21 +48,19 @@ async def run_backtest(
 ) -> Dict[str, Any]:
     """
     Run a backtest with the given configuration.
-    
+
     This is a placeholder that will be connected to the actual service.
     """
     # TODO: Implement connection to the backtest service
     # Basic validation
-    required_fields = [
-        "strategy_id", "symbol", "timeframe", "start_date", "end_date"
-    ]
+    required_fields = ["strategy_id", "symbol", "timeframe", "start_date", "end_date"]
     for field in required_fields:
         if field not in backtest_config:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Missing required field: {field}"
+                detail=f"Missing required field: {field}",
             )
-    
+
     # Mock successful backtest run
     return {
         "id": "bt_12345",
@@ -80,18 +78,16 @@ async def run_backtest(
             "profit_factor": 1.8,
             "max_drawdown": 0.12,
             "net_profit": 0.35,
-            "sharpe_ratio": 1.2
-        }
+            "sharpe_ratio": 1.2,
+        },
     }
 
 
 @router.get("/backtest/{backtest_id}")
-async def get_backtest_results(
-    backtest_id: str
-) -> Dict[str, Any]:
+async def get_backtest_results(backtest_id: str) -> Dict[str, Any]:
     """
     Get results for a specific backtest.
-    
+
     This is a placeholder that will be connected to the actual service.
     """
     # TODO: Implement connection to the backtest service
@@ -113,7 +109,7 @@ async def get_backtest_results(
                 "profit_factor": 1.8,
                 "max_drawdown": 0.12,
                 "net_profit": 0.35,
-                "sharpe_ratio": 1.2
+                "sharpe_ratio": 1.2,
             },
             "trades": [
                 {
@@ -122,7 +118,7 @@ async def get_backtest_results(
                     "type": "buy",
                     "price": 45000.0,
                     "amount": 0.1,
-                    "profit": None
+                    "profit": None,
                 },
                 {
                     "id": 2,
@@ -130,12 +126,12 @@ async def get_backtest_results(
                     "type": "sell",
                     "price": 48000.0,
                     "amount": 0.1,
-                    "profit": 0.067
-                }
-            ]
+                    "profit": 0.067,
+                },
+            ],
         }
-    
+
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Backtest with ID {backtest_id} not found"
-    ) 
+        detail=f"Backtest with ID {backtest_id} not found",
+    )

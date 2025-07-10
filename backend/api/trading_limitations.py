@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api", tags=["trading-limitations"])
 
 @router.get("/trading-limitations")
 async def get_trading_limitations(
-    exchange_service: ExchangeService = Depends(get_exchange_service_async)
+    exchange_service: ExchangeService = Depends(get_exchange_service_async),
 ) -> Dict[str, Any]:
     """
     Get trading limitations for current account type.
@@ -41,4 +41,4 @@ async def get_trading_limitations(
             "margin_trading_available": True,
             "supported_order_types": ["spot", "margin"],
             "limitations": [],
-        } 
+        }

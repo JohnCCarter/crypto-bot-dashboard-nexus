@@ -61,7 +61,9 @@ class TestRealAPIIntegration:
         elif isinstance(data, dict) and "balances" in data:
             balances = data["balances"]
         else:
-            raise AssertionError("/api/balances returnerar varken lista eller dict med 'balances'-nyckel")
+            raise AssertionError(
+                "/api/balances returnerar varken lista eller dict med 'balances'-nyckel"
+            )
 
         assert isinstance(balances, list)
         print(f"✅ Retrieved {len(balances)} balance entries")
@@ -87,7 +89,9 @@ class TestRealAPIIntegration:
             order_data["price"] = 30000  # Low price to ensure it stays open
 
         print(f"📝 Placing order: {order_data}")
-        response = requests.post(f"{self.BASE_URL}/api/orders", json=order_data, timeout=5)
+        response = requests.post(
+            f"{self.BASE_URL}/api/orders", json=order_data, timeout=5
+        )
         if response.status_code != 201:
             print(f"❌ Fel vid orderläggning: status={response.status_code}")
             try:
@@ -96,11 +100,15 @@ class TestRealAPIIntegration:
                 print(f"Response text: {response.text}")
         assert response.status_code == 201
         order_result = response.json()
-        assert "id" in order_result and "symbol" in order_result and "type" in order_result
+        assert (
+            "id" in order_result and "symbol" in order_result and "type" in order_result
+        )
 
         # Step 2: Get order status (polling istället för sleep)
         print(f"🔍 Getting status for order {order_result['id']}")
-        status_url = f"{self.BASE_URL}/api/orders/{order_result['id']}?symbol={self.TEST_SYMBOL}"
+        status_url = (
+            f"{self.BASE_URL}/api/orders/{order_result['id']}?symbol={self.TEST_SYMBOL}"
+        )
         status_data = None
         for i in range(10):  # max 5 sekunder (0.5s intervall)
             status_response = requests.get(status_url, timeout=5)
@@ -119,9 +127,13 @@ class TestRealAPIIntegration:
 
         # Step 3: Cancel order
         print(f"❌ Cancelling order {order_result['id']}")
-        cancel_response = requests.delete(f"{self.BASE_URL}/api/orders/{order_result['id']}", timeout=5)
+        cancel_response = requests.delete(
+            f"{self.BASE_URL}/api/orders/{order_result['id']}", timeout=5
+        )
         if cancel_response.status_code != 200:
-            print(f"⚠️ Cancel failed: status={cancel_response.status_code}, response={cancel_response.text}")
+            print(
+                f"⚠️ Cancel failed: status={cancel_response.status_code}, response={cancel_response.text}"
+            )
         assert cancel_response.status_code == 200
 
         # Step 4: Verify cancellation (polling)

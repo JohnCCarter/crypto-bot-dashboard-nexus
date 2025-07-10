@@ -3,21 +3,22 @@ API routes module for FastAPI.
 """
 
 from fastapi import APIRouter
-from backend.api.status import router as status_router
-from backend.api.balances import router as balances_router
+
 from backend.api import (
-    orders,
     backtest,
-    config,
-    positions,
     bot_control,
+    config,
     market_data,
-    orderbook,
     monitoring,
-    risk_management,
+    orderbook,
+    orders,
     portfolio,
+    positions,
+    risk_management,
     websocket,
 )
+from backend.api.balances import router as balances_router
+from backend.api.status import router as status_router
 
 # Create API router
 api_router = APIRouter()
@@ -54,4 +55,4 @@ __all__ = [
     "risk_management",
     "portfolio",
     "websocket",
-] 
+]
