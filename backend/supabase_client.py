@@ -1,6 +1,7 @@
 import os
+
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 # Bygg absolut sökväg till .env-filen i projektroten
 env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))

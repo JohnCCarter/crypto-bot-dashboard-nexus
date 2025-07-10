@@ -62,7 +62,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     console.log(`💰 [Balance] WebSocket ticker update: ${symbol} = $${ticker.price.toFixed(2)}`);
     console.log(`💰 [Balance] Ticker data:`, { price: ticker.price, volume: ticker.volume });
     return ticker;
-  }, [ticker?.price, symbol]); // Only update when price changes significantly
+  }, [ticker, symbol]); // Include ticker dependency
   
   // Get balance data via REST
   const { data: balancesResponse, isLoading, error, refetch } = useQuery<{balances: Balance[]}>({
@@ -87,12 +87,13 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     }
   });
 
-  // Extract balances from response
-  const balances = balancesResponse?.balances || [];
-
   // Calculate live portfolio values (optimized)
   const portfolioData = useMemo(() => {
     console.log(`💰 [Balance] Calculating portfolio data...`);
+    
+    // Extract balances from response inside useMemo to avoid dependency warning
+    const balances = balancesResponse?.balances || [];
+    
     console.log(`💰 [Balance] Balances available: ${balances.length}`);
     console.log(`💰 [Balance] Ticker available: ${!!debouncedTicker}`);
     
@@ -180,7 +181,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
     console.log(`💰 [Balance] Assets: ${assetsWithAllocation.length} currencies`);
 
     return result;
-  }, [balances, debouncedTicker]);
+  }, [balancesResponse, debouncedTicker]);
 
   // Format currency values
   const formatCurrency = (value: number, currency = 'USD') => {

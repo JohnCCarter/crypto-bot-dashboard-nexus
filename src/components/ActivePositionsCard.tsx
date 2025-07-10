@@ -111,11 +111,12 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
     }
   });
 
-  // Extract positions from response
-  const positions = positionsResponse?.positions || [];
-
   // Process positions med live pricing
   const processedPositions = useMemo(() => {
+    console.log(`🎯 [Positions] Processing positions...`);
+    
+    // Extract positions from response inside useMemo to avoid dependency warning
+    const positions = positionsResponse?.positions || [];
     console.log(`🎯 [Positions] Processing ${positions.length} positions...`);
     
     if (!positions || positions.length === 0) {
@@ -194,7 +195,7 @@ export const ActivePositionsCard: React.FC<ActivePositionsCardProps> = ({
     console.log(`🎯 [Positions] WebSocket pricing active: ${connected}`);
 
     return result;
-  }, [positions, symbol, showOnlySymbol, maxPositions, getTickerForSymbol, connected]);
+  }, [positionsResponse, symbol, showOnlySymbol, maxPositions, getTickerForSymbol, connected]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {

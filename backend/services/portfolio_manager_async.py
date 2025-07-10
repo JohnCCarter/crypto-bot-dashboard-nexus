@@ -5,10 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from backend.services.risk_manager_async import (
-    ProbabilityData,
-    RiskManagerAsync,
-)
+from backend.services.risk_manager_async import ProbabilityData, RiskManagerAsync
 from backend.strategies.sample_strategy import TradeSignal
 
 

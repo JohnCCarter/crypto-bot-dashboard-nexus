@@ -411,9 +411,9 @@ class TestWebSocketIntegration:
 
     def test_websocket_routes_exist(self, test_client):
         """Verifierar att WebSocket-routes är registrerade i FastAPI-appen."""
-        from backend.fastapi_app import (  # Importera här för att undvika global långsamhet
+        from backend.fastapi_app import (
             app,
-        )
+        )  # Importera här för att undvika global långsamhet
 
         routes = [route for route in app.routes]
         # Använd hasattr för att kontrollera om route har path-attribut

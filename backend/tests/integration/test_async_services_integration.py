@@ -13,10 +13,11 @@ Run with: pytest backend/tests/integration/test_async_services_integration.py -v
 
 import asyncio
 import time
-from typing import Dict, Any, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List
+
 import pytest
 import requests
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class TestAsyncServicesIntegration:

@@ -6,6 +6,15 @@
     "terminal.integrated.stickyScroll.enabled": true,
     "terminal.integrated.suggest.enabled": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
-    "python.createEnvironment.contentButton": "hide"
+    "python.createEnvironment.contentButton": "hide",
+    "python-envs.pythonProjects": [],
+    "github.copilot.advanced": {
+        "enableCopilotForChat": true,
+        "enableCopilotForCodeReview": true,
+        "enableCopilotForPullRequest": true,
+        "enableCopilotForIssues": true,
+        "enableCopilotForSearch": true,
+        "enableCopilotForCodeCompletion": true   
+    }
     
 }

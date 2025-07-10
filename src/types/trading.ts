@@ -94,11 +94,17 @@ export interface EmaCrossoverSignal {
   type: 'buy' | 'sell';
 }
 
+export interface EmaCrossoverSignalResult {
+  action: 'buy' | 'sell' | 'hold';
+  confidence: number;
+  metadata?: Record<string, unknown>;
+}
+
 export interface EmaCrossoverBacktestResult {
   ema_fast: number[];
   ema_slow: number[];
   signals: EmaCrossoverSignal[];
-  signal_result: any;
+  signal_result: EmaCrossoverSignalResult;
   // Lägg till övriga fält från backtest vid behov
-  [key: string]: any;
+  [key: string]: unknown;
 }

@@ -8,10 +8,10 @@
  * 4. Smart data merging för seamless experience
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useWebSocketMarket } from './useWebSocketMarket';
 import { api } from '@/lib/api';
-import { OrderBook, OHLCVData } from '@/types/trading';
+import { OHLCVData, OrderBook } from '@/types/trading';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useWebSocketMarket } from './useWebSocketMarket';
 
 interface RestTickerData {
   symbol?: string;
@@ -240,7 +240,7 @@ export const useHybridMarketData = (
         return updatedData;
       });
     }
-  }, [finalTicker?.price, chartData.length]); // Only depend on price and data length
+  }, [finalTicker?.price, chartData]); // Include full chartData dependency
 
   // 🔧 UTILITY METHODS - Stabilized
   const refreshData = useCallback(async () => {

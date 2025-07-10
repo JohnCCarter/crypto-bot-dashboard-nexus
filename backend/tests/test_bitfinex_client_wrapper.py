@@ -2,9 +2,10 @@
 Tester för BitfinexClientWrapper-klassen.
 """
 
-import unittest
-from unittest.mock import patch, MagicMock
 import asyncio
+import unittest
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from backend.services.bitfinex_client_wrapper import BitfinexClientWrapper

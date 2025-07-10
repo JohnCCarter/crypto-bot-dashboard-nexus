@@ -2,7 +2,6 @@
 """Test if wrapper works with our endpoint."""
 
 from fastapi.testclient import TestClient
-
 from fastapi_app import app
 
 

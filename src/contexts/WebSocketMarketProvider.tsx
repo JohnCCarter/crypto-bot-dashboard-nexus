@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 // Types from existing implementation
 interface MarketData {
@@ -113,6 +113,21 @@ interface WebSocketMarketState {
   // User data subscriptions
   subscribeToUserData: () => Promise<void>;
   unsubscribeFromUserData: () => Promise<void>;
+}
+
+// 1. Skapa/uppdatera interfaces för WebSocket-data
+interface WebSocketMessage {
+  event: string;
+  data: unknown;
+  timestamp: number;
+}
+
+interface MarketData {
+  symbol: string;
+  price: number;
+  volume: number;
+  bid?: number;
+  ask?: number;
 }
 
 const WebSocketMarketContext = createContext<WebSocketMarketState | null>(null);
@@ -790,10 +805,9 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   }, []);
 
   // Helper function to parse order status
-  const parseOrderStatus = (statusInfo: any): 'open' | 'filled' | 'cancelled' | 'partial' => {
+  const parseOrderStatus = (statusInfo: unknown): 'open' | 'filled' | 'cancelled' | 'partial' => {
     if (!statusInfo) return 'open';
-    
-    const statusStr = statusInfo.toString();
+    const statusStr = typeof statusInfo === 'string' ? statusInfo : statusInfo.toString();
     if (statusStr.includes('EXECUTED')) return 'filled';
     if (statusStr.includes('CANCELED')) return 'cancelled';
     if (statusStr.includes('PARTIALLY FILLED')) return 'partial';

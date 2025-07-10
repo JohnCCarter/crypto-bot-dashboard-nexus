@@ -1,4 +1,4 @@
-import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, OHLCVData, OrderBook, OrderHistoryItem, Trade, TradingConfig } from '@/types/trading';
+import { Balance, BotStatus, EmaCrossoverBacktestResult, LogEntry, MarketData, OHLCVData, OrderBook, OrderHistoryItem, Trade, TradingConfig } from '@/types/trading';
 
 // Use Vite proxy instead of direct backend connection
 // In development: requests go to '/api/*' which Vite proxies to http://127.0.0.1:8001
@@ -47,7 +47,11 @@ export const api = {
       body: JSON.stringify(order),
     });
     
-    if (!res.ok) throw new Error('Order failed');
+    if (!res.ok) {
+      const errorData: { error?: string; message?: string } = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || 'Failed to place order');
+    }
+    
     return await res.json();
   },
 
@@ -123,25 +127,21 @@ export const api = {
   },
 
   // Get Market Ticker (Live Bitfinex)
-  async getMarketTicker(symbol: string): Promise<any> {
+  async getMarketTicker(symbol: string): Promise<MarketData> {
     const res = await fetch(`${API_BASE_URL}/api/market/ticker/${symbol}`);
-    
     if (!res.ok) {
       throw new Error('Failed to fetch ticker');
     }
-    
     const ticker = await res.json();
     return ticker;
   },
 
   // Get Available Markets (Live Bitfinex)
-  async getAvailableMarkets(): Promise<any> {
+  async getAvailableMarkets(): Promise<{ markets: string[] }> {
     const res = await fetch(`${API_BASE_URL}/api/market/markets`);
-    
     if (!res.ok) {
       throw new Error('Failed to fetch markets');
     }
-    
     const markets = await res.json();
     return markets;
   },
@@ -168,9 +168,10 @@ export const api = {
     return await res.json();
   },
 
+  // Run Backtest (EMA Crossover)
   async runBacktestEmaCrossover(
     data: { timestamp: number[]; open: number[]; high: number[]; low: number[]; close: number[]; volume: number[] },
-    parameters: any = {}
+    parameters: Record<string, unknown> = {}
   ): Promise<EmaCrossoverBacktestResult> {
     const res = await fetch(`${API_BASE_URL}/api/backtest/run`, {
       method: 'POST',
@@ -181,11 +182,10 @@ export const api = {
         parameters
       })
     });
-    
     if (!res.ok) {
       let errorDetails = `HTTP ${res.status}: ${res.statusText}`;
       try {
-        const errorBody = await res.json();
+        const errorBody: { error?: string; error_type?: string; timestamp?: string } = await res.json();
         if (errorBody.error) {
           errorDetails = `${errorBody.error}`;
           if (errorBody.error_type) {
@@ -200,7 +200,6 @@ export const api = {
       }
       throw new Error(`Backtest failed: ${errorDetails}`);
     }
-    
     const result = await res.json();
     return result;
   },
@@ -247,7 +246,7 @@ export const api = {
   },
 
   // Cancel Order (Live)
-  async cancelOrder(orderId: string): Promise<any> {
+  async cancelOrder(orderId: string): Promise<{ success: boolean; message: string }> {
     const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
       method: 'DELETE',
     });

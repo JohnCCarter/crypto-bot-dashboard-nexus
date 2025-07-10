@@ -4,10 +4,10 @@ Detta testmodul fokuserar på att testa WebSocket-användarendpoint utan att på
 """
 
 import json
-import pytest
 import logging
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi.websockets import WebSocket
 
 # Konfigurera loggning

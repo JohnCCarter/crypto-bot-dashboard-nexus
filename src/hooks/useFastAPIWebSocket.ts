@@ -3,9 +3,9 @@
  * Hanterar anslutning, prenumerationer och datahantering för FastAPI WebSockets
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useWebSocket } from './useWebSocket';
+import { useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { useWebSocket } from './useWebSocket';
 
 // Typer för marknadsdata
 interface MarketData {
@@ -61,7 +61,11 @@ interface WebSocketMessage {
   status?: string;
   error?: string;
   type?: string;
-  data?: any;
+  /**
+   * Möjliga datatyper: MarketData, OrderBook, Trade[], Balance, Order, Position, eller null.
+   * Utöka unionen vid behov om fler typer tillkommer.
+   */
+  data?: MarketData | OrderBook | Trade[] | Balance | Order | Position | null;
 }
 
 // Hook returtyp
