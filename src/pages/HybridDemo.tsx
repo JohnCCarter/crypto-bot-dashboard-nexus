@@ -21,7 +21,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Zap, 
-  Clock, 
   Wifi, 
   Activity, 
   CheckCircle, 

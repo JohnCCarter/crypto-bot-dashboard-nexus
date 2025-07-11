@@ -195,7 +195,7 @@ export const api = {
             errorDetails += ` [${errorBody.timestamp}]`;
           }
         }
-      } catch (e) {
+      } catch {
         // Failed to parse error response - use default error
       }
       throw new Error(`Backtest failed: ${errorDetails}`);

@@ -1,6 +1,7 @@
 """Tests for probability-based risk management features."""
 
-from backend.services.risk_manager import ProbabilityData, RiskManager, RiskParameters
+from backend.services.risk_manager import (ProbabilityData, RiskManager,
+                                           RiskParameters)
 
 
 class TestProbabilityData:

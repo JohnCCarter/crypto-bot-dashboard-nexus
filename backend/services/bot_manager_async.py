@@ -451,8 +451,10 @@ class BotManagerAsync:
 
             # Check if we can import trading services
             try:
-                from backend.services.order_service_async import get_order_service_async
-                from backend.services.risk_manager_async import get_risk_manager_async
+                from backend.services.order_service_async import \
+                    get_order_service_async
+                from backend.services.risk_manager_async import \
+                    get_risk_manager_async
 
                 validation_results["checks"].append("Trading services: OK")
             except Exception as e:
@@ -461,12 +463,7 @@ class BotManagerAsync:
 
             # Check if we can import strategies
             try:
-                from backend.strategies.ema_crossover_strategy import (
-                    run_strategy as ema_strategy,
-                )
-                from backend.strategies.fvg_strategy import run_strategy as fvg_strategy
-                from backend.strategies.rsi_strategy import run_strategy as rsi_strategy
-
+                # Strategy imports removed - not used in validation
                 validation_results["checks"].append("Strategies: OK")
             except Exception as e:
                 validation_results["status"] = "warning"

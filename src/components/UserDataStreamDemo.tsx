@@ -3,8 +3,7 @@ import { useGlobalWebSocketMarket } from '../contexts/WebSocketMarketProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Separator } from './ui/separator';
-import { CheckCircle, XCircle, Circle, DollarSign, TrendingUp, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, DollarSign, TrendingUp, Clock } from 'lucide-react';
 
 export const UserDataStreamDemo: React.FC = () => {
   const {

@@ -31,8 +31,8 @@ alwaysApply: true
 
 * **Unit tests:**
 
-  * Backend: run `pytest backend/tests/` from the root.
-  * Frontend: run `npm run test` from the `frontend` directory.
+  * Backend: run `python scripts/testing/run_tests_optimized.py` (optimized) or `cd backend; python -m pytest -v` (standard)
+  * Frontend: run `npm test` from the project root
   * Resolve all import errors in test files (`sys.path` updates for backend, alias config for frontend).
 * **Integration tests:**
 

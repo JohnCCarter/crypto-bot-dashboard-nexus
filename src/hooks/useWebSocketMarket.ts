@@ -368,7 +368,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
                 const asks: Array<{ price: number; amount: number }> = [];
                 
                 messageData.forEach((entry: number[]) => {
-                  const [price, count, amount] = entry;
+                  const [price, , amount] = entry;
                   if (amount > 0) {
                     bids.push({ price, amount });
                   } else {
@@ -384,7 +384,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
                 });
               } else if (Array.isArray(messageData) && messageData.length === 3) {
                 // Orderbook update [PRICE, COUNT, AMOUNT]
-                const [price, count, amount] = messageData;
+                const [price, , amount] = messageData;
                 
                 handleOrderbookUpdate({
                   symbol: subscription.symbol,
@@ -398,8 +398,8 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
               }
             }
           }
-        } catch (e) {
-          logger.wsError('❌ [WS] Message parsing error:', e);
+        } catch {
+          logger.wsError('❌ [WS] Message parsing error');
         }
       };
 
@@ -430,7 +430,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
         }
       };
 
-      ws.current.onerror = (error) => {
+      ws.current.onerror = () => {
         // SUPPRESS WebSocket errors - no logging for connection issues
         setError('WebSocket connection failed');
         setConnecting(false);
@@ -446,7 +446,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
         }
       };
 
-    } catch (error) {
+    } catch {
       // SUPPRESSED
       setError('Failed to create WebSocket connection');
       setConnecting(false);
@@ -513,7 +513,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
       ws.current.send(JSON.stringify(bookMsg));
       
       // SUPPRESSED
-    } catch (error) {
+    } catch {
       // SUPPRESSED
       setError('Failed to subscribe to symbol');
     }
@@ -544,7 +544,7 @@ export const useWebSocketMarket = (initialSymbol: string = 'BTCUSD'): WebSocketM
         ws.current!.send(JSON.stringify(unsubMsg));
         subscriptions.current.delete(channelId);
         // Silent unsubscribe - only log if there's an error
-      } catch (error) {
+      } catch {
         // SUPPRESSED
       }
     });

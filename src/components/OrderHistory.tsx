@@ -58,7 +58,7 @@ export function OrderHistory({ orders, isLoading = false, onOrderCancelled }: Or
       if (typeof onOrderCancelled === 'function') {
         onOrderCancelled();
       }
-    } catch (error) {
+    } catch {
       toast({
         title: 'Cancellation Failed',
         description: 'Failed to cancel order. Please try again.',

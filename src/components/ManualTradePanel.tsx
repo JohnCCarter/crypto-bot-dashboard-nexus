@@ -63,7 +63,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     AVAILABLE_SYMBOLS.find(s => s.value.includes(symbol?.replace('USD', '')))?.value || 'TESTBTC/TESTUSD'
   );
 
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Get global WebSocket data (shared single connection)
@@ -99,13 +98,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     refetchInterval: 5000
   });
 
-  // Get trading limitations
-  const { data: tradingLimitations } = useQuery({
-    queryKey: ['trading-limitations'],
-    queryFn: () => fetch('/api/trading-limitations').then(res => res.json()),
-    refetchInterval: 30000 // Check limitations every 30 seconds
-  });
-
   // Order submission mutation
   const submitOrderMutation = useMutation({
     mutationFn: (orderData: {
@@ -135,10 +127,10 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
         description: `${variables.side.toUpperCase()} order for ${variables.amount} ${variables.symbol} submitted successfully.`
       });
       
-      queryClient.invalidateQueries({ queryKey: ['balances'] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['positions'] });
-      queryClient.invalidateQueries({ queryKey: ['active-positions'] });
+      useQueryClient().invalidateQueries({ queryKey: ['balances'] });
+      useQueryClient().invalidateQueries({ queryKey: ['orders'] });
+      useQueryClient().invalidateQueries({ queryKey: ['positions'] });
+      useQueryClient().invalidateQueries({ queryKey: ['active-positions'] });
       
       // Reset form
       setAmount('');

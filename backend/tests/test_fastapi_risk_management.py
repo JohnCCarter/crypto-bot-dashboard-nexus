@@ -6,13 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.api.models import (
-    OrderData,
-    OrderSide,
-    OrderType,
-    ProbabilityDataModel,
-    ResponseStatus,
-)
+from backend.api.models import (OrderData, OrderSide, OrderType,
+                                ProbabilityDataModel, ResponseStatus)
 from backend.fastapi_app import app
 from backend.services.order_service_async import OrderServiceAsync
 from backend.services.risk_manager_async import RiskManagerAsync

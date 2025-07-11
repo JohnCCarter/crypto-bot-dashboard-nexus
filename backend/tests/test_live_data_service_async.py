@@ -9,10 +9,8 @@ import pandas as pd
 import pytest
 
 from backend.services.live_data_service_async import (
-    LiveDataServiceAsync,
-    close_live_data_service_async,
-    get_live_data_service_async,
-)
+    LiveDataServiceAsync, close_live_data_service_async,
+    get_live_data_service_async)
 
 
 @pytest.fixture

@@ -7,7 +7,6 @@ including performance metrics, anomaly detection, and predictive analysis.
 
 import asyncio
 import json
-import math
 import statistics
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -18,7 +17,8 @@ import numpy as np
 from scipy import stats
 
 from .websocket_connection_interface import ConnectionMetrics, ConnectionType
-from .websocket_in_memory_store import ConnectionRecord, InMemoryConnectionStore
+from .websocket_in_memory_store import (ConnectionRecord,
+                                        InMemoryConnectionStore)
 
 
 @dataclass

@@ -7,9 +7,8 @@ from typing import Any, Dict, List, Optional
 
 from backend.services.cache_service import get_cache_service
 from backend.services.exchange import ExchangeError
-from backend.services.exchange_async import (
-    _exchange_instance as async_exchange_instance,
-)
+from backend.services.exchange_async import \
+    _exchange_instance as async_exchange_instance
 
 
 async def get_position_type_from_metadata_async(symbol: str) -> str:

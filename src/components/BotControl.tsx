@@ -1,10 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { api } from '@/lib/api';
 import { BotStatus } from '@/types/trading';
-import { logger } from '@/utils/logger';
 import { useState } from 'react';
 
 interface BotControlProps {
@@ -14,7 +11,6 @@ interface BotControlProps {
 
 export function BotControl({ status, onStatusChange }: BotControlProps) {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const getStatusColor = (status: string) => {
     switch (status) {

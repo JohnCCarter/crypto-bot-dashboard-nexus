@@ -19,7 +19,8 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from .websocket_connection_interface import ConnectionState, ConnectionType
-from .websocket_in_memory_store import ConnectionRecord, InMemoryConnectionStore
+from .websocket_in_memory_store import (ConnectionRecord,
+                                        InMemoryConnectionStore)
 
 
 class AlertSeverity(Enum):

@@ -16,13 +16,10 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .websocket_connection_interface import (
-    ConnectionConfig,
-    ConnectionMetrics,
-    ConnectionState,
-    ConnectionType,
-    WebSocketConnectionInterface,
-)
+from .websocket_connection_interface import (ConnectionConfig,
+                                             ConnectionMetrics,
+                                             ConnectionState, ConnectionType,
+                                             WebSocketConnectionInterface)
 
 
 @dataclass

@@ -33,8 +33,7 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
   const { 
     connected, 
     getTickerForSymbol,
-    subscribeToSymbol,
-    platformStatus
+    subscribeToSymbol
   } = useGlobalWebSocketMarket();
   
   // Subscribe to symbol on mount for live pricing data
@@ -188,9 +187,9 @@ export const HybridTradeTable: React.FC<HybridTradeTableProps> = ({
               </Badge>
             )}
             
-            {platformStatus === 'maintenance' && (
+            {/* platformStatus === 'maintenance' && (
               <Badge variant="destructive">Maintenance</Badge>
-            )}
+            ) */}
             
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-3 h-3" />

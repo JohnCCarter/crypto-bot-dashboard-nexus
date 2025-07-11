@@ -15,15 +15,13 @@ from typing import Any, Callable, Dict, List, Optional
 
 from .websocket_alerts import NotificationConfig, WebSocketAlertManager
 from .websocket_analytics import WebSocketAnalytics
-from .websocket_connection_interface import (
-    ConnectionConfig,
-    ConnectionEventHandler,
-    ConnectionState,
-    ConnectionType,
-    WebSocketConnectionInterface,
-)
+from .websocket_connection_interface import (ConnectionConfig,
+                                             ConnectionEventHandler,
+                                             ConnectionState, ConnectionType,
+                                             WebSocketConnectionInterface)
 from .websocket_in_memory_store import InMemoryConnectionStore
-from .websocket_load_balancer import LoadBalancingStrategy, WebSocketLoadBalancer
+from .websocket_load_balancer import (LoadBalancingStrategy,
+                                      WebSocketLoadBalancer)
 
 
 @dataclass

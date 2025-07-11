@@ -9,11 +9,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.services.risk_manager_async import (
-    ProbabilityData,
-    RiskManagerAsync,
-    RiskParameters,
-)
+from backend.services.risk_manager_async import (ProbabilityData,
+                                                 RiskManagerAsync,
+                                                 RiskParameters)
 
 
 class TestAsyncProbabilityData:

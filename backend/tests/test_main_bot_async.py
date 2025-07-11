@@ -250,7 +250,7 @@ async def test_main_async_invalid_market_conditions(
     )
 
     # Mock asyncio.to_thread för att förhindra anrop till strategifunktioner
-    async def mock_to_thread(func, *args, **kwargs):
+    async def mock_to_thread(_, *args, **kwargs):
         return None  # Vi förväntar oss inte att strategier körs i detta test
 
     with patch(

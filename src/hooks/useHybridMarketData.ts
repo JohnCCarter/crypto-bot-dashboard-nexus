@@ -63,7 +63,6 @@ export const useHybridMarketData = (
   
   // State för hybrid control
   const [dataSource, setDataSource] = useState<'websocket' | 'rest' | 'hybrid'>('hybrid');
-  const [isRestPolling, setIsRestPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // WebSocket hook
@@ -107,7 +106,7 @@ export const useHybridMarketData = (
       initialLoadComplete.current = true;
       setError(null);
       
-    } catch (err) {
+    } catch {
       console.error('Failed to load initial market data');
       setError('Failed to load initial market data');
     }
@@ -117,7 +116,6 @@ export const useHybridMarketData = (
   const startRestPolling = useCallback(() => {
     if (restPollingInterval.current) return;
 
-    setIsRestPolling(true);
     setDataSource('rest');
 
     restPollingInterval.current = setInterval(async () => {
@@ -143,7 +141,7 @@ export const useHybridMarketData = (
         lastRestUpdate.current = now;
         setError(null);
 
-      } catch (err) {
+      } catch {
         setError('REST polling failed');
       }
     }, 2000); // Poll every 2 seconds
@@ -154,7 +152,6 @@ export const useHybridMarketData = (
     if (restPollingInterval.current) {
       clearInterval(restPollingInterval.current);
       restPollingInterval.current = null;
-      setIsRestPolling(false);
     }
   }, []); // No dependencies needed
 

@@ -21,9 +21,7 @@ import {
   TrendingDown,
   Shield,
   Target,
-  BarChart3,
-  AlertTriangle,
-  DollarSign
+  BarChart3
 } from 'lucide-react';
 
 interface Position {
@@ -269,7 +267,7 @@ export const PortfolioSummaryCard: React.FC = () => {
           
           {portfolioMetrics.assetAllocation.length > 0 ? (
             <div className="space-y-2">
-              {portfolioMetrics.assetAllocation.slice(0, 5).map((asset, index) => (
+              {portfolioMetrics.assetAllocation.slice(0, 5).map((asset) => (
                 <div key={asset.asset} className="flex justify-between items-center p-2 rounded bg-muted/50">
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${

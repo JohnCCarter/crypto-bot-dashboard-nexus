@@ -16,14 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
 import {
-  Balance,
-  BotStatus,
-  EmaCrossoverBacktestResult,
   LogEntry,
   OHLCVData,
-  OrderBook as OrderBookType,
-  OrderHistoryItem,
-  Trade
+  OrderHistoryItem
 } from '@/types/trading';
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -36,23 +31,16 @@ import { Link } from 'react-router-dom';
  */
 const Index: FC = () => {
   // State management
-  const [balances, setBalances] = useState<Balance[]>([]);
-  const [activeTrades, setActiveTrades] = useState<Trade[]>([]);
-  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
-  const [botStatus, setBotStatus] = useState<BotStatus>({
+  const [botStatus, setBotStatus] = useState<{ status: string; uptime: number; last_update: string }>({
     status: 'stopped',
     uptime: 0,
     last_update: new Date().toISOString()
   });
-  const [orderBook, setOrderBook] = useState<OrderBookType | null>(null);
+  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [chartData, setChartData] = useState<OHLCVData[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [emaFast, setEmaFast] = useState<number[] | undefined>(undefined);
-  const [emaSlow, setEmaSlow] = useState<number[] | undefined>(undefined);
-  const [signals, setSignals] = useState<EmaCrossoverBacktestResult["signals"] | undefined>(undefined);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
 
@@ -79,19 +67,13 @@ const Index: FC = () => {
         volume: chartData.map(d => d.volume)
       };
       
-      const result = await api.runBacktestEmaCrossover(data, {
+      await api.runBacktestEmaCrossover(data, {
         fast_period: 3,
         slow_period: 5,
         lookback: 5
       });
-      setEmaFast(result.ema_fast);
-      setEmaSlow(result.ema_slow);
-      setSignals(result.signals);
-    } catch (error) {
+    } catch {
       // Reset EMA data on error to prevent stale data
-      setEmaFast(undefined);
-      setEmaSlow(undefined);
-      setSignals(undefined);
     }
   }, [chartData]);
 
@@ -125,13 +107,11 @@ const Index: FC = () => {
       
       // STEG 2: Balances (ofta cached i 90s)
       await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay mellan calls
-      const balancesData = await api.getBalances();
-      setBalances(balancesData);
+      await api.getBalances();
       
       // STEG 3: Positions och trades
       await new Promise(resolve => setTimeout(resolve, 200));
-      const tradesData = await api.getActiveTrades();
-      setActiveTrades(tradesData);
+      await api.getActiveTrades();
       
       // STEG 4: Order history (låg prioritet, kan vara cached längre)
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -140,8 +120,7 @@ const Index: FC = () => {
       
       // STEG 5: Market data (använd WebSocket när möjligt)
       await new Promise(resolve => setTimeout(resolve, 200));
-      const orderBookData = await api.getOrderBook(selectedSymbol);
-      setOrderBook(orderBookData);
+      await api.getOrderBook(selectedSymbol);
       
       // STEG 6: Chart data (låg prioritet)
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -155,9 +134,9 @@ const Index: FC = () => {
       
       setIsConnected(true);
       console.log('✅ Sequential data load completed - nonce-safe approach');
-    } catch (error) {
+    } catch {
       setIsConnected(false);
-      console.error('❌ Sequential data load failed:', error);
+      console.error('❌ Sequential data load failed');
     } finally {
       setIsLoading(false);
     }
@@ -167,12 +146,12 @@ const Index: FC = () => {
   const loadAllData = async () => {
     try {
       const [
-        balancesData,
-        tradesData,
+        ,
+        ,
         ordersData,
         statusData,
-        orderBookData,
-        logsData,
+        ,
+        ,
         chartDataResponse
       ] = await Promise.all([
         api.getBalances(),
@@ -184,18 +163,14 @@ const Index: FC = () => {
         api.getChartData(selectedSymbol)
       ]);
 
-      setBalances(balancesData);
-      setActiveTrades(tradesData);
-      setOrderHistory(ordersData);
       setBotStatus(statusData);
-      setOrderBook(orderBookData);
-      setLogs(logsData);
+      setOrderHistory(ordersData);
       setChartData(chartDataResponse);
       setIsConnected(true);
       console.log('✅ Parallel initial load completed');
-    } catch (error) {
+    } catch {
       setIsConnected(false);
-      console.error('❌ Parallel initial load failed:', error);
+      console.error('❌ Parallel initial load failed');
     } finally {
       setIsLoading(false);
     }
@@ -205,7 +180,7 @@ const Index: FC = () => {
     try {
       const status = await api.getBotStatus();
       setBotStatus(status);
-    } catch (error) {
+    } catch {
       toast({
         title: "Status Error",
         description: "Failed to fetch bot status",

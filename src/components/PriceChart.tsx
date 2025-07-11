@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { OHLCVData, EmaCrossoverSignal } from '@/types/trading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';

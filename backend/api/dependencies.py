@@ -13,45 +13,32 @@ from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import Depends, HTTPException, Request, status
 
-from backend.services.bot_manager_async import BotManagerAsync, get_bot_manager_async
-from backend.services.cache_service import EnhancedCacheService, get_cache_service
+from backend.services.bot_manager_async import (BotManagerAsync,
+                                                get_bot_manager_async)
+from backend.services.cache_service import (EnhancedCacheService,
+                                            get_cache_service)
 from backend.services.config_service import ConfigService
 from backend.services.exchange import ExchangeService
-from backend.services.exchange_async import (
-    create_mock_exchange_service,
-    fetch_ohlcv_async,
-    fetch_order_book_async,
-    fetch_recent_trades_async,
-    fetch_ticker_async,
-    get_exchange_status_async,
-    get_markets_async,
-    get_trading_limitations_async,
-)
-from backend.services.global_nonce_manager import (
-    EnhancedGlobalNonceManager,
-    get_global_nonce_manager,
-)
+from backend.services.exchange_async import (create_mock_exchange_service,
+                                             fetch_ohlcv_async,
+                                             fetch_order_book_async,
+                                             fetch_recent_trades_async,
+                                             fetch_ticker_async,
+                                             get_exchange_status_async,
+                                             get_markets_async)
+from backend.services.global_nonce_manager import (EnhancedGlobalNonceManager,
+                                                   get_global_nonce_manager)
 from backend.services.nonce_monitoring_service import (
-    EnhancedNonceMonitoringService,
-    get_nonce_monitoring_service,
-)
-from backend.services.order_service_async import (
-    OrderServiceAsync,
-    get_order_service_async,
-)
+    EnhancedNonceMonitoringService, get_nonce_monitoring_service)
+from backend.services.order_service_async import (OrderServiceAsync,
+                                                  get_order_service_async)
 from backend.services.portfolio_manager_async import (
-    PortfolioManagerAsync,
-    StrategyWeight,
-    get_portfolio_manager_async,
-)
-
+    PortfolioManagerAsync, StrategyWeight, get_portfolio_manager_async)
 # Använd bara fetch_positions_async från positions_service_async
 from backend.services.positions_service_async import fetch_positions_async
-from backend.services.risk_manager_async import (
-    RiskManagerAsync,
-    RiskParameters,
-    get_risk_manager_async,
-)
+from backend.services.risk_manager_async import (RiskManagerAsync,
+                                                 RiskParameters,
+                                                 get_risk_manager_async)
 
 logger = logging.getLogger(__name__)
 

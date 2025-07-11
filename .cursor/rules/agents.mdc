@@ -24,10 +24,21 @@ Codex should primarily work in:
 
 Codex, follow these when testing:
 
-- Use `pytest` to validate Python modules
-- Run `pnpm lint` and `pnpm test` for any frontend code (if active)
+### Backend Testing:
+- **Primary:** Use optimized test runner: `python scripts/testing/run_tests_optimized.py`
+- **Fallback:** Use standard pytest: `cd backend; python -m pytest -v --tb=short --durations=10 --maxfail=10`
+- **Expected:** 236+ passed tests, 9 skipped, 1 xfailed (expected)
+- **Performance:** < 3 minutes total runtime
+
+### Frontend Testing:
+- Use `npm test` for Vitest (TypeScript/React)
+- **Expected:** 9/10 test files passing
+- **Performance:** < 30 seconds runtime
+
+### General:
 - Confirm all rule checks pass before proposing a pull request
-- Follow `cursor-rules-testing.mdc` for onboarding and test policy
+- Follow `cursor-rules-testing.mdc` for detailed testing policy
+- Always run baseline tests before and after changes
 
 ---
 

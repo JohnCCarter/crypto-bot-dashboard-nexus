@@ -28,7 +28,7 @@ class EnhancedNonceMonitoringService:
         self.startup_time = time.time()
         print("📊 Enhanced Nonce Monitoring Service initialized")
 
-    def log_nonce_usage(self, nonce: int, service_name: str, api_key_suffix: str):
+    def log_nonce_usage(self, nonce: int, service_name: str):
         """Log nonce usage event"""
         self.stats.total_nonces_issued += 1
         logger.info(f"🔢 Nonce {nonce} → {service_name}")

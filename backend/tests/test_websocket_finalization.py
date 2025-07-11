@@ -13,36 +13,21 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from backend.services.websocket_alerts import (
-    Alert,
-    AlertSeverity,
-    AlertType,
-    NotificationChannel,
-    WebSocketAlertManager,
-)
+from backend.services.websocket_alerts import (Alert, AlertSeverity, AlertType,
+                                               NotificationChannel,
+                                               WebSocketAlertManager)
 from backend.services.websocket_analytics import WebSocketAnalytics
 from backend.services.websocket_connection_interface import (
-    ConnectionConfig,
-    ConnectionEventHandler,
-    ConnectionMetrics,
-    ConnectionState,
-    ConnectionType,
-    WebSocketConnectionInterface,
-)
+    ConnectionConfig, ConnectionEventHandler, ConnectionMetrics,
+    ConnectionState, ConnectionType, WebSocketConnectionInterface)
 from backend.services.websocket_in_memory_store import (
-    ConnectionRecord,
-    InMemoryConnectionStore,
-)
+    ConnectionRecord, InMemoryConnectionStore)
 from backend.services.websocket_integration_manager import (
-    IntegrationConfig,
-    WebSocketIntegrationEventHandler,
-    WebSocketIntegrationManager,
-)
-from backend.services.websocket_load_balancer import (
-    HealthCheckResult,
-    LoadBalancingStrategy,
-    WebSocketLoadBalancer,
-)
+    IntegrationConfig, WebSocketIntegrationEventHandler,
+    WebSocketIntegrationManager)
+from backend.services.websocket_load_balancer import (HealthCheckResult,
+                                                      LoadBalancingStrategy,
+                                                      WebSocketLoadBalancer)
 
 
 class MockWebSocketConnection(WebSocketConnectionInterface):

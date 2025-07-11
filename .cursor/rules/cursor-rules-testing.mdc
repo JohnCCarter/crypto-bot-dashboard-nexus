@@ -1,13 +1,78 @@
----
-description: 
-globs: 
-alwaysApply: true
----
+# 🧪 Testing Instructions & Best Practices
+
+## Backend Testing (Python)
+
+### Primary Test Methods:
+1. **Optimized Test Runner (Recommended):**
+   ```bash
+   python scripts/testing/run_tests_optimized.py
+   ```
+   - Automatically runs fast tests first, then slow tests
+   - Parallel execution with auto workers
+   - Category-based filtering (fast, unit, api, mock, slow, positions, config, risk, portfolio)
+
+2. **Standard pytest (Fallback):**
+   ```bash
+   cd backend
+   python -m pytest -v --tb=short --durations=10 --maxfail=10
+   ```
+   - Use when optimized runner doesn't match test markers
+   - Provides complete test coverage
+
+### Test Categories:
+- **Fast Tests:** Unit tests, API mocks, basic functionality
+- **Slow Tests:** Integration tests, real API calls, complex scenarios
+- **Integration Tests:** End-to-end workflows, async services
+- **WebSocket Tests:** Real-time functionality, connection management
+
+### Expected Results:
+- **Baseline:** 236+ passed tests, 9 skipped, 1 xfailed (expected)
+- **Performance:** < 3 minutes total runtime
+- **Coverage:** All critical trading functions, strategies, risk management
+
+## Frontend Testing (TypeScript/React)
+
+### Test Commands:
+```bash
+npm test                    # Run all tests with Vitest
+npm run test:ui            # Interactive test UI
+npm run test:coverage      # Coverage report
+```
+
+### Test Structure:
+- **Unit Tests:** Component functionality, hooks, utilities
+- **Integration Tests:** API integration, WebSocket connections
+- **UI Tests:** Component rendering, user interactions
+
+### Expected Results:
+- **Baseline:** 9/10 test files passing
+- **Coverage:** All critical components and user flows
+- **Performance:** < 30 seconds runtime
+
+## Testing Workflow
+
+### Before Changes:
+1. Run baseline tests to establish current state
+2. Document any existing failures or warnings
+3. Ensure all tests pass before proceeding
+
+### After Changes:
+1. Run tests again to verify no regressions
+2. Fix any new failures immediately
+3. Update test documentation if needed
+
+### Continuous Integration:
+- All tests must pass before merge
+- Use optimized test runner in CI pipeline
+- Monitor test performance and coverage trends
+
+## Test Documentation
 
 - README.md must include:
   - Project overview
   - Setup instructions (backend, frontend, Docker)
   - API documentation reference
   - Example usage and test instructions
-- Update README when significant changes are made.
-
+  - **NEW:** Optimized test runner usage
+- Update README when significant changes are made
+- Document test categories and expected results

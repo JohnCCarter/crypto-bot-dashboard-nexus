@@ -48,7 +48,7 @@ class TestBitfinexClientWrapper(unittest.TestCase):
     @patch("backend.services.bitfinex_client_wrapper.asyncio.new_event_loop")
     @patch("backend.services.bitfinex_client_wrapper.Client")
     def test_connect_websocket(
-        self, mock_client, mock_event_loop, mock_set_loop, mock_connect_async
+        self, mock_client, mock_event_loop, _, mock_connect_async
     ):
         """Testar att WebSocket-anslutningen fungerar."""
         # Arrange
@@ -73,7 +73,7 @@ class TestBitfinexClientWrapper(unittest.TestCase):
     @patch("backend.services.bitfinex_client_wrapper.asyncio.set_event_loop")
     @patch("backend.services.bitfinex_client_wrapper.asyncio.new_event_loop")
     @patch("backend.services.bitfinex_client_wrapper.Client")
-    def test_place_order(self, mock_client, mock_event_loop, mock_set_loop):
+    def test_place_order(self, mock_client, mock_event_loop, _):
         """Testar att placera en order."""
         # Arrange
         mock_instance = MagicMock()
@@ -107,7 +107,7 @@ class TestBitfinexClientWrapper(unittest.TestCase):
     @patch("backend.services.bitfinex_client_wrapper.asyncio.set_event_loop")
     @patch("backend.services.bitfinex_client_wrapper.asyncio.new_event_loop")
     @patch("backend.services.bitfinex_client_wrapper.Client")
-    def test_get_wallet_balances(self, mock_client, mock_event_loop, mock_set_loop):
+    def test_get_wallet_balances(self, mock_client, mock_event_loop, _):
         """Testar att hämta plånbokssaldon."""
         # Arrange
         mock_instance = MagicMock()
@@ -189,7 +189,7 @@ class TestBitfinexClientWrapper(unittest.TestCase):
     @patch("backend.services.bitfinex_client_wrapper.asyncio.set_event_loop")
     @patch("backend.services.bitfinex_client_wrapper.asyncio.new_event_loop")
     @patch("backend.services.bitfinex_client_wrapper.Client")
-    def test_exception_handling(self, mock_client, mock_event_loop, mock_set_loop):
+    def test_exception_handling(self, mock_client, mock_event_loop, _):
         """Testar att felhantering fungerar korrekt."""
         # Arrange
         mock_instance = MagicMock()

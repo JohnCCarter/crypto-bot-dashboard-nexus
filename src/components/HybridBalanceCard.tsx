@@ -31,8 +31,7 @@ export const HybridBalanceCard: React.FC<HybridBalanceCardProps> = ({
   const { 
     connected, 
     getTickerForSymbol, 
-    subscribeToSymbol, 
-    unsubscribeFromSymbol 
+    subscribeToSymbol
   } = useGlobalWebSocketMarket();
   
   // Subscribe to symbol on mount

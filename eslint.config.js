@@ -1,26 +1,86 @@
 import js from "@eslint/js";
 import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import pluginReact from "eslint-plugin-react";
+import { defineConfig } from "eslint/config";
 
-export default tseslint.config(
-  { ignores: ["dist"] },
+export default defineConfig([
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
+    files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
+      js,
+      "@typescript-eslint": tseslint.plugin,
+      react: pluginReact,
+    },
+    extends: ["js/recommended"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": "off",
-      "@typescript-eslint/no-unused-vars": "off",
+      "react/react-in-jsx-scope": "off",
+      "@typescript-eslint/no-unused-vars": ["error"],
     },
-  }
-);
+  },
+  tseslint.configs.recommended,
+  pluginReact.configs.flat.recommended,
+  {
+    ignores: [
+      "node_modules/**",
+      "venv/**",
+      "dist/**",
+      "build/**",
+      "*.min.js",
+      "*.bundle.js",
+      "coverage/**",
+      "*.lcov",
+      ".next/**",
+      "out/**",
+      "**/*.test.js",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      ".env*",
+      "*.log",
+      "npm-debug.log*",
+      "yarn-debug.log*",
+      "yarn-error.log*",
+      "pids",
+      "*.pid",
+      "*.seed",
+      "*.pid.lock",
+      ".nyc_output",
+      ".npm",
+      ".eslintcache",
+      ".rpt2_cache/",
+      ".rts2_cache_cjs/",
+      ".rts2_cache_es/",
+      ".rts2_cache_umd/",
+      ".node_repl_history",
+      "*.tgz",
+      ".yarn-integrity",
+      ".cache",
+      ".parcel-cache",
+      ".nuxt",
+      ".vuepress/dist",
+      ".serverless/",
+      ".fusebox/",
+      ".dynamodb/",
+      ".tern-port",
+      ".codex_backups/**",
+      "temp/**",
+    ],
+  },
+  // Sista blocket: stäng av react/react-in-jsx-scope igen
+  {
+    rules: {
+      "react/react-in-jsx-scope": "off",
+    },
+  },
+]);

@@ -12,11 +12,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from backend.services.websocket_user_data_service import (
-    BitfinexUserDataClient,
-    MarginInfo,
-    Notification,
-    Position,
-)
+    BitfinexUserDataClient, MarginInfo, Notification, Position)
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

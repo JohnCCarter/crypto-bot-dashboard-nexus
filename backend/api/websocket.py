@@ -8,19 +8,11 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import (
-    APIRouter,
-    HTTPException,
-    Query,
-    WebSocket,
-    WebSocketDisconnect,
-    status,
-)
+from fastapi import (APIRouter, HTTPException, Query, WebSocket,
+                     WebSocketDisconnect, status)
 
-from backend.services.websocket_market_service import (
-    get_websocket_client,
-    start_websocket_service,
-)
+from backend.services.websocket_market_service import (get_websocket_client,
+                                                       start_websocket_service)
 from backend.services.websocket_user_data_service import BitfinexUserDataClient
 
 logger = logging.getLogger(__name__)

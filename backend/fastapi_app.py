@@ -3,6 +3,11 @@ FastAPI application entry point.
 This module provides the FastAPI application instance and configuration.
 """
 
+import sys
+
+print(sys.path)
+
+
 import logging
 import os
 import sys
@@ -18,9 +23,6 @@ from fastapi import status as http_status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from backend.api import backtest as backtest_api
-from backend.api import balances as balances_api
-from backend.api import bot_control as bot_control_api
 from backend.api import config as config_api
 from backend.api import market_data as market_data_api
 from backend.api import monitoring as monitoring_api
@@ -102,7 +104,8 @@ async def lifespan(app: FastAPI):
     # Initiera WebSocket-tjänster om de inte är inaktiverade
     if not disable_websockets:
         # Importera här för att undvika cirkelberoenden
-        from backend.services.websocket_market_service import get_websocket_client
+        from backend.services.websocket_market_service import \
+            get_websocket_client
 
         # Initiera WebSocket-tjänster
         ws_market = get_websocket_client()
@@ -110,9 +113,8 @@ async def lifespan(app: FastAPI):
 
         try:
             # Importera och initiera WebSocket User Data om tillgänglig
-            from backend.services.websocket_user_data_service import (
-                get_websocket_user_data_service,
-            )
+            from backend.services.websocket_user_data_service import \
+                get_websocket_user_data_service
 
             ws_user = await get_websocket_user_data_service()
             logger.info("🔌 WebSocket User Data tjänst initierad")
@@ -139,16 +141,16 @@ async def lifespan(app: FastAPI):
     if not disable_websockets:
         try:
             # Importera här för att undvika cirkelberoenden
-            from backend.services.websocket_market_service import stop_websocket_service
+            from backend.services.websocket_market_service import \
+                stop_websocket_service
 
             await stop_websocket_service()
             logger.info("🔌 WebSocket Market tjänst stängd")
 
             # Stäng WebSocket User Data om tillgänglig
             try:
-                from backend.services.websocket_user_data_service import (
-                    get_websocket_user_data_service,
-                )
+                from backend.services.websocket_user_data_service import \
+                    get_websocket_user_data_service
 
                 ws_user = await get_websocket_user_data_service()
                 await ws_user.close()
@@ -178,12 +180,9 @@ app.add_middleware(
 
 # Lägg till API-routers
 app.include_router(status_api.router)
-app.include_router(balances_api.router)
 app.include_router(orders_api.router)
-app.include_router(backtest_api.router)
 app.include_router(positions_api.router)
 app.include_router(config_api.router)
-app.include_router(bot_control_api.router)
 app.include_router(monitoring_api.router)
 app.include_router(portfolio_api.router)
 app.include_router(risk_management_api.router)

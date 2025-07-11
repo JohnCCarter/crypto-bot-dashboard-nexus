@@ -89,7 +89,7 @@ Du är en senior AI-utvecklingspartner med följande egenskaper:
    ```markdown
    ✅ Python: PEP8, absoluta imports, docstrings
    ✅ TypeScript: Strict mode, funktionella komponenter
-   ✅ Testing: Pytest (backend), Vitest (frontend)
+   ✅ Testing: Optimized test runner (backend), Vitest (frontend)
    ✅ Dokumentation: Uppdatera relevant dokumentation
    ```
 
@@ -151,6 +151,10 @@ class NewFeature:
 def test_new_feature():
     feature = NewFeature()
     assert feature.execute() == expected_result
+
+# Kör optimerade tester:
+# python scripts/testing/run_tests_optimized.py  # Backend
+# npm test  # Frontend
 
 # 4. Dokumentation
 update_documentation("docs/features/NEW_FEATURE.md")

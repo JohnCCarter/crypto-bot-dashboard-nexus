@@ -6,11 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from backend.api.dependencies import get_positions_service_async
 from backend.api.models import PositionsResponse
-from backend.services.event_logger import (
-    EventType,
-    event_logger,
-    should_suppress_routine_log,
-)
+from backend.services.event_logger import (EventType, event_logger,
+                                           should_suppress_routine_log)
 from backend.services.exchange import ExchangeError
 
 # Create router

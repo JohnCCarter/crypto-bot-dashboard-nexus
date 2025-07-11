@@ -115,21 +115,6 @@ interface WebSocketMarketState {
   unsubscribeFromUserData: () => Promise<void>;
 }
 
-// 1. Skapa/uppdatera interfaces för WebSocket-data
-interface WebSocketMessage {
-  event: string;
-  data: unknown;
-  timestamp: number;
-}
-
-interface MarketData {
-  symbol: string;
-  price: number;
-  volume: number;
-  bid?: number;
-  ask?: number;
-}
-
 const WebSocketMarketContext = createContext<WebSocketMarketState | null>(null);
 
 export const useGlobalWebSocketMarket = (): WebSocketMarketState => {
@@ -144,7 +129,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
   // Global state for all symbols
   const [tickers, setTickers] = useState<Record<string, MarketData>>({});
   const [orderbooks, setOrderbooks] = useState<Record<string, OrderBook>>({});
-  const [trades, setTrades] = useState<Record<string, Trade[]>>({});
+  const [trades] = useState<Record<string, Trade[]>>({});
   
   // Connection state
   const [connected, setConnected] = useState(false);
@@ -291,13 +276,6 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     });
   }, []);
 
-  const handleTradeUpdate = useCallback((data: { symbol: string; trades: Trade[] }) => {
-    setTrades(prev => ({
-      ...prev,
-      [data.symbol]: [...data.trades, ...(prev[data.symbol] || [])].slice(0, 100)
-    }));
-  }, []);
-
   // SINGLE WebSocket connection with development mode protection
   const connect = useCallback(() => {
     // Prevent multiple connections (especially in React Strict Mode)
@@ -406,7 +384,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
                 const asks: Array<{ price: number; amount: number }> = [];
                 
                 messageData.forEach((entry: number[]) => {
-                  const [price, count, amount] = entry;
+                  const [price, , amount] = entry;
                   if (amount > 0) {
                     bids.push({ price, amount });
                   } else {
@@ -421,7 +399,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
                   timestamp: new Date().toISOString()
                 });
               } else if (Array.isArray(messageData) && messageData.length === 3) {
-                const [price, count, amount] = messageData;
+                const [price, , amount] = messageData;
                 
                 handleOrderbookUpdate({
                   symbol: subscription.symbol,
@@ -435,7 +413,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
               }
             }
           }
-        } catch (e) {
+        } catch {
           // Silent error handling - no spam
         }
       };
@@ -473,7 +451,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
         connectionInitialized.current = false; // Reset connection flag on error
       };
 
-    } catch (error) {
+    } catch {
       setError('Failed to create WebSocket connection');
       setConnecting(false);
     }
@@ -508,7 +486,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
     try {
       ws.current.send(JSON.stringify(tickerMsg));
       ws.current.send(JSON.stringify(bookMsg));
-    } catch (error) {
+    } catch {
       setError('Failed to subscribe to symbol');
     }
   }, []);
@@ -537,7 +515,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
       try {
         ws.current!.send(JSON.stringify(unsubMsg));
         subscriptions.current.delete(channelId);
-      } catch (error) {
+      } catch {
         // Silent error handling
       }
     });
@@ -656,7 +634,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
           };
 
           userDataWS.current?.send(JSON.stringify(authMessage));
-        } catch (error) {
+        } catch {
           setUserDataError('Authentication failed');
           userDataConnecting.current = false;
         }
@@ -683,7 +661,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
 
           // Handle user data messages
           if (Array.isArray(data) && data.length >= 2) {
-            const [channelId, messageData] = data;
+            const [, messageData] = data;
             
             if (messageData === 'hb') {
               // Heartbeat - user data connection is alive
@@ -735,7 +713,7 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
                   setLiveOrders(prev => {
                     // Remove order if status is 'filled' or 'cancelled'
                     if (order.status === 'filled' || order.status === 'cancelled') {
-                      const { [order.id]: _, ...rest } = prev;
+                      const rest = Object.fromEntries(Object.entries(prev).filter(([k]) => k !== order.id));
                       return rest;
                     }
                     // Otherwise, add/update the order
@@ -764,8 +742,8 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
               }
             }
           }
-        } catch (error) {
-          console.error('❌ Error processing user data message:', error);
+        } catch {
+          console.error('❌ Error processing user data message');
         }
       };
 
@@ -776,14 +754,14 @@ export const WebSocketMarketProvider: React.FC<{ children: React.ReactNode }> = 
         console.log('🔌 User data WebSocket disconnected');
       };
 
-      userDataWS.current.onerror = (error) => {
+      userDataWS.current.onerror = () => {
         setUserDataError('User data WebSocket connection failed');
         userDataConnecting.current = false;
-        console.error('❌ User data WebSocket error:', error);
+        console.error('❌ User data WebSocket error');
       };
 
-    } catch (error) {
-      setUserDataError(`Failed to connect to user data stream: ${error}`);
+    } catch {
+      setUserDataError('Failed to connect to user data stream');
       userDataConnecting.current = false;
     }
   }, [userDataConnected]);

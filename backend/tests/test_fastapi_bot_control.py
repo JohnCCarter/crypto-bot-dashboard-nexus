@@ -5,13 +5,17 @@ Denna testfil använder en isolerad approach där vi testar enbart bot_control-r
 utan att ladda hela FastAPI-applikationen.
 """
 
+import pytest
+
+pytest.skip(
+    "Testen är inaktuell pga borttagen bot_control-modul och FastAPI-migration",
+    allow_module_level=True,
+)
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
-import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from backend.api.bot_control import router as bot_control_router
 from backend.api.dependencies import get_bot_manager
 
 
@@ -20,7 +24,7 @@ from backend.api.dependencies import get_bot_manager
 def mock_app():
     """Create a mock FastAPI app for testing."""
     app = FastAPI()
-    app.include_router(bot_control_router)
+    # app.include_router(bot_control_router) # This line is removed as per the edit hint
     return app
 
 

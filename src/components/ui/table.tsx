@@ -1,19 +1,16 @@
 import * as React from "react"
+import PropTypes from 'prop-types'
 
 import { cn } from "@/lib/utils"
 
-const Table = React.forwardRef<
-  HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-))
+interface TableProps {
+  className?: string;
+  // ... eventuella andra props
+}
+
+const Table: React.FC<TableProps> = ({ className = '', ...props }) => (
+  <table className={className} {...props} />
+);
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<
@@ -81,6 +78,10 @@ const TableHead = React.forwardRef<
 ))
 TableHead.displayName = "TableHead"
 
+TableHead.propTypes = {
+  className: PropTypes.string,
+};
+
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
@@ -92,6 +93,10 @@ const TableCell = React.forwardRef<
   />
 ))
 TableCell.displayName = "TableCell"
+
+TableCell.propTypes = {
+  className: PropTypes.string,
+};
 
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
