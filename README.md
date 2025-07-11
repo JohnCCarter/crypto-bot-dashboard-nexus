@@ -547,7 +547,7 @@ npm run lint
 
 > **Note:** Due to a limitation in FastAPI's dependency override system, some error-path tests for the positions API (e.g. simulating ExchangeError/Exception via query params) are currently skipped. See `backend/tests/test_fastapi_positions.py` and the FastAPI migration status documentation for details.
 
-### Teststatus (2024-07-07)
+### Teststatus (2025-07-07)
 
 - Unit-tester och mockade API-tester: 100% grönt
 - API-tester (bot control): 2 fail (status: 'running' istället för 'stopped')
