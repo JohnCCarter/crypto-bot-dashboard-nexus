@@ -32,11 +32,30 @@ class OverseerEngine:
 
     VERSION_PATTERN = _re.compile(r"Version (\d+)\.(\d+)")
 
-    def __init__(self) -> None:
+    def __init__(self, base_dir: Path | None = None) -> None:
+        """Create a new OverseerEngine.
+
+        Parameters
+        ----------
+        base_dir : Path | None, optional
+            Root directory for log, spec, and archive files. Defaults to the
+            directory containing this module. Passing a temporary directory
+            enables isolated testing without affecting the real Overseer log.
+        """
+        self._base_dir = base_dir or Path(__file__).parent
+
+        # Bind files relative to base_dir (enables test isolation)
+        global _LOG_FILE, _SPEC_FILE, _ARCHIVE_DIR
+        _LOG_FILE = self._base_dir / "Overseer_Log.md"
+        _SPEC_FILE = self._base_dir / "Command_Handling_Spec.md"
+        _ARCHIVE_DIR = self._base_dir / "archive"
+
         self.state: _State = _State.IDLE
         self.major: int = 0
         self.minor: int = 0
+
         self._load_version()
+
         # ensure archive dir exists
         _ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
