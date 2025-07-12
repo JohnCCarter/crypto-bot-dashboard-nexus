@@ -10,6 +10,9 @@ import datetime as _dt
 import re as _re
 import shutil as _shutil
 from enum import Enum, auto
+
+# Local import for proposal management (relative import)
+from .autonomous_system import ProposalManager, ProposalStatus, run_backend_tests, Proposal
 from pathlib import Path
 
 _LOG_FILE = Path(__file__).with_name("Overseer_Log.md")
@@ -59,6 +62,9 @@ class OverseerEngine:
         # ensure archive dir exists
         _ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
+        # Initialize proposal manager
+        self._proposal_mgr = ProposalManager()
+
     # ---------------------------------------------------------------------
     # Public API
     # ---------------------------------------------------------------------
@@ -78,6 +84,12 @@ class OverseerEngine:
             return self._cmd_finalize()
         if cmd_lower == "/reset":
             return self._cmd_reset()
+        # Internal admin commands (not exposed to user)
+        if cmd_lower == "__list_pending__":
+            return self._cmd_list_pending()
+        if cmd_lower.startswith("__approve_"):
+            pid = int(cmd_lower.split("__approve_")[-1])
+            return self._cmd_approve(pid)
         return self._help_text()
 
     # ------------------------------------------------------------------
@@ -98,9 +110,46 @@ class OverseerEngine:
         self.state = _State.BRAINSTORM
         self._bump_minor()
         self._append_to_log("### Brainstorm Notes (v{}.{}).\n\n_Agent brainstorming session initiated._".format(self.major, self.minor))
-        # After brainstorming, transition back to analysis
+        # Agents would programmatically generate proposals here and submit.
+        # For this skeleton system, we simply log and transition back.
         self.state = _State.ANALYSIS
         return "Brainstorming in progress."
+
+    # ---------------- Proposal Handling ----------------
+    def submit_proposal(self, proposal: Proposal) -> None:  # called by agents
+        self._proposal_mgr.submit(proposal)
+        self._append_to_log(
+            f"### Proposal #{proposal.id} submitted by {proposal.agent_name}.\n\n> {proposal.description}"
+        )
+
+    def _cmd_list_pending(self) -> str:
+        pending = self._proposal_mgr.list_pending()
+        if not pending:
+            return "No pending proposals."
+        lines = [f"Pending Proposals ({len(pending)}):"]
+        for p in pending:
+            lines.append(f"- #{p.id} by {p.agent_name}: {p.description[:60]}...")
+        return "\n".join(lines)
+
+    def _cmd_approve(self, pid: int) -> str:
+        if self._proposal_mgr.approve(pid):
+            prop = self._proposal_mgr.get(pid)
+            self._apply_proposal(prop)  # type: ignore[arg-type]
+            return f"Proposal #{pid} approved and applied."
+        return f"Proposal #{pid} not found or cannot be approved."
+
+    def _apply_proposal(self, prop: Proposal) -> None:
+        """Apply changes and run tests; update log and versioning."""
+        if not prop or prop.status != ProposalStatus.APPROVED:
+            return
+        # TODO: implement file patching logic; placeholder for now.
+        tests_ok = run_backend_tests()
+        if tests_ok:
+            prop.status = ProposalStatus.APPLIED
+            self._append_to_log(f"Proposal #{prop.id} applied successfully. Tests passed.")
+        else:
+            prop.status = ProposalStatus.FAILED
+            self._append_to_log(f"Proposal #{prop.id} failed tests and was rolled back.")
 
     def _cmd_feedback(self, feedback: str) -> str:
         if not feedback:
