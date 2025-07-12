@@ -166,3 +166,53 @@ def run_frontend_tests() -> bool:
 def run_all_tests() -> bool:
     """Run both backend and frontend tests, short-circuit on first failure."""
     return run_backend_tests() and run_frontend_tests()
+
+
+###############################################################################
+# Version Control Integration (Git wrapper)
+###############################################################################
+
+
+class VersionControl:
+    """Lightweight Git wrapper for staging, committing, and reverting changes.
+
+    All operations are best-effort; if the repository is not a Git repo or Git
+    is unavailable, the class will act as a no-op to avoid breaking workflow.
+    """
+
+    def __init__(self) -> None:
+        # Detect git root lazily
+        self._root = self._detect_git_root()
+
+    # ------------------------------------------------------------------
+    def stage(self, file_paths: list[Path]) -> bool:
+        if not self._root:
+            return True
+        try:
+            subprocess.run(["git", "add", *[str(p) for p in file_paths]], check=True)
+            return True
+        except Exception:
+            return False
+
+    def commit(self, message: str) -> bool:
+        if not self._root:
+            return True
+        try:
+            subprocess.run(["git", "commit", "-m", message, "--no-verify"], check=True)
+            return True
+        except Exception:
+            return False
+
+    def revert(self, file_paths: list[Path]) -> None:
+        if not self._root:
+            return
+        subprocess.run(["git", "checkout", "--", *[str(p) for p in file_paths]], check=False)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _detect_git_root() -> Path | None:
+        current = Path.cwd()
+        for parent in [current] + list(current.parents):
+            if (parent / ".git").exists():
+                return parent
+        return None

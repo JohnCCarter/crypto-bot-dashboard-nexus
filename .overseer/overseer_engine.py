@@ -12,7 +12,13 @@ import shutil as _shutil
 from enum import Enum, auto
 
 # Local import for proposal management (relative import)
-from .autonomous_system import ProposalManager, ProposalStatus, run_backend_tests, Proposal
+from .autonomous_system import (
+    ProposalManager,
+    ProposalStatus,
+    run_all_tests,
+    VersionControl,
+    Proposal,
+)
 from pathlib import Path
 
 _LOG_FILE = Path(__file__).with_name("Overseer_Log.md")
@@ -143,11 +149,34 @@ class OverseerEngine:
         if not prop or prop.status != ProposalStatus.APPROVED:
             return
         # TODO: implement file patching logic; placeholder for now.
-        tests_ok = run_backend_tests()
+        vc = VersionControl()
+
+        # Backup original contents for manual revert if git not available
+        originals: dict[Path, str] = {}
+        for cs in prop.changes:
+            path = cs.file_path
+            try:
+                originals[path] = path.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                originals[path] = ""
+
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(cs.new_content, encoding="utf-8")
+
+        # Run full test suite (backend + frontend)
+        tests_ok = run_all_tests()
+
         if tests_ok:
             prop.status = ProposalStatus.APPLIED
+            files = [cs.file_path for cs in prop.changes]
+            vc.stage(files)
+            vc.commit(f"Apply proposal #{prop.id}: {prop.description[:50]}")
             self._append_to_log(f"Proposal #{prop.id} applied successfully. Tests passed.")
         else:
+            # revert changes
+            for path, content in originals.items():
+                path.write_text(content, encoding="utf-8")
+            vc.revert([cs.file_path for cs in prop.changes])
             prop.status = ProposalStatus.FAILED
             self._append_to_log(f"Proposal #{prop.id} failed tests and was rolled back.")
 
