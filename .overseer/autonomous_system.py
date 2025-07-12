@@ -28,10 +28,15 @@ class ProposalStatus(Enum):
 
 @dataclass
 class ChangeSet:
-    """Represents an atomic modification to a single file."""
+    """Represents an atomic modification to a single file.
+
+    The system currently supports *replace* operations where the entire file
+    content is replaced with ``new_content``. Future modes (unified diff patch)
+    can be added as needed.
+    """
 
     file_path: Path
-    patch: str  # unified diff or replacement text
+    new_content: str  # full replacement text for the file
 
 
 @dataclass
@@ -72,6 +77,15 @@ class ProposalManager:
     def approve(self, pid: int) -> bool:
         prop = self._get(pid)
         if prop and prop.status == ProposalStatus.UNDER_REVIEW:
+            # conflict detection
+            conflicts = self.detect_conflicts(prop)
+            if conflicts:
+                # keep under review; decision postponed
+                prop.description += (
+                    "\n\n[Blocked] Conflicts with proposal(s): "
+                    + ", ".join(str(c.id) for c in conflicts)
+                )
+                return False
             prop.status = ProposalStatus.APPROVED
             return True
         return False
@@ -88,8 +102,22 @@ class ProposalManager:
     def get(self, pid: int) -> Proposal | None:
         return self._get(pid)
 
+    # ------------------------ conflict detection ---------------------------
+    def detect_conflicts(self, target: Proposal) -> list[Proposal]:
+        """Return proposals that touch the same files as *target*."""
+        target_files = {cs.file_path for cs in target.changes}
+        conflicts: list[Proposal] = []
+        for p in self._proposals:
+            if p.id == target.id or p.status in {ProposalStatus.REJECTED}:
+                continue
+            other_files = {cs.file_path for cs in p.changes}
+            if target_files & other_files:
+                conflicts.append(p)
+        return conflicts
+
     # ------------------------ internals ---------------------------
-    def _get(self, pid: int) -> Proposal | None:
+    def _get(self, pid: int) -> Proposal | None:  # noqa: D401
+        """Internal: retrieve proposal by id."""
         return next((p for p in self._proposals if p.id == pid), None)
 
 
@@ -123,3 +151,18 @@ def run_backend_tests() -> bool:
             check=False,
         )
         return result.returncode == 0
+
+
+def run_frontend_tests() -> bool:
+    """Run frontend test suite using npm/vitest; return success bool."""
+    result = subprocess.run([
+        "npm",
+        "test",
+        "--silent",
+    ], check=False)
+    return result.returncode == 0
+
+
+def run_all_tests() -> bool:
+    """Run both backend and frontend tests, short-circuit on first failure."""
+    return run_backend_tests() and run_frontend_tests()
