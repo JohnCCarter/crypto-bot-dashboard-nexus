@@ -18,6 +18,8 @@ from .autonomous_system import (
     run_all_tests,
     VersionControl,
     Proposal,
+    DomainTracker,
+    Domain,
 )
 from pathlib import Path
 
@@ -70,6 +72,16 @@ class OverseerEngine:
 
         # Initialize proposal manager
         self._proposal_mgr = ProposalManager()
+
+        # Domain tracker with simple notify callback that appends log and prepares user-facing message queue
+        self._domain_messages: list[str] = []
+
+        def _notify(domain: Domain):
+            msg = f"Domain '{domain.value}' has been fully processed and validated."
+            self._domain_messages.append(msg)
+            self._append_to_log(f"**Notification:** {msg}")
+
+        self._domain_tracker = DomainTracker(_notify)
 
     # ---------------------------------------------------------------------
     # Public API
@@ -172,6 +184,9 @@ class OverseerEngine:
             vc.stage(files)
             vc.commit(f"Apply proposal #{prop.id}: {prop.description[:50]}")
             self._append_to_log(f"Proposal #{prop.id} applied successfully. Tests passed.")
+
+            # Mark domain done and maybe notify
+            self._domain_tracker.mark_completed(prop.domain)
         else:
             # revert changes
             for path, content in originals.items():
@@ -179,6 +194,11 @@ class OverseerEngine:
             vc.revert([cs.file_path for cs in prop.changes])
             prop.status = ProposalStatus.FAILED
             self._append_to_log(f"Proposal #{prop.id} failed tests and was rolled back.")
+
+    # Expose messages to user when requested (poll)
+    def get_notifications(self) -> list[str]:
+        msgs, self._domain_messages = self._domain_messages, []
+        return msgs
 
     def _cmd_feedback(self, feedback: str) -> str:
         if not feedback:

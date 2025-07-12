@@ -26,6 +26,16 @@ class ProposalStatus(Enum):
     FAILED = auto()
 
 
+class Domain(Enum):
+    REPO_STRUCTURE = "Repo Structure"
+    DEPENDENCIES = "Dependencies"
+    RUNTIME = "Runtime"
+    DOMAIN_LOGIC = "Domain Logic"
+    TESTS = "Tests"
+    SECURITY = "Security"
+    REFACTOR = "Refactor"
+
+
 @dataclass
 class ChangeSet:
     """Represents an atomic modification to a single file.
@@ -45,6 +55,7 @@ class Proposal:
 
     agent_name: str
     description: str
+    domain: Domain = Domain.REFACTOR
     changes: List[ChangeSet] = field(default_factory=list)
     tests_to_run: List[str] = field(default_factory=list)
     id: int | None = None
@@ -216,3 +227,30 @@ class VersionControl:
             if (parent / ".git").exists():
                 return parent
         return None
+
+###############################################################################
+# Domain Tracking
+###############################################################################
+
+
+class DomainStatus(Enum):
+    IN_PROGRESS = auto()
+    COMPLETED = auto()
+
+
+class DomainTracker:
+    """Track completion state of each domain and emit notifications via callback."""
+
+    def __init__(self, notify_cb):
+        self._status: dict[Domain, DomainStatus] = {d: DomainStatus.IN_PROGRESS for d in Domain}
+        self._notify = notify_cb  # function(domain: Domain) -> None
+
+    def mark_completed(self, domain: Domain) -> None:
+        if self._status[domain] == DomainStatus.COMPLETED:
+            return
+        self._status[domain] = DomainStatus.COMPLETED
+        # Emit notification
+        self._notify(domain)
+
+    def all_completed(self) -> bool:
+        return all(status == DomainStatus.COMPLETED for status in self._status.values())
