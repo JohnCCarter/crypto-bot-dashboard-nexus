@@ -80,7 +80,8 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/api/balances`);
     
     if (!res.ok) throw new Error('Failed to fetch balances');
-    return await res.json();
+    const data = await res.json();
+    return data.balances || [];
   },
 
   // Get Active Trades (Live)
@@ -106,8 +107,7 @@ export const api = {
 
   // Get Order Book (Live Bitfinex)
   async getOrderBook(symbol: string, limit: number = 20): Promise<OrderBook> {
-    const res = await fetch(`${API_BASE_URL}/api/market/orderbook/${symbol}?limit=${limit}`);
-    
+    const res = await fetch(`${API_BASE_URL}/api/orderbook/${symbol}?limit=${limit}`);
     if (!res.ok) {
       return {
         bids: [

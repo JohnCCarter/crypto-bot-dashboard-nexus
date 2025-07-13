@@ -23,6 +23,8 @@ from fastapi import status as http_status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
+from backend.api import balances as balances_api
+from backend.api import bot_control as bot_control_api
 from backend.api import config as config_api
 from backend.api import market_data as market_data_api
 from backend.api import monitoring as monitoring_api
@@ -34,6 +36,7 @@ from backend.api import risk_management as risk_management_api
 from backend.api import status as status_api
 from backend.api import trading_limitations as trading_limitations_api
 from backend.api import websocket as websocket_api
+from backend.api import backtest as backtest_api
 from backend.services.exchange import ExchangeService
 from backend.services.exchange_async import create_mock_exchange_service
 from backend.services.global_nonce_manager import get_global_nonce_manager
@@ -180,6 +183,7 @@ app.add_middleware(
 
 # Lägg till API-routers
 app.include_router(status_api.router)
+app.include_router(balances_api.router)
 app.include_router(orders_api.router)
 app.include_router(positions_api.router)
 app.include_router(config_api.router)
@@ -189,6 +193,8 @@ app.include_router(risk_management_api.router)
 app.include_router(market_data_api.router)
 app.include_router(orderbook_api.router)
 app.include_router(trading_limitations_api.router)
+app.include_router(bot_control_api.router)
+app.include_router(backtest_api.router)
 
 # Lägg till WebSocket-router om den inte är inaktiverad
 if os.environ.get("FASTAPI_DISABLE_WEBSOCKETS", "false").lower() != "true":

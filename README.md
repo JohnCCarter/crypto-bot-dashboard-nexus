@@ -554,20 +554,24 @@ pytest backend/tests/test_risk_manager_async.py -v
 ```bash
 # Run component tests
 npm run test
-
+# List all test files and cases
+npx vitest list
 # Run with coverage
 npm run test:coverage
-
 # Run linting
 npm run lint
 ```
 
-**Test Coverage:** Comprehensive testing with:
+**Test Coverage:**  
+- 10/10 testfiler ska passera (1 test kan vara "skipped" – detta är förväntat)
+- Alla tester måste passera innan PR/merge
+- Testerna körs med Vitest och omfattar komponenter, integration och användarinteraktion
 
-- ✅ Component unit tests
-- ✅ Integration tests with MSW
-- ✅ User interaction testing
-- ✅ API response handling
+> **Tips:** Om du får ett felmeddelande om "Invalid hook call" – kontrollera att alla hooks används korrekt i komponenter och att endast en version av React finns i node_modules.
+
+**Senaste teststatus (2025-07-13):**
+- Frontend: 10/10 testfiler passerar, 1 test skipped (förväntat)
+- Backend: 205 passed, 12 skipped, 1 expected failure
 
 > **Note:** Due to a limitation in FastAPI's dependency override system, some error-path tests for the positions API (e.g. simulating ExchangeError/Exception via query params) are currently skipped. See `backend/tests/test_fastapi_positions.py` and the FastAPI migration status documentation for details.
 
@@ -913,4 +917,3 @@ FASTAPI_DEV_MODE=true
 ## Known Issues
 
 - WebSocket User Data: "Cannot run the event loop while another loop is running" may appear in logs. This does not block core functionality but is under investigation.
-                                                                                  

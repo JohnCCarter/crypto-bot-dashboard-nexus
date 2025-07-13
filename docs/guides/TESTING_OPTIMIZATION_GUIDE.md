@@ -3,12 +3,14 @@
 ## 📊 Performance Improvements
 
 ### Before Optimization
+
 - **Sequential execution:** 6 minutes for full test suite
 - **No parallel processing**
 - **All tests run in order**
 - **Sleep delays and polling loops**
 
 ### After Optimization
+
 - **Parallel execution:** 3:10 minutes (47% faster)
 - **8 workers** (auto-detected CPU cores)
 - **Smart test categorization**
@@ -17,6 +19,7 @@
 ## 🔧 Implementation Details
 
 ### 1. Parallel Execution Setup
+
 ```bash
 # Install pytest-xdist for parallel testing
 pip install pytest-xdist
@@ -29,6 +32,7 @@ addopts =
 ```
 
 ### 2. Test Categorization
+
 ```python
 # Mark tests for optimal execution
 @pytest.mark.fast      # < 1s tests
@@ -39,6 +43,7 @@ addopts =
 ```
 
 ### 3. Optimized Test Scripts
+
 ```bash
 # Main optimized runner
 python scripts/testing/run_tests_optimized.py
@@ -53,17 +58,21 @@ python scripts/testing/run_tests_optimized.py --category "risk"
 ## 🎯 Best Practices
 
 ### For Developers
+
 1. **Always use parallel execution:**
+
    ```bash
    python -m pytest backend/tests/  # Uses -n auto by default
    ```
 
 2. **Use fast tests for development:**
+
    ```bash
    python scripts/testing/run_tests_optimized.py --fast-only
    ```
 
 3. **Categorize new tests:**
+
    ```python
    @pytest.mark.fast
    def test_quick_function():
@@ -77,12 +86,15 @@ python scripts/testing/run_tests_optimized.py --category "risk"
    ```
 
 ### For CI/CD
+
 1. **Use optimized runner:**
+
    ```bash
    python scripts/testing/run_tests_optimized.py
    ```
 
 2. **Configure appropriate workers:**
+
    ```bash
    # For CI with limited resources
    python scripts/testing/run_tests_optimized.py --workers 2
@@ -93,6 +105,7 @@ python scripts/testing/run_tests_optimized.py --category "risk"
 ### Common Issues
 
 #### 1. Parallel Execution Not Working
+
 ```bash
 # Check if pytest-xdist is installed
 pip show pytest-xdist
@@ -102,6 +115,7 @@ python -m pytest --trace-config | grep xdist
 ```
 
 #### 2. Tests Running Slowly
+
 ```bash
 # Check if using optimized script
 python scripts/testing/run_tests_optimized.py --fast-only
@@ -111,6 +125,7 @@ echo $PYTEST_DISABLE_PLUGIN_AUTOLOAD  # Should be empty
 ```
 
 #### 3. Test Failures in Parallel
+
 ```bash
 # Run with single worker for debugging
 python scripts/testing/run_tests_optimized.py --workers 1
@@ -119,6 +134,7 @@ python scripts/testing/run_tests_optimized.py --workers 1
 ## 📈 Performance Monitoring
 
 ### Test Duration Tracking
+
 ```bash
 # Show slowest tests
 python -m pytest backend/tests/ --durations=10
@@ -128,6 +144,7 @@ python -m pytest backend/tests/ --durations-min=0.5
 ```
 
 ### Worker Utilization
+
 ```bash
 # Monitor worker performance
 python -m pytest backend/tests/ -n auto -v
@@ -136,16 +153,19 @@ python -m pytest backend/tests/ -n auto -v
 ## 🚨 Important Notes
 
 ### 1. Test Isolation
+
 - Ensure tests don't share state
 - Use proper fixtures and cleanup
 - Avoid global variables in tests
 
 ### 2. Resource Management
+
 - Monitor memory usage with parallel execution
 - Adjust worker count based on system resources
 - Consider using fewer workers for slow tests
 
 ### 3. Integration Tests
+
 - Integration tests still require running server
 - Run separately: `pytest backend/tests/integration/`
 - Mark with `@pytest.mark.integration`
@@ -153,6 +173,7 @@ python -m pytest backend/tests/ -n auto -v
 ## 🔄 Migration Guide
 
 ### From Old Test Scripts
+
 ```bash
 # Old way (slow)
 python scripts/testing/run_tests_fast.py
@@ -162,6 +183,7 @@ python scripts/testing/run_tests_optimized.py --fast-only
 ```
 
 ### From Sequential Execution
+
 ```bash
 # Old way (slow)
 python -m pytest backend/tests/
@@ -183,4 +205,16 @@ python -m pytest backend/tests/  # Now uses -n auto by default
 - **47% faster test execution** (6min → 3:10min)
 - **8 parallel workers** utilizing all CPU cores
 - **Smart categorization** for optimal execution order
-- **Automatic parallel execution** by default 
+- **Automatic parallel execution** by default
+
+## 🚦 Frontend Testning (Vitest)
+
+- Frontend-tester körs med Vitest:
+
+  ```bash
+  npm run test
+  npx vitest list
+  ```
+
+- Förväntat resultat: **10/10 testfiler ska passera** (1 test kan vara "skipped" – detta är normalt).
+- Alla tester måste passera innan PR/merge.

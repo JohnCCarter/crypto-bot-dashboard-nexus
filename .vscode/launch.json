@@ -1,10 +1,5 @@
 {
     "configurations": [
-        
-
-
-        
-
         {
             "type": "msedge",
             "name": "http://http://localhost:8081",
@@ -16,6 +11,18 @@
             "name": "http://localhost:8081",
             "request": "launch",
             "url": "http://localhost:8081"
+        },
+        {
+            "type": "msedge",
+            "name": "http://localhost:8082",
+            "request": "launch",
+            "url": "http://localhost:8082"
+        },
+        {
+            "type": "msedge",
+            "name": "http://localhost:8082/",
+            "request": "launch",
+            "url": "http://localhost:8082/"
         }
     ]
 }

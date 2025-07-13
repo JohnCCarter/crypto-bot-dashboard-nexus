@@ -1,0 +1,2738 @@
+[
+    {
+      "timestamp": "2025-07-13T22:21:59.510Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:59.510Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:59.459Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:59.105Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:58.774Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Fetching balance data from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:58.225Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:58.224Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:57.941Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.817Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.817Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.817Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.817Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.817Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.817Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.769Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.769Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.769Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.769Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.769Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.769Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.191Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.191Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.191Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.191Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.191Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.191Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 118190,\n  \"volume\": 203.91466655\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: BTCUSD = $118190.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.180Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.180Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.180Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.180Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.180Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 118190,\n  \"volume\": 203.91466655\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.180Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: BTCUSD = $118190.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.171Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.170Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.170Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.170Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.170Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:56.169Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.867Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Configuration loading completed"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.867Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Settings] Stack trace: Error: Failed to fetch config\n    at Object.getConfig (http://localhost:8081/src/lib/api.ts:52:28)\n    at async http://localhost:8081/src/components/SettingsPanel.tsx:45:32"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.866Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Settings] Error message: Failed to fetch config"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.865Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Settings] Error type: Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.865Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Settings] Failed to load configuration: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.595Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Calling api.getConfig()..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.595Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Timestamp: 2025-07-13T22:21:54.594Z"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.594Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Loading configuration..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:54.594Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "⚙️ [Settings] Settings panel opened, loading config"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:52.908Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:52.908Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:52.639Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:51.638Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:51.638Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:51.596Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.559Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.559Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.263Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Bot start operation completed (loading=false)"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.263Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Stack trace: SyntaxError: Unexpected end of JSON input\n    at handleButtonClick (http://localhost:8081/src/components/BotControl.tsx:57:41)"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.262Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Error message: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.262Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Error type: SyntaxError"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.262Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Error: {\n  \"message\": \"Failed to execute 'json' on 'Response': Unexpected end of JSON input\"\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.262Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Bot start operation failed!"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:46.260Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:45.959Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:45.947Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Sending start request to API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:45.947Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Timestamp: 2025-07-13T22:21:45.947Z"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:45.947Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Bot uptime: 0s"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:45.947Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Current bot status: stopped"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:45.946Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] User clicked START button"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:45.675Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Fetching balance data from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:44.814Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:44.814Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:44.582Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.612Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Parallel initial load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.316Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.314Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.232Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Show details: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.232Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.232Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component mounted - tracking BTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.231Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component unmounting from LTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.119Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.119Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.119Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.119Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.119Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 118170,\n  \"volume\": 203.91466655\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.118Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: BTCUSD = $118170.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.118Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.118Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.118Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.118Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.118Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 118170,\n  \"volume\": 203.91466655\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:42.118Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: BTCUSD = $118170.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.806Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.789Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.789Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.789Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.789Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.789Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.789Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 93.77,\n  \"volume\": 7290.62432845\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: LTCUSD = $93.77"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 93.77,\n  \"volume\": 7290.62432845\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.779Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: LTCUSD = $93.77"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.170Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.170Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.170Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.169Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.169Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.169Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.150Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.150Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.150Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.150Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.150Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:41.150Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.649Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.649Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.437Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Parallel initial load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.404Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.071Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Show details: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.071Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.071Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component mounted - tracking LTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:40.071Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component unmounting from ADAUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.964Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.964Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.964Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.964Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.964Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 93.77,\n  \"volume\": 7290.62432845\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.963Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: LTCUSD = $93.77"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.963Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.963Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.963Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.963Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.963Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 93.77,\n  \"volume\": 7290.62432845\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:39.963Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: LTCUSD = $93.77"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.142Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.142Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.142Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.142Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.142Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.141Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 0.72696,\n  \"volume\": 678308.01772676\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: ADAUSD = $0.73"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.132Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 0.72696,\n  \"volume\": 678308.01772676\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.131Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: ADAUSD = $0.73"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:38.130Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Parallel initial load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.865Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Show details: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.865Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.865Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component mounted - tracking ADAUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.865Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component unmounting from XRPUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: false"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] No ticker data available for ADAUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: false"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:37.777Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] No ticker data available for ADAUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.121Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Parallel initial load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.112Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.112Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.112Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.112Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.112Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.112Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 2.7924,\n  \"volume\": 1393837.5451535\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: XRPUSD = $2.79"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.102Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 2.7924,\n  \"volume\": 1393837.5451535\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:36.101Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: XRPUSD = $2.79"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.800Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Show details: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.800Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.800Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component mounted - tracking XRPUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.800Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component unmounting from ETHUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: false"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] No ticker data available for XRPUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: false"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:35.713Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] No ticker data available for XRPUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:34.980Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:34.979Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:34.953Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.929Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.929Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.754Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Parallel initial load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.733Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.516Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Show details: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.516Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.516Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component mounted - tracking ETHUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.516Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component unmounting from BTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 2945,\n  \"volume\": 15735.48032461\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: ETHUSD = $2945.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 2945,\n  \"volume\": 15735.48032461\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:33.425Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: ETHUSD = $2945.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:32.711Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:32.634Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Fetching balance data from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:28.548Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:28.548Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:28.456Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:27.408Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:27.408Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:27.262Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.241Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.241Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.241Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.241Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.240Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.240Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.206Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.206Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.206Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.206Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.205Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:26.205Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:24.535Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Sequential data load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:22.261Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:22.261Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:22.190Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:21.186Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:21.185Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:21.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:20.536Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:20.517Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Fetching balance data from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:16.126Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:16.126Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:16.041Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:15.023Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:15.023Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:15.017Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:11.182Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:11.182Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:11.182Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:11.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:11.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:11.181Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:10.015Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:10.015Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:10.010Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:09.008Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:09.008Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:08.879Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:08.400Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:08.341Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Fetching balance data from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:03.859Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:03.859Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:03.799Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:21:02.771Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:02.770Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:21:02.697Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:57.695Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:57.695Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:57.690Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.684Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.682Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.641Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.378Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.378Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.378Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.377Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.377Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.377Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.345Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.345Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.345Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.344Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.344Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.344Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.190Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:56.131Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Fetching balance data from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:54.488Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Sequential data load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:51.397Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:51.397Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:51.333Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:50.302Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:50.301Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:50.161Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:45.152Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:45.152Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:45.100Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:44.099Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:44.098Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:44.049Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:43.852Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:43.847Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Fetching balance data from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.373Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.373Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.373Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.373Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.373Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.373Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.223Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.223Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.223Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.223Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.223Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.223Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.173Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.173Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.173Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.172Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.172Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.172Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 118170,\n  \"volume\": 203.91466655\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: BTCUSD = $118170.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.162Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.161Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.161Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 118170,\n  \"volume\": 203.91466655\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:41.161Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: BTCUSD = $118170.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.626Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Bot start operation completed (loading=false)"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.626Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Stack trace: SyntaxError: Unexpected end of JSON input\n    at handleButtonClick (http://localhost:8081/src/components/BotControl.tsx:57:41)"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.626Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Error message: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.626Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Error type: SyntaxError"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.625Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Error: {\n  \"message\": \"Failed to execute 'json' on 'Response': Unexpected end of JSON input\"\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.625Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [BotControl] Bot start operation failed!"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.615Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Sending start request to API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.615Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Timestamp: 2025-07-13T22:20:38.615Z"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.615Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Bot uptime: 0s"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.615Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] Current bot status: stopped"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.614Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🤖 [BotControl] User clicked START button"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.115Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.115Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:38.077Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:37.025Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:37.025Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:36.864Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.296Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.296Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.296Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.296Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.296Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.296Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.200Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.200Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.200Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.199Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.199Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.199Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.144Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.144Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.144Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.144Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.144Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.144Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 118170,\n  \"volume\": 203.90751679\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: BTCUSD = $118170.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.126Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.125Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 118170,\n  \"volume\": 203.90751679\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:26.125Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: BTCUSD = $118170.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.825Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.824Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.786Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Fetching positions from API..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.457Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.457Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.457Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.457Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.457Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.457Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.443Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.443Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.443Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.443Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] Ticker data: {\n  \"price\": 118240,\n  \"volume\": 203.74339383\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 💰 [Balance] WebSocket ticker update: BTCUSD = $118240.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Insufficient data for portfolio calculation"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker available: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Balances available: 0"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Calculating portfolio data..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Ticker data: {\n  \"price\": 118240,\n  \"volume\": 203.74339383\n}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.442Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket ticker update: BTCUSD = $118240.00"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Subscribing to LTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Subscribing to ETHUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Subscribing to BTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Subscribing to common symbols for portfolio-wide pricing"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Max positions: 5"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Show only symbol: false"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Symbol filter: all"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Component mounted"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📈 [ManualTrade] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.157Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📈 [ManualTrade] Component mounted - subscribing to TESTBTC/TESTUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.156Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Show details: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.156Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] WebSocket connected: true"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.156Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component mounted - tracking BTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.156Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Component unmounting"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.156Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📈 [ManualTrade] Component unmounting from TESTBTC/TESTUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.156Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component unmounting from BTCUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.048Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.048Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.048Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "\u001b[2;38;2;124;124;124m%s\u001b[0m 🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.048Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] No positions to process"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.048Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing 0 positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.048Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Processing positions..."
+    },
+    {
+      "timestamp": "2025-07-13T22:20:25.003Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Parallel initial load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:24.791Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ Parallel initial load failed"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:24.785Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] Failed to fetch positions: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:24.784Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Positions] API request failed: 500 Internal Server Error"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:24.679Z",
+      "level": "error",
+      "source": "Frontend",
+      "message": "❌ [Balance] Failed to fetch balance data: {}"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:24.468Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "🎯 [Positions] Component unmounting"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:24.468Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "📈 [ManualTrade] Component unmounting from TESTBTC/TESTUSD"
+    },
+    {
+      "timestamp": "2025-07-13T22:20:24.467Z",
+      "level": "info",
+      "source": "Frontend",
+      "message": "💰 [Balance] Component unmounting from BTCUSD"
+    }
+  ]

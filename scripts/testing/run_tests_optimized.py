@@ -31,7 +31,7 @@ def run_tests_with_parallel(category=None, markers=None, max_workers="auto"):
     cmd = [
         sys.executable, "-m", "pytest",
         "backend/tests/",
-        "-n", str(max_workers),  # Parallell exekvering
+        # "-n", str(max_workers),  # Ta bort denna rad eftersom det redan finns i pytest.ini
         "-v",
         "--tb=short",
         "--durations=10",

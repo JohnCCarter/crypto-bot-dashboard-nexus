@@ -20,17 +20,17 @@ import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    Activity,
-    AlertTriangle,
-    CheckCircle,
-    Coins,
-    DollarSign,
-    Layers,
-    Target,
-    TrendingDown,
-    TrendingUp,
-    Wifi,
-    Zap
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Coins,
+  DollarSign,
+  Layers,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  Wifi,
+  Zap
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -74,6 +74,8 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     platformStatus
   } = useGlobalWebSocketMarket();
   
+  const queryClient = useQueryClient();
+  
   // Subscribe to symbol on mount
   useEffect(() => {
     console.log(`📈 [ManualTrade] Component mounted - subscribing to ${currentSymbol}`);
@@ -97,6 +99,37 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
     queryFn: api.getBalances,
     refetchInterval: 5000
   });
+
+  // Trading capacity calculation (dynamic based on selected symbol and position type)
+  const tradingCapacity = useMemo(() => {
+    const symbolInfo = AVAILABLE_SYMBOLS.find(s => s.value === currentSymbol);
+    const baseCurrency = symbolInfo?.currency || 'TESTBTC';
+    
+    // Ensure balances is an array and add null safety
+    const balancesArray = Array.isArray(balances) ? balances : [];
+    const usdBalance = balancesArray.find(b => b.currency === 'TESTUSD')?.available || 0;
+    const cryptoBalance = balancesArray.find(b => b.currency === baseCurrency)?.available || 0;
+    
+    // For margin trading, we could potentially have higher leverage
+    // For now, treating both the same but marking for future enhancement
+    const leverageMultiplier = positionType === 'margin' ? 1 : 1; // Future: could be 2-10x for margin
+    
+    const maxBuyUSD = usdBalance * leverageMultiplier;
+    const maxSellCrypto = cryptoBalance;
+    const currentPrice = ticker?.price || 0;
+    
+    return {
+      baseCurrency,
+      positionType,
+      leverageMultiplier,
+      maxBuyUSD,
+      maxSellCrypto,
+      maxBuyCrypto: currentPrice > 0 ? maxBuyUSD / currentPrice : 0,
+      maxSellUSD: maxSellCrypto * currentPrice,
+      hasCapacity: side === 'buy' ? maxBuyUSD > 0 : maxSellCrypto > 0,
+      marginNote: positionType === 'margin' ? 'Margin trading (1:1 leverage)' : 'Spot trading'
+    };
+  }, [balances, ticker, side, currentSymbol, positionType]);
 
   // Order submission mutation
   const submitOrderMutation = useMutation({
@@ -127,10 +160,10 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
         description: `${variables.side.toUpperCase()} order for ${variables.amount} ${variables.symbol} submitted successfully.`
       });
       
-      useQueryClient().invalidateQueries({ queryKey: ['balances'] });
-      useQueryClient().invalidateQueries({ queryKey: ['orders'] });
-      useQueryClient().invalidateQueries({ queryKey: ['positions'] });
-      useQueryClient().invalidateQueries({ queryKey: ['active-positions'] });
+      queryClient.invalidateQueries({ queryKey: ['balances'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['positions'] });
+      queryClient.invalidateQueries({ queryKey: ['active-positions'] });
       
       // Reset form
       setAmount('');
@@ -199,35 +232,6 @@ export const ManualTradePanel: React.FC<ManualTradePanelProps> = ({
       liquidityWarning
     };
   }, [ticker, orderbook, price, amount, side]);
-
-  // Trading capacity calculation (dynamic based on selected symbol and position type)
-  const tradingCapacity = useMemo(() => {
-    const symbolInfo = AVAILABLE_SYMBOLS.find(s => s.value === currentSymbol);
-    const baseCurrency = symbolInfo?.currency || 'TESTBTC';
-    
-    const usdBalance = balances.find(b => b.currency === 'TESTUSD')?.available || 0;
-    const cryptoBalance = balances.find(b => b.currency === baseCurrency)?.available || 0;
-    
-    // For margin trading, we could potentially have higher leverage
-    // For now, treating both the same but marking for future enhancement
-    const leverageMultiplier = positionType === 'margin' ? 1 : 1; // Future: could be 2-10x for margin
-    
-    const maxBuyUSD = usdBalance * leverageMultiplier;
-    const maxSellCrypto = cryptoBalance;
-    const currentPrice = ticker?.price || 0;
-    
-    return {
-      baseCurrency,
-      positionType,
-      leverageMultiplier,
-      maxBuyUSD,
-      maxSellCrypto,
-      maxBuyCrypto: currentPrice > 0 ? maxBuyUSD / currentPrice : 0,
-      maxSellUSD: maxSellCrypto * currentPrice,
-      hasCapacity: side === 'buy' ? maxBuyUSD > 0 : maxSellCrypto > 0,
-      marginNote: positionType === 'margin' ? 'Margin trading (1:1 leverage)' : 'Spot trading'
-    };
-  }, [balances, ticker, side, currentSymbol, positionType]);
 
   // Auto-fill functions
   const fillMarketPrice = () => {

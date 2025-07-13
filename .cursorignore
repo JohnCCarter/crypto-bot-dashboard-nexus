@@ -39,3 +39,11 @@ frontend/build/
 # Large databases and logs
 *.log
 local.db
+
+# Overseer system (internal AI logic)
+.overseer/
+!.overseer/__init__.py
+!.overseer/autonomous_system.py
+!.overseer/overseer_engine.py
+!.overseer/Command_Handling_Spec.md
+!.overseer/Overseer_Log.md

@@ -254,3 +254,8 @@ class DomainTracker:
 
     def all_completed(self) -> bool:
         return all(status == DomainStatus.COMPLETED for status in self._status.values())
+
+
+# Registrera modulen i sys.modules för att relativa imports ska fungera
+import sys as _sys
+_sys.modules.setdefault("autonomous_system", _sys.modules[__name__])

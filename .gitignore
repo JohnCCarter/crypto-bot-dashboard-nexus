@@ -23,6 +23,7 @@ lerna-debug.log*
 .codex_backups/
 temp/
 mcp.json
+.cursor/mcp.json
 
 # =============================================================================
 # NODE.JS & FRONTEND
@@ -164,6 +165,17 @@ __pycache__/
 
 # Backup directories
 .codex_backups/
+
+# =============================================================================
+# OVERSEER SYSTEM
+# =============================================================================
+# Overseer internal files (contains sensitive AI logic)
+.overseer/
+!.overseer/__init__.py
+!.overseer/autonomous_system.py
+!.overseer/overseer_engine.py
+!.overseer/Command_Handling_Spec.md
+!.overseer/Overseer_Log.md
 
 # =============================================================================
 # SECURITY & SENSITIVE DATA

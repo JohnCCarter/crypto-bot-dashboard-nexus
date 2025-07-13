@@ -24,18 +24,21 @@ Codex should primarily work in:
 
 Codex, follow these when testing:
 
-### Backend Testing:
+### Backend Testing
+
 - **Primary:** Use optimized test runner: `python scripts/testing/run_tests_optimized.py`
 - **Fallback:** Use standard pytest: `cd backend; python -m pytest -v --tb=short --durations=10 --maxfail=10`
 - **Expected:** 236+ passed tests, 9 skipped, 1 xfailed (expected)
 - **Performance:** < 3 minutes total runtime
 
-### Frontend Testing:
+### Frontend Testing
+
 - Use `npm test` for Vitest (TypeScript/React)
 - **Expected:** 9/10 test files passing
 - **Performance:** < 30 seconds runtime
 
-### General:
+### General
+
 - Confirm all rule checks pass before proposing a pull request
 - Follow `cursor-rules-testing.mdc` for detailed testing policy
 - Always run baseline tests before and after changes
@@ -47,6 +50,7 @@ Codex, follow these when testing:
 Codex **must create backups** before modifying tracked files.
 
 > Rule: `cursor-rule-backup-safety.mdc`
+
 - Back up to `.codex_backups/YYYY-MM-DD/`
 - Verify backup integrity
 - Abort if backup fails
@@ -87,5 +91,3 @@ Codex is more effective when:
 3. Lint and type-check
 4. Follow PR title format: `[<area>] <concise title>`
 5. Cross-check with `AGENTS.md` before commit
-
-

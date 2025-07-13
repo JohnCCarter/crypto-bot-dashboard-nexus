@@ -12,15 +12,27 @@ import shutil as _shutil
 from enum import Enum, auto
 
 # Local import for proposal management (relative import)
-from .autonomous_system import (
-    ProposalManager,
-    ProposalStatus,
-    run_all_tests,
-    VersionControl,
-    Proposal,
-    DomainTracker,
-    Domain,
-)
+try:
+    from .autonomous_system import (
+        ProposalManager,
+        ProposalStatus,
+        run_all_tests,
+        VersionControl,
+        Proposal,
+        DomainTracker,
+        Domain,
+    )
+except ImportError:
+    # Fallback för när modulen laddas via importlib
+    from autonomous_system import (
+        ProposalManager,
+        ProposalStatus,
+        run_all_tests,
+        VersionControl,
+        Proposal,
+        DomainTracker,
+        Domain,
+    )
 from pathlib import Path
 
 _LOG_FILE = Path(__file__).with_name("Overseer_Log.md")

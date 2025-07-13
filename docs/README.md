@@ -50,6 +50,7 @@ This directory contains all project documentation.
 ## Key Guides
 
 ### Environment and Configuration
+
 - [Environment Setup Guide](guides/ENVIRONMENT_SETUP_GUIDE.md) - Main guide for setting up the development environment
 - [Node.js and TypeScript Setup](guides/environment/NODE_TYPESCRIPT_SETUP.md) - Detailed guide for Node.js and TypeScript configuration
 - [Virtual Environment Migration Guide](guides/environment/VENV_MIGRATION_GUIDE.md) - Guide for migrating from backend/venv to ./venv
@@ -57,18 +58,21 @@ This directory contains all project documentation.
 - [Snabb deploymentguide](guides/QUICK_DEPLOYMENT_GUIDE.md) - Snabbguide för driftsättning
 
 ### API and Integration
+
 - [Bitfinex API-integrationsguide](guides/BITFINEX_API_INTEGRATION_GUIDE.md) - Guide för Bitfinex API-integration
 - [Bitfinex API-uppdateringsplan](guides/BITFINEX_API_INTEGRATION_UPDATE.md)
 - [Bitfinex API-uppdateringschecklista](guides/BITFINEX_API_UPDATE_CHECKLIST.md)
 - [Bitfinex API-uppdateringsstatus](guides/BITFINEX_API_UPDATE_CI_STATUS.md)
 
 ### WebSocket
+
 - [WebSocket Finalization Implementation](guides/WEBSOCKET_FINALIZATION_IMPLEMENTATION.md) - **PRODUCTION READY** - Komplett WebSocket-hantering med load balancing, analytics och alerts
 - [WebSocket-funktioner översikt](guides/WEBSOCKET_FUNKTIONER_OVERSIKT.md) - Översikt över WebSocket-funktioner
 - [WebSocket vs REST-analys](guides/WEBSOCKET_VS_REST_ANALYSIS.md) - Jämförelse mellan WebSocket och REST
 - [WebSocket-användardata implementationsplan](guides/WEBSOCKET_USER_DATA_IMPLEMENTATION_PLAN.md) - Plan för implementering av användardata via WebSocket
 
 ### Serverhantering
+
 - [Serverhanteringsguide](guides/SERVER_MANAGEMENT_GUIDE.md) - Guide för serverhantering
 
 ## Key Reports
@@ -92,4 +96,4 @@ This directory contains all project documentation.
 - [Logganalys lösning](solutions/LOG_ANALYSIS_SOLUTION.md)
 - [Pappershandel lösning sammanfattning](solutions/PAPER_TRADING_SOLUTION_SUMMARY.md)
 - [Serverstartlösning](solutions/SERVER_START_SOLUTION.md)
-- [Logg 7 lösning sammanfattning](solutions/LOG_7_SOLUTION_SUMMARY.md) 
+- [Logg 7 lösning sammanfattning](solutions/LOG_7_SOLUTION_SUMMARY.md)

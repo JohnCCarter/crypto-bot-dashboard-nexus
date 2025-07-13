@@ -1,28 +1,28 @@
-import { HybridBalanceCard } from '@/components/HybridBalanceCard';
+import { ActivePositionsCard } from '@/components/ActivePositionsCard';
 import { BotControl } from '@/components/BotControl';
+import { HybridBalanceCard } from '@/components/HybridBalanceCard';
+import { HybridOrderBook } from '@/components/HybridOrderBook';
+import { HybridPriceChart } from '@/components/HybridPriceChart';
 import { LogViewer } from '@/components/LogViewer';
 import { ManualTradePanel } from '@/components/ManualTradePanel';
-import { HybridOrderBook } from '@/components/HybridOrderBook';
 import { OrderHistory } from '@/components/OrderHistory';
-import { HybridPriceChart } from '@/components/HybridPriceChart';
+import { PortfolioSummaryCard } from '@/components/PortfolioSummaryCard';
 import ProbabilityAnalysis from '@/components/ProbabilityAnalysis';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ActivePositionsCard } from '@/components/ActivePositionsCard';
-import { PortfolioSummaryCard } from '@/components/PortfolioSummaryCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
 import {
   LogEntry,
   OHLCVData,
   OrderHistoryItem
 } from '@/types/trading';
+import { RefreshCw, Settings, TrendingUp, Zap } from 'lucide-react';
 import { useCallback, useEffect, useState, type FC } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Settings, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 /**
@@ -46,6 +46,9 @@ const Index: FC = () => {
 
   // Global symbol selection state
   const [selectedSymbol, setSelectedSymbol] = useState<string>('BTCUSD');
+
+  // Refresh key for manual refresh
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Available trading symbols
   const SYMBOLS = ['BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD', 'ADAUSD'];
