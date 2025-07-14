@@ -17,6 +17,7 @@ pytest.skip(
 from fastapi.testclient import TestClient
 
 from backend.api.dependencies import BotManagerDependency, get_bot_manager
+
 # from backend.api.models import BotActionResponse, BotStatusResponse  # UNUSED: removed by vulture
 from backend.fastapi_app import app
 

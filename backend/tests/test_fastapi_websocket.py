@@ -21,13 +21,21 @@ import pytest
 from fastapi.testclient import TestClient
 from fastapi.websockets import WebSocket
 
-from backend.api.websocket import (ConnectionManager, market_manager,
-                                   orderbook_manager, ticker_manager,
-                                   trades_manager, user_data_manager)
+from backend.api.websocket import (
+    ConnectionManager,
+    market_manager,
+    orderbook_manager,
+    ticker_manager,
+    trades_manager,
+    user_data_manager,
+)
+
 # Importera FastAPI-appen för tester
 from backend.fastapi_app import app
-from backend.services.websocket_market_service import (BitfinexWebSocketClient,
-                                                       MarketData)
+from backend.services.websocket_market_service import (
+    BitfinexWebSocketClient,
+    MarketData,
+)
 from backend.services.websocket_user_data_service import BitfinexUserDataClient
 
 # Konfigurera loggning
@@ -402,8 +410,9 @@ class TestWebSocketIntegration:
 
     def test_websocket_routes_exist(self, test_client):
         """Verifierar att WebSocket-routes är registrerade i FastAPI-appen."""
-        from backend.fastapi_app import \
-            app  # Importera här för att undvika global långsamhet
+        from backend.fastapi_app import (
+            app,
+        )  # Importera här för att undvika global långsamhet
 
         routes = [route for route in app.routes]
         # Använd hasattr för att kontrollera om route har path-attribut

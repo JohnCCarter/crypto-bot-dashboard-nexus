@@ -13,7 +13,9 @@ from backend.api.dependencies import MarketDataDependency, get_market_data
 from backend.api.models import ErrorResponse, OrderBook
 from backend.services.exchange import ExchangeError
 from backend.services.live_data_service_async import (
-    LiveDataServiceAsync, get_live_data_service_async)
+    LiveDataServiceAsync,
+    get_live_data_service_async,
+)
 
 # Create logger
 logger = logging.getLogger(__name__)

@@ -10,12 +10,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import ValidationError
 
 from backend.api.dependencies import get_portfolio_manager, get_risk_manager
-from backend.api.models import (AllocationItem, PortfolioAllocationRequest,
-                                PortfolioAllocationResponse, ResponseStatus,
-                                RiskProfile, SignalData, StrategySignalRequest,
-                                StrategySignalResponse)
-from backend.services.live_portfolio_service_async import \
-    LivePortfolioServiceAsync
+from backend.api.models import (
+    AllocationItem,
+    PortfolioAllocationRequest,
+    PortfolioAllocationResponse,
+    ResponseStatus,
+    RiskProfile,
+    SignalData,
+    StrategySignalRequest,
+    StrategySignalResponse,
+)
+from backend.services.live_portfolio_service_async import LivePortfolioServiceAsync
 from backend.services.portfolio_manager_async import PortfolioManagerAsync
 from backend.services.risk_manager_async import RiskManagerAsync
 

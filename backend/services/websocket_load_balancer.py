@@ -15,12 +15,14 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .websocket_connection_interface import (ConnectionConfig,
-                                             ConnectionMetrics,
-                                             ConnectionState, ConnectionType,
-                                             WebSocketConnectionInterface)
-from .websocket_in_memory_store import (ConnectionRecord,
-                                        InMemoryConnectionStore)
+from .websocket_connection_interface import (
+    ConnectionConfig,
+    ConnectionMetrics,
+    ConnectionState,
+    ConnectionType,
+    WebSocketConnectionInterface,
+)
+from .websocket_in_memory_store import ConnectionRecord, InMemoryConnectionStore
 
 
 class LoadBalancingStrategy(Enum):

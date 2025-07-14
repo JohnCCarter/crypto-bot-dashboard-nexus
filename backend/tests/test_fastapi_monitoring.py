@@ -10,8 +10,7 @@ from fastapi.testclient import TestClient
 from backend.fastapi_app import app
 from backend.services.cache_service import EnhancedCacheService
 from backend.services.global_nonce_manager import EnhancedGlobalNonceManager
-from backend.services.nonce_monitoring_service import \
-    EnhancedNonceMonitoringService
+from backend.services.nonce_monitoring_service import EnhancedNonceMonitoringService
 
 
 @pytest.fixture
