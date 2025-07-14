@@ -6,12 +6,16 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from backend.services.portfolio_manager_async import (CombinedSignal,
-                                                      PortfolioManagerAsync,
-                                                      StrategyWeight)
-from backend.services.risk_manager_async import (ProbabilityData,
-                                                 RiskManagerAsync,
-                                                 RiskParameters)
+from backend.services.portfolio_manager_async import (
+    CombinedSignal,
+    PortfolioManagerAsync,
+    StrategyWeight,
+)
+from backend.services.risk_manager_async import (
+    ProbabilityData,
+    RiskManagerAsync,
+    RiskParameters,
+)
 from backend.strategies.sample_strategy import TradeSignal
 
 
@@ -400,8 +404,9 @@ class TestPortfolioManagerAsyncFactory:
             mock_pm.return_value = mock_instance
 
             # Anropa factory function
-            from backend.services.portfolio_manager_async import \
-                get_portfolio_manager_async
+            from backend.services.portfolio_manager_async import (
+                get_portfolio_manager_async,
+            )
 
             portfolio_manager = await get_portfolio_manager_async(
                 risk_manager=mock_risk_manager, strategy_weights=mock_strategy_weights

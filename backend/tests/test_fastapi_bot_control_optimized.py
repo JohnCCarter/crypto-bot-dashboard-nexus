@@ -24,6 +24,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from backend.api.dependencies import BotManagerDependency
+
 # from backend.api.models import BotActionResponse, BotStatusResponse  # UNUSED: removed by vulture
 from backend.services.bot_manager_async import BotManagerAsync
 

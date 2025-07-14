@@ -18,7 +18,12 @@ from typing import Any, Callable, Dict, List, Optional
 
 from backend.services.cache_service import get_cache_service
 from backend.services.websocket_user_data_service import (
-    BitfinexUserDataClient, LiveBalance, LiveOrder, OrderFill, Position)
+    BitfinexUserDataClient,
+    LiveBalance,
+    LiveOrder,
+    OrderFill,
+    Position,
+)
 
 logger = logging.getLogger(__name__)
 

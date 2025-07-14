@@ -5,12 +5,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from backend.services.exchange import ExchangeService
-from backend.services.exchange_async import (cancel_order_async,
-                                             create_order_async,
-                                             fetch_open_orders_async,
-                                             fetch_order_async)
-from backend.services.validation import (validate_order_data,
-                                         validate_trading_pair)
+from backend.services.exchange_async import (
+    cancel_order_async,
+    create_order_async,
+    fetch_open_orders_async,
+    fetch_order_async,
+)
+from backend.services.validation import validate_order_data, validate_trading_pair
 
 
 class OrderServiceAsync:

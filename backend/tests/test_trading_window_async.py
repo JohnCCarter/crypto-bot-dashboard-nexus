@@ -8,8 +8,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.services.trading_window_async import (TradingWindowAsync,
-                                                   get_trading_window_async)
+from backend.services.trading_window_async import (
+    TradingWindowAsync,
+    get_trading_window_async,
+)
 
 
 @pytest.fixture

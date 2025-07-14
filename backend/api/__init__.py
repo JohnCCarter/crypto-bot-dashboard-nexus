@@ -4,8 +4,17 @@ API routes module for FastAPI.
 
 from fastapi import APIRouter
 
-from backend.api import (config, market_data, monitoring, orderbook, orders,
-                         portfolio, positions, risk_management, websocket)
+from backend.api import (
+    config,
+    market_data,
+    monitoring,
+    orderbook,
+    orders,
+    portfolio,
+    positions,
+    risk_management,
+    websocket,
+)
 from backend.api.bot_control import router as bot_control_router
 from backend.api.status import router as status_router
 

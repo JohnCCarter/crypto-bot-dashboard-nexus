@@ -5,8 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from backend.services.exchange import ExchangeService
-from backend.services.validation import (validate_order_data,
-                                         validate_trading_pair)
+from backend.services.validation import validate_order_data, validate_trading_pair
 
 
 class OrderService:

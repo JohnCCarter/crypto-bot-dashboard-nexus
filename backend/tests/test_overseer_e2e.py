@@ -4,7 +4,6 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -16,11 +15,12 @@ def _load_module(name: str, path: Path):
             raise ImportError(f"Could not load spec for {name} from {path}")
         print(f"  Creating module from spec for {name}")
         mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
-        
+
         # Registrera modulen i sys.modules för att dataclass ska fungera
         import sys
+
         sys.modules[name] = mod
-        
+
         print(f"  Executing module {name}")
         spec.loader.exec_module(mod)  # type: ignore[attr-defined]
         print(f"  Successfully loaded {name}")
@@ -28,6 +28,7 @@ def _load_module(name: str, path: Path):
     except Exception as e:
         print(f"  Error loading {name}: {e}")
         import traceback
+
         traceback.print_exc()
         pytest.skip(f"Could not load {name} module: {e}", allow_module_level=True)
 
@@ -44,13 +45,14 @@ if not overseer_engine_path.exists():
 try:
     print(f"Loading autonomous_system from {autonomous_path}")
     autonomous = _load_module("autonomous_system", autonomous_path)
-    
+
     # Registrera .overseer paketet innan vi laddar overseer_engine
     import sys
+
     overseer_package = type(sys)(name=".overseer")
     sys.modules[".overseer"] = overseer_package
     overseer_package.autonomous_system = autonomous
-    
+
     print(f"Loading overseer_engine from {overseer_engine_path}")
     engine_mod = _load_module("overseer_engine", overseer_engine_path)
 
@@ -63,6 +65,7 @@ try:
 except Exception as e:
     print(f"Error loading overseer modules: {e}")
     import traceback
+
     traceback.print_exc()
     pytest.skip(f"Could not import overseer modules: {e}", allow_module_level=True)
 
@@ -77,14 +80,16 @@ def patched_version_control(monkeypatch):
     monkeypatch.setattr(VersionControl, "stage", _noop)
     monkeypatch.setattr(VersionControl, "commit", _noop)
     monkeypatch.setattr(VersionControl, "revert", lambda *a, **kw: None)
-    
+
     # Mock run_all_tests to always return True for testing
     monkeypatch.setattr(autonomous, "run_all_tests", lambda: True)
     # Also mock it in the engine module since it imports it directly
     monkeypatch.setattr(engine_mod, "run_all_tests", lambda: True)
 
 
-def _create_dummy_proposal(tmp_dir: Path, domain: Domain, content: str = "data") -> Proposal:
+def _create_dummy_proposal(
+    tmp_dir: Path, domain: Domain, content: str = "data"
+) -> Proposal:
     file_path = tmp_dir / f"{domain.value.replace(' ', '_').lower()}.txt"
     return Proposal(
         agent_name=f"Agent-{domain.value}",

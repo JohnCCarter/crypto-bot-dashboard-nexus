@@ -14,13 +14,19 @@ from dotenv import load_dotenv
 
 from backend.services.config_service import ConfigService
 from backend.services.live_data_service_async import (
-    LiveDataServiceAsync, get_live_data_service_async)
+    LiveDataServiceAsync,
+    get_live_data_service_async,
+)
 from backend.services.notifications import Notifier
-from backend.services.risk_manager_async import (RiskManagerAsync,
-                                                 RiskParameters,
-                                                 get_risk_manager_async)
-from backend.services.trading_window_async import (TradingWindowAsync,
-                                                   get_trading_window_async)
+from backend.services.risk_manager_async import (
+    RiskManagerAsync,
+    RiskParameters,
+    get_risk_manager_async,
+)
+from backend.services.trading_window_async import (
+    TradingWindowAsync,
+    get_trading_window_async,
+)
 from backend.strategies.ema_crossover_strategy import run_strategy as run_ema
 from backend.strategies.fvg_strategy import run_strategy as run_fvg
 from backend.strategies.rsi_strategy import run_strategy as run_rsi

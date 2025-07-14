@@ -451,10 +451,8 @@ class BotManagerAsync:
 
             # Check if we can import trading services
             try:
-                from backend.services.order_service_async import \
-                    get_order_service_async
-                from backend.services.risk_manager_async import \
-                    get_risk_manager_async
+                from backend.services.order_service_async import get_order_service_async
+                from backend.services.risk_manager_async import get_risk_manager_async
 
                 validation_results["checks"].append("Trading services: OK")
             except Exception as e:

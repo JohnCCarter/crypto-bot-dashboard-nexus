@@ -2,15 +2,18 @@
 Bot control API endpoints for FastAPI.
 """
 
+from typing import Any, Dict
+
 from fastapi import APIRouter, HTTPException, status
+
 from backend.api.models import BotStatusResponse
 from backend.services.bot_manager_async import get_bot_manager_async
-from typing import Dict, Any
 
 router = APIRouter(
     prefix="/api",
     tags=["bot-control"],
 )
+
 
 # GET /api/bot-status
 @router.get("/bot-status", response_model=BotStatusResponse)
@@ -21,7 +24,10 @@ async def get_bot_status() -> Dict[str, Any]:
         status_result = await bot_manager.get_status()
         return status_result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get bot status: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get bot status: {str(e)}"
+        )
+
 
 # POST /api/bot/start
 @router.post("/bot/start")
@@ -34,6 +40,7 @@ async def start_bot() -> Dict[str, Any]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start bot: {str(e)}")
 
+
 # POST /api/bot/stop
 @router.post("/bot/stop")
 async def stop_bot() -> Dict[str, Any]:
@@ -43,4 +50,4 @@ async def stop_bot() -> Dict[str, Any]:
         result = await bot_manager.stop_bot()
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to stop bot: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to stop bot: {str(e)}")

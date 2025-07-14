@@ -64,8 +64,10 @@ class BitfinexWebSocketClient:
             callback: Funktion som anropas när data kommer
         """
         # Convert UI format to Bitfinex WebSocket format using symbol converter
-        from backend.services.symbol_converter import (convert_ui_to_websocket,
-                                                       log_symbol_conversion)
+        from backend.services.symbol_converter import (
+            convert_ui_to_websocket,
+            log_symbol_conversion,
+        )
 
         original_symbol = symbol
         symbol = convert_ui_to_websocket(symbol)
